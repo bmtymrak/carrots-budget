@@ -1,0 +1,10 @@
+{% extends "_base.html" %}
+
+{% block title %}Carrots Budgeting App{% endblock title %}
+
+{% block body %}
+<h1>Carrots Budgeting</h1>
+<a href="{% url 'account_login'%}">Login</a>
+<a href="{% url 'account_signup' %}">Sign Up</a>
+<a href="{% url 'account_logout' %}">Logout</a>
+{% endblock body %}
