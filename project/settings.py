@@ -45,11 +45,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",
     "debug_toolbar",
+    "django_extensions",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "accounts.apps.AccountsConfig",
     "pages.apps.PagesConfig",
+    "purchases.apps.PurchasesConfig",
+    "budgets.apps.BudgetsConfig",
 ]
 
 MIDDLEWARE = [
