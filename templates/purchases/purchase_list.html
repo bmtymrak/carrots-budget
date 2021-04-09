@@ -1,0 +1,14 @@
+{% extends "_base.html" %}
+
+{% block body %}
+
+{% for purchase in purchases %}
+
+<ul>
+    <li>{{purchase.item}}</li>
+    <li>{{purchase.amount}}</li>
+</ul>
+
+{% endfor %}
+
+{% endblock body %}

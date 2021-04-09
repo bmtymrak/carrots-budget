@@ -34,7 +34,7 @@ class Subcategory(models.Model):
 
 class Purchase(models.Model):
     item = models.CharField(max_length=250, blank=True)
-    date = models.DateField()
+    date = models.DateField(null=True, default=None)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
