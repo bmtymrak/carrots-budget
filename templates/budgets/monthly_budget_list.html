@@ -1,0 +1,10 @@
+{% extends "_base.html" %}
+
+{% block body %}
+
+<ul>
+{% for budget in monthly_budgets %}
+<li><a href='{% url "monthly_detail" year=budget.date.year month=budget.date.month %}'>{{budget.date.year}} - {{budget.date.month}}</a></li>
+{% endfor %}
+</ul>
+{% endblock body %}

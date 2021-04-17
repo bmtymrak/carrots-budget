@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block body %}
+<ul>
+    <li>{{budget_item.monthly_budget.date.year}} - {{budget_item.monthly_budget.date.month}}</li>
+    <li>{{budget_item.category}}</li>
+    <li>Amount: {{budget_item.amount}}</li>
+</ul>
+
+<ul>
+    {% for purchase in purchases %}
+    <li>{{purchase.item}} - {{purchase.amount}}</li>
+    {% endfor %}
+</ul>
+
+{% endblock body %}

@@ -1,0 +1,17 @@
+{% extends "_base.html" %}
+
+{% block body %}
+
+<p>
+    {{monthly_budget.date.month}} - {{monthly_budget.date.year}}
+</p>
+
+<ul>
+{% for budget_item in monthly_budget.budget_items.all %}
+    <li><a href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>{{budget_item.category}}</a> - {{budget_item.amount}} <a href='{% url "budgetitem_edit" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>Edit</a></li>
+{% endfor %}
+</ul>
+
+<a href='{% url "budgetitem_create" year=monthly_budget.date.year month=monthly_budget.date.month %}'>Add budget item</a>
+
+{% endblock body %}

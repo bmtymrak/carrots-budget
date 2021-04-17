@@ -14,9 +14,12 @@ class YearlyBudget(models.Model):
 
     date = models.DateField(null=False, default=None, blank=False)
 
+    def __str__(self):
+        return f"{self.user}-{self.date.year}"
+
 
 class MonthlyBudget(models.Model):
-    monthly = models.BooleanField()
+    monthly = models.BooleanField(null=True, blank=True, default=True)
     date = models.DateField()
     expected_income = models.IntegerField(blank=True, null=True)
     user = models.ForeignKey(
@@ -45,12 +48,16 @@ class BudgetItem(models.Model):
         null=False,
     )
     category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, related_name="budget_items",
+        Category,
+        on_delete=models.CASCADE,
+        related_name="budget_items",
+        blank=True,
+        null=False,
     )
     amount = models.IntegerField(blank=True, default=0)
     monthly_budget = models.ForeignKey(
         MonthlyBudget,
-        null=True,
+        null=False,
         on_delete=models.CASCADE,
         related_name="budget_items",
         default=None,
@@ -71,3 +78,10 @@ class BudgetItem(models.Model):
             return f"{self.category}-{self.monthly_budget.date.month}-{self.monthly_budget.date.year}"
         else:
             return f"{self.category}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["monthly_budget", "category", "user"], name="unique_budgetitem"
+            )
+        ]

@@ -4,7 +4,7 @@ from django.conf import settings
 
 class Category(models.Model):
     name = models.CharField(max_length=250, blank=False)
-    rollover = models.BooleanField(null=False)
+    rollover = models.BooleanField(null=False, default=False)
     notes = models.TextField(blank=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

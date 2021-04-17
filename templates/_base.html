@@ -13,5 +13,16 @@
     {% block body %}
     {% endblock body %}
     
+
+    <ul>
+        <li><a href='{% url "yearly_list" %}'>Yearly List</a></li>
+        <li><a href='{% url "monthly_budget_list" %}'>Monthly Budget List</a></li>
+        <li><a href='{% url "monthly_create" %}'>Monthly Create</a></li>
+        <li><a href='{% url "yearly_create" %}'>Yearly Create</a></li>
+        <li><a href='{% url "purchase_add" %}'>Purchase Add</a></li>
+        <li><a href='{% url "category_create"%}'>Category Create</a></li>
+        <li><a href='{% url "purchase_list" %}'>Purchase List</a></li>
+    </ul>
+    
 </body>
 </html>
