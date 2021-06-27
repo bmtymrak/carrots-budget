@@ -1,5 +1,38 @@
+/* *{
+    font-size: 6px;
+} */
 
+.purchase-horizontal-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+}
 
-.item-horz-list{
-    
+.budget-horizontal-grid-year{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border: 1px solid black;
+    font-size: 12px;
+}
+
+.budget-horizontal-grid-month{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    border: 1px solid black;
+    font-size: 12px;
+}
+
+.yearly-detail-grid{
+    display: grid;
+    grid-template-columns: 150px repeat(13, 200px);
+    overflow-x: scroll
+}
+
+.yearly-detail-grid-header{
+    display: grid;
+    grid-template-columns: 150px repeat(12, 200px)
+}
+
+.purchase-form{
+    display:grid;
+    grid-template-columns: repeat(8, 1fr);
 }

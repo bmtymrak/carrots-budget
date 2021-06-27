@@ -37,7 +37,7 @@ class MonthlyBudget(models.Model):
     )
 
     def __str__(self):
-        return f"{self.date.year} - {self.date.month}"
+        return f"{self.date.year} - {self.date.month} - {self.user}"
 
 
 class BudgetItem(models.Model):

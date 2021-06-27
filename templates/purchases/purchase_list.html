@@ -2,12 +2,29 @@
 
 {% block body %}
 
+
+<div class="purchase-horizontal-grid">
+    <div>Date</div>
+    <div>Item</div>
+    <div>Amount</div>
+    <div>Source</div>
+    <div>Location</div>
+    <div>Category</div>
+    <div>Edit</div>
+    <div>Delete</div>
+</div>
 {% for purchase in purchases %}
 
-<ul>
-    <li>{{purchase.item}}</li>
-    <li>{{purchase.amount}}</li>
-</ul>
+<div class="purchase-horizontal-grid">
+    <div>{{purchase.date}}</div>
+    <div>{{purchase.item}}</div>
+    <div>{{purchase.amount}}</div>
+    <div>{{purhcase.source}}</div>
+    <div>{{purchase.location}}</div>
+    <div>{{purchase.category}}</div>
+    <div><a href='{% url "purchase_edit" pk=purchase.id %}'>Edit</a></div>
+    <div><a href='{% url "purchase_delete" pk=purchase.id %}'>Delete</a></div>
+</div>
 
 {% endfor %}
 

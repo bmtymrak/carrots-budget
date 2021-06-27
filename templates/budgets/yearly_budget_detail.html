@@ -4,10 +4,50 @@
 
 <h1>{{yearly_budget.date.year}}</h1>
 
-<ul>
-    {% for monthly_budget in yearly_budget.monthly_budgets.all %}
-    <li><a href='{% url "monthly_detail" year=yearly_budget.date.year month=monthly_budget.date.month %}'>{{monthly_budget.date|date:"F"}}</a></li>
+
+<div class="yearly-detail-grid">
+
+    <div>
+        {{yearly_budget.date.year}}
+    <div class="budget-horizontal-grid-year">
+        <div>Category</div>
+        <div>Spent</div>
+        <div>Remaining</div>
+    </div>
+
+    {% for budget_item in budget_items%}
+    <div class="budget-horizontal-grid-year">
+        <div>{{budget_item.category__name}}</div>
+        <div>{{budget_item.spent}}</div>
+        <div>{{budget_item.diff}}</div>
+    </div>
     {% endfor %}
-</ul>
+    </div>
+    
+    {% regroup monthly_budgetitems by monthly_budget.date.month as month_items %}
+   
+        {% for month in month_items %}
+        <div>
+        {{ month.grouper}}
+        <div class="budget-horizontal-grid-month">
+            <div>Category</div>
+            <div>Budgeted</div>
+            <div>Spent</div>
+            <div>+/-</div>
+        </div>
+        {% for budget_item in month.list %}
+        <div class="budget-horizontal-grid-month">
+            <div>{{budget_item.category}}</div>
+            <div>{{budget_item.amount}}</div>
+            <div>{{budget_item.spent}}</div>
+            <div>{{budget_item.diff}}</div>
+        </div>
+        {% endfor %}
+        </div>
+        {% endfor %}
+    
+</div>
+
+</div>
 
 {% endblock body %}

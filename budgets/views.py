@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Sum, F, Value, Q, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 
 from .models import MonthlyBudget, YearlyBudget, BudgetItem
 from purchases.models import Category, Purchase
@@ -43,6 +45,55 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         return obj
 
+    def get_context_data(self, **kwargs):
+        kwargs = super().get_context_data(**kwargs)
+
+        purchases = Purchase.objects.filter(
+            category=OuterRef("category"),
+            user=self.request.user,
+            date__year=self.object.date.year,
+        ).values("category")
+
+        budgetitems = (
+            BudgetItem.objects.filter(user=self.request.user)
+            .filter(monthly_budget__date__year=self.object.date.year,)
+            .values("category__name")
+            .annotate(
+                spent=Coalesce(
+                    Subquery(purchases.annotate(total=Sum("amount")).values("total")),
+                    Value(0),
+                ),
+                amount_total=Sum("amount", distinct=True),
+                diff=F("amount_total") - F("spent"),
+            )
+        )
+
+        monthly_purchases = Purchase.objects.filter(
+            category=OuterRef("category"),
+            date__year=self.object.date.year,
+            date__month=OuterRef("monthly_budget__date__month"),
+            user=self.request.user,
+        ).values("date__month", "category")
+
+        monthly_budgetitems = (
+            BudgetItem.objects.filter(user=self.request.user)
+            .filter(monthly_budget__date__year=self.object.date.year)
+            .annotate(
+                spent=Coalesce(
+                    Subquery(
+                        monthly_purchases.annotate(total=Sum("amount")).values("total")
+                    ),
+                    Value(0),
+                )
+            )
+            .annotate(diff=F("amount") - F("spent"))
+        ).order_by("monthly_budget__date__month")
+
+        kwargs.update({"budget_items": budgetitems})
+        kwargs.update({"monthly_budgetitems": monthly_budgetitems})
+
+        return kwargs
+
 
 class MonthlyBudgetCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = MonthlyBudget
@@ -81,6 +132,31 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, DetailView):
             user=self.request.user,
         )
         return obj
+
+    def get_context_data(self, **kwargs):
+        kwargs = super().get_context_data(**kwargs)
+
+        budgetitems = (
+            BudgetItem.objects.filter(user=self.request.user)
+            .filter(monthly_budget=self.object)
+            .annotate(
+                spent=Coalesce(
+                    Sum(
+                        "category__purchases__amount",
+                        filter=Q(
+                            category__purchases__date__month=self.object.date.month,
+                            category__purchases__date__year=self.object.date.year,
+                            category__purchases__user=self.request.user,
+                        ),
+                    ),
+                    Value(0),
+                )
+            )
+        ).annotate(diff=F("amount") - F("spent"))
+
+        kwargs.update({"budget_items": budgetitems})
+
+        return kwargs
 
 
 class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
