@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.db.models.fields.related import ForeignKey
 
 
 class Category(models.Model):
@@ -62,3 +63,25 @@ class Purchase(models.Model):
 
     def __str__(self):
         return self.item
+
+
+class Income(models.Model):
+    user = ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="incomes",
+        null=False,
+    )
+    amount = models.IntegerField(blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    source = models.CharField(max_length=250, blank=True)
+    payer = models.CharField(max_length=250, blank=True)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="incomes",
+    )
+    notes = models.TextField(blank=True)
+

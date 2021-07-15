@@ -21,10 +21,15 @@
     font-size: 12px;
 }
 
+.budget-horizontal-grid-monthly{
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+}
+
 .yearly-detail-grid{
     display: grid;
     grid-template-columns: 150px repeat(13, 200px);
-    overflow-x: scroll
+    overflow-x: auto;
 }
 
 .yearly-detail-grid-header{
@@ -34,5 +39,5 @@
 
 .purchase-form{
     display:grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: 1fr 1fr 1fr repeat(5, 1fr);
 }

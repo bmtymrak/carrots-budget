@@ -10,7 +10,7 @@ from django.views.generic import (
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 
-from .models import Purchase, Category
+from .models import Purchase, Category, Income
 from .forms import PurchaseForm, PurchaseFormSet
 
 
@@ -56,11 +56,14 @@ class PurchaseDeleteView(LoginRequiredMixin, DeleteView):
     model = Purchase
     context_object_name = "purchase"
     template_name = "purchases/purchase_delete.html"
-    success_url = reverse_lazy("purchase_list")
+    # success_url = reverse_lazy("purchase_list")
 
     def get_object(self):
         obj = self.model.objects.get(user=self.request.user, id=self.kwargs.get("pk"))
         return obj
+
+    def get_success_url(self):
+        return reverse_lazy("purchase_list")
 
 
 class PurchaseAddView(LoginRequiredMixin, TemplateView):
@@ -132,3 +135,7 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
         categories = Category.objects.filter(user=self.request.user)
         kwargs.update({"categories": categories})
         return kwargs
+
+
+class IncomeAddView(LoginRequiredMixin, AddUserMixin, CreateView):
+    model = Income

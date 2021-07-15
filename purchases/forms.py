@@ -9,6 +9,7 @@ class PurchaseForm(ModelForm):
         self.fields["category"].queryset = Category.objects.filter(user=self.user)
         self.fields["subcategory"].queryset = Subcategory.objects.filter(user=self.user)
         self.fields["notes"].widget.attrs.update(rows="1")
+        self.fields["date"].widget.attrs.update(size="10")
 
     class Meta:
         model = Purchase

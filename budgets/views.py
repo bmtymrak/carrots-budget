@@ -1,3 +1,4 @@
+from purchases.forms import PurchaseForm
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
@@ -66,7 +67,10 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 amount_total=Sum("amount", distinct=True),
                 diff=F("amount_total") - F("spent"),
             )
-        )
+        ).order_by("category__name")
+
+        total_spent = budgetitems.aggregate(Sum("spent"))
+        total_remaining = budgetitems.aggregate(Sum("diff"))
 
         monthly_purchases = Purchase.objects.filter(
             category=OuterRef("category"),
@@ -87,10 +91,11 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 )
             )
             .annotate(diff=F("amount") - F("spent"))
-        ).order_by("monthly_budget__date__month")
+        ).order_by("monthly_budget__date__month", "category__name")
 
         kwargs.update({"budget_items": budgetitems})
         kwargs.update({"monthly_budgetitems": monthly_budgetitems})
+        kwargs.update({"total_spent": total_spent, "total_remaining": total_remaining})
 
         return kwargs
 
@@ -113,6 +118,7 @@ class MonthlyBudgetListView(LoginRequiredMixin, ListView):
     model = MonthlyBudget
     context_object_name = "monthly_budgets"
     template_name = "budgets/monthly_budget_list.html"
+    ordering = "date"
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -120,18 +126,19 @@ class MonthlyBudgetListView(LoginRequiredMixin, ListView):
         return queryset
 
 
-class MonthlyBudgetDetailView(LoginRequiredMixin, DetailView):
-    model = MonthlyBudget
+class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
+    model = Purchase
     context_object_name = "monthly_budget"
+    form_class = PurchaseForm
     template_name = "budgets/monthly_budget_detail.html"
 
-    def get_object(self):
-        obj = self.model.objects.get(
+    def get(self, request, *args, **kwargs):
+        self.object = MonthlyBudget.objects.get(
             date__year=self.kwargs.get("year"),
             date__month=self.kwargs.get("month"),
             user=self.request.user,
         )
-        return obj
+        return self.render_to_response(self.get_context_data())
 
     def get_context_data(self, **kwargs):
         kwargs = super().get_context_data(**kwargs)
@@ -154,16 +161,81 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
         ).annotate(diff=F("amount") - F("spent"))
 
-        kwargs.update({"budget_items": budgetitems})
+        purchases = Purchase.objects.filter(
+            user=self.request.user,
+            date__year=self.object.date.year,
+            date__month=self.object.date.month,
+        ).order_by("date")
+
+        kwargs.update({"budget_items": budgetitems, "purchases": purchases})
 
         return kwargs
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        kwargs["instance"] = None
+
+        return kwargs
+
+    def get_success_url(self):
+        url = reverse_lazy(
+            "monthly_detail",
+            kwargs={"year": self.kwargs["year"], "month": self.kwargs["month"],},
+        )
+
+        return url
+
+
+# class MonthlyBudgetDetailView(LoginRequiredMixin, DetailView):
+#     model = MonthlyBudget
+#     context_object_name = "monthly_budget"
+#     template_name = "budgets/monthly_budget_detail.html"
+
+#     def get_object(self):
+#         obj = self.model.objects.get(
+#             date__year=self.kwargs.get("year"),
+#             date__month=self.kwargs.get("month"),
+#             user=self.request.user,
+#         )
+#         return obj
+
+#     def get_context_data(self, **kwargs):
+#         kwargs = super().get_context_data(**kwargs)
+
+#         budgetitems = (
+#             BudgetItem.objects.filter(user=self.request.user)
+#             .filter(monthly_budget=self.object)
+#             .annotate(
+#                 spent=Coalesce(
+#                     Sum(
+#                         "category__purchases__amount",
+#                         filter=Q(
+#                             category__purchases__date__month=self.object.date.month,
+#                             category__purchases__date__year=self.object.date.year,
+#                             category__purchases__user=self.request.user,
+#                         ),
+#                     ),
+#                     Value(0),
+#                 )
+#             )
+#         ).annotate(diff=F("amount") - F("spent"))
+
+#         purchases = Purchase.objects.filter(
+#             user=self.request.user,
+#             date__year=self.object.date.year,
+#             date__month=self.object.date.month,
+#         ).order_by("date")
+
+#         kwargs.update({"budget_items": budgetitems, "purchases": purchases})
+
+#         return kwargs
 
 
 class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = BudgetItem
     form_class = BudgetItemForm
     template_name = "budgets/budgetitem_create.html"
-    # success_url = reverse_lazy("monthly_budget_list")
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

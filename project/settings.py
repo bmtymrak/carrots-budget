@@ -10,6 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+from django.urls import reverse
+from datetime import datetime
+
 from pathlib import Path
 import environ
 
@@ -159,5 +162,5 @@ ACCOUNT_SESSIONS_REMEMBER = None
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_UNIQUE_EMAIL = True
 
-LOGIN_REDIRECT_URL = "home"
+LOGIN_REDIRECT_URL = f"/budgets/{datetime.now().year}"
 ACCOUNT_LOGOUT_REDIRECT_URL = "home"

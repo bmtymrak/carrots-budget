@@ -22,13 +22,19 @@
         <div>{{budget_item.diff}}</div>
     </div>
     {% endfor %}
+    <div class="budget-horizontal-grid-year">
+        <div>Total</div>
+        <div>{{total_spent.spent__sum}}</div>
+        <div>{{total_remaining.diff__sum}}</div>
+    </div>
     </div>
     
     {% regroup monthly_budgetitems by monthly_budget.date.month as month_items %}
    
         {% for month in month_items %}
         <div>
-        {{ month.grouper}}
+            <a href='{% url "monthly_detail" year=yearly_budget.date.year month=month.grouper %}'>{{ month.grouper}}</a></li>
+        
         <div class="budget-horizontal-grid-month">
             <div>Category</div>
             <div>Budgeted</div>

@@ -3,17 +3,74 @@
 {% block body %}
 
 <p>
-    {{monthly_budget.date.month}} - {{monthly_budget.date.year}}
+    {{monthly_budget.date|date:"F Y"}}
 </p>
 
-<ul>
+<div class="budget-horizontal-grid-monthly">
+    <div>Category</div>
+    <div>Budgeted</div>
+    <div>Spent</div>
+    <div>+/-</div>
+    <div></div>
+</div>
 {% for budget_item in budget_items%}
-    <li><a href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>{{budget_item.category}}</a> - Budgeted: {{budget_item.amount}} - Spent: {{budget_item.spent}} - Remaining {{budget_item.diff}} <a href='{% url "budgetitem_edit" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>Edit</a></li>
+    <div class="budget-horizontal-grid-monthly">
+        <div><a href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>{{budget_item.category}}</a></div>
+        <div>{{budget_item.amount}}</div>
+        <div>{{budget_item.spent}}</div>
+        <div>{{budget_item.diff}}</div>
+        <div><a href='{% url "budgetitem_edit" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>Edit</a></div>
+    </div>
 {% endfor %}
-</ul>
+
 
 
 
 <a href='{% url "budgetitem_create" year=monthly_budget.date.year month=monthly_budget.date.month %}'>Add budget item</a>
+
+
+
+<div class="purchase-horizontal-grid">
+    <div>Date</div>
+    <div>Item</div>
+    <div>Amount</div>
+    <div>Source</div>
+    <div>Location</div>
+    <div>Category</div>
+    <div>Edit</div>
+    <div>Delete</div>
+</div>
+{% for purchase in purchases %}
+
+<div class="purchase-horizontal-grid">
+    <div>{{purchase.date}}</div>
+    <div>{{purchase.item}}</div>
+    <div>{{purchase.amount}}</div>
+    <div>{{purchase.source}}</div>
+    <div>{{purchase.location}}</div>
+    <div>{{purchase.category}}</div>
+    <div><a href='{% url "purchase_edit" pk=purchase.id %}'>Edit</a></div>
+    <div><a href='{% url "purchase_delete" pk=purchase.id %}'>Delete</a></div>
+</div>
+
+{% endfor %}
+
+<form method="POST">
+    {% csrf_token %}
+    <div class="purchase-form">
+        {% for hidden in form.hidden_fields %}
+        {{hidden}}
+        {% endfor %}
+        {% for field in form.visible_fields %}
+        <div>
+        {{field.errors}}
+        {{field.label_tag}}
+        {{field}}
+        </div>
+        {% endfor %}
+    </div>
+    <button type="submit">Add</button>
+</form>
+
 
 {% endblock body %}
