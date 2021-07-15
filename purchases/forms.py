@@ -16,7 +16,7 @@ class PurchaseForm(ModelForm):
         fields = [
             "item",
             "date",
-            "amount",
+            # "amount",
             "source",
             "location",
             "category",

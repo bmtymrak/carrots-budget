@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 
+from djmoney.models.fields import MoneyField
+
 from purchases.models import Category
 
 
@@ -21,7 +23,9 @@ class YearlyBudget(models.Model):
 class MonthlyBudget(models.Model):
     monthly = models.BooleanField(null=True, blank=True, default=True)
     date = models.DateField()
-    expected_income = models.IntegerField(blank=True, null=True)
+    expected_income = MoneyField(
+        max_digits=19, decimal_places=4, default_currency="USD", blank=True, null=True
+    )
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -54,7 +58,9 @@ class BudgetItem(models.Model):
         blank=True,
         null=False,
     )
-    amount = models.IntegerField(blank=True, default=0)
+    amount = MoneyField(
+        max_digits=19, decimal_places=4, default_currency="USD", blank=True, null=True
+    )
     monthly_budget = models.ForeignKey(
         MonthlyBudget,
         null=False,
