@@ -3,7 +3,14 @@ from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Sum, F, Value, Q, OuterRef, Subquery
+from django.db.models import (
+    Sum,
+    F,
+    Value,
+    Q,
+    OuterRef,
+    Subquery,
+)
 from django.db.models.functions import Coalesce
 
 from .models import MonthlyBudget, YearlyBudget, BudgetItem
@@ -88,7 +95,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                         monthly_purchases.annotate(total=Sum("amount")).values("total")
                     ),
                     Value(0),
-                )
+                ),
             )
             .annotate(diff=F("amount") - F("spent"))
         ).order_by("monthly_budget__date__month", "category__name")
@@ -157,7 +164,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
                         ),
                     ),
                     Value(0),
-                )
+                ),
             )
         ).annotate(diff=F("amount") - F("spent"))
 

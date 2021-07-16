@@ -44,9 +44,7 @@ class Purchase(models.Model):
         related_name="purchases",
         null=False,
     )
-    amount = MoneyField(
-        max_digits=19, decimal_places=4, default_currency="USD", blank=True, null=True
-    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     source = models.CharField(max_length=250, blank=True)
     location = models.CharField(max_length=250, blank=True)
     category = models.ForeignKey(
@@ -76,9 +74,7 @@ class Income(models.Model):
         related_name="incomes",
         null=False,
     )
-    amount = MoneyField(
-        max_digits=19, decimal_places=4, default_currency="USD", blank=True, null=True
-    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     date = models.DateField(blank=True, null=True)
     source = models.CharField(max_length=250, blank=True)
     payer = models.CharField(max_length=250, blank=True)
