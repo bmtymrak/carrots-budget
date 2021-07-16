@@ -6,24 +6,10 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('budgets', '0008_auto_20210715_0118'),
+        ("budgets", "0005_alter_budgetitem_monthly_budget"),
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='budgetitem',
-            name='amount',
-        ),
-        migrations.RemoveField(
-            model_name='budgetitem',
-            name='amount_currency',
-        ),
-        migrations.RemoveField(
-            model_name='monthlybudget',
-            name='expected_income',
-        ),
-        migrations.RemoveField(
-            model_name='monthlybudget',
-            name='expected_income_currency',
-        ),
+        migrations.RemoveField(model_name="budgetitem", name="amount",),
+        migrations.RemoveField(model_name="monthlybudget", name="expected_income",),
     ]

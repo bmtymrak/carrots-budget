@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     "pages.apps.PagesConfig",
     "purchases.apps.PurchasesConfig",
     "budgets.apps.BudgetsConfig",
-    "djmoney",
 ]
 
 MIDDLEWARE = [

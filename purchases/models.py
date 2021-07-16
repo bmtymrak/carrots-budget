@@ -2,8 +2,6 @@ from django.db import models
 from django.conf import settings
 from django.db.models.fields.related import ForeignKey
 
-from djmoney.models.fields import MoneyField
-
 
 class Category(models.Model):
     name = models.CharField(max_length=250, blank=False)
