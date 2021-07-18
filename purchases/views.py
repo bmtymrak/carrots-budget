@@ -51,6 +51,13 @@ class PurchaseEditView(LoginRequiredMixin, UpdateView):
         print(obj)
         return obj
 
+    def get_success_url(self):
+        if self.request.POST.get("next"):
+            return self.request.POST.get("next")
+
+        else:
+            return reverse_lazy("purchase_list")
+
 
 class PurchaseDeleteView(LoginRequiredMixin, DeleteView):
     model = Purchase
@@ -139,3 +146,4 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 
 class IncomeAddView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Income
+

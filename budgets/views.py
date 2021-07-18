@@ -1,3 +1,4 @@
+from django.db.models.fields import DecimalField
 from purchases.forms import PurchaseForm
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -10,11 +11,12 @@ from django.db.models import (
     Q,
     OuterRef,
     Subquery,
+    ExpressionWrapper,
 )
 from django.db.models.functions import Coalesce
 
 from .models import MonthlyBudget, YearlyBudget, BudgetItem
-from purchases.models import Category, Purchase
+from purchases.models import Category, Purchase, Income
 from .forms import BudgetItemForm
 
 
@@ -62,14 +64,25 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             date__year=self.object.date.year,
         ).values("category")
 
+        incomes = Income.objects.filter(
+            category=OuterRef("category"),
+            user=self.request.user,
+            date__year=self.object.date.year,
+        )
+
         budgetitems = (
             BudgetItem.objects.filter(user=self.request.user)
             .filter(monthly_budget__date__year=self.object.date.year,)
             .values("category__name")
             .annotate(
-                spent=Coalesce(
-                    Subquery(purchases.annotate(total=Sum("amount")).values("total")),
-                    Value(0),
+                spent=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            purchases.annotate(total=Sum("amount")).values("total")
+                        ),
+                        Value(0),
+                    ),
+                    output_field=DecimalField(),
                 ),
                 amount_total=Sum("amount", distinct=True),
                 diff=F("amount_total") - F("spent"),
@@ -90,15 +103,22 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             BudgetItem.objects.filter(user=self.request.user)
             .filter(monthly_budget__date__year=self.object.date.year)
             .annotate(
-                spent=Coalesce(
-                    Subquery(
-                        monthly_purchases.annotate(total=Sum("amount")).values("total")
+                spent=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            monthly_purchases.annotate(total=Sum("amount")).values(
+                                "total"
+                            )
+                        ),
+                        Value(0),
                     ),
-                    Value(0),
+                    output_field=DecimalField(),
                 ),
             )
             .annotate(diff=F("amount") - F("spent"))
         ).order_by("monthly_budget__date__month", "category__name")
+
+        # print(budgetitems)
 
         kwargs.update({"budget_items": budgetitems})
         kwargs.update({"monthly_budgetitems": monthly_budgetitems})
@@ -154,19 +174,28 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
             BudgetItem.objects.filter(user=self.request.user)
             .filter(monthly_budget=self.object)
             .annotate(
-                spent=Coalesce(
-                    Sum(
-                        "category__purchases__amount",
-                        filter=Q(
-                            category__purchases__date__month=self.object.date.month,
-                            category__purchases__date__year=self.object.date.year,
-                            category__purchases__user=self.request.user,
+                spent=ExpressionWrapper(
+                    Coalesce(
+                        Sum(
+                            "category__purchases__amount",
+                            filter=Q(
+                                category__purchases__date__month=self.object.date.month,
+                                category__purchases__date__year=self.object.date.year,
+                                category__purchases__user=self.request.user,
+                            ),
                         ),
+                        Value(0),
                     ),
-                    Value(0),
-                ),
+                    output_field=DecimalField(),
+                )
             )
         ).annotate(diff=F("amount") - F("spent"))
+
+        total_budgeted = budgetitems.aggregate(Sum("amount"))
+
+        total_spent_budgeted = budgetitems.aggregate(amount=Sum("spent"))
+
+        total_remaining = budgetitems.aggregate(Sum("diff"))
 
         purchases = Purchase.objects.filter(
             user=self.request.user,
@@ -174,7 +203,31 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
             date__month=self.object.date.month,
         ).order_by("date")
 
-        kwargs.update({"budget_items": budgetitems, "purchases": purchases})
+        total_spent = purchases.aggregate(amount=Sum("amount"))
+
+        incomes = Income.objects.filter(
+            user=self.request.user,
+            date__month=self.object.date.month,
+            date__year=self.object.date.year,
+        ).order_by("date")
+
+        total_income = incomes.aggregate(amount=Sum("amount"))
+
+        free_income = total_income["amount"] - total_spent["amount"]
+
+        kwargs.update(
+            {
+                "budget_items": budgetitems,
+                "purchases": purchases,
+                "incomes": incomes,
+                "total_budgeted": total_budgeted,
+                "total_spent": total_spent,
+                "total_spent_budgeted": total_spent_budgeted,
+                "total_remaining": total_remaining,
+                "total_income": total_income,
+                "free_income": free_income,
+            }
+        )
 
         return kwargs
 
