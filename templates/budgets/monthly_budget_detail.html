@@ -1,149 +1,139 @@
 {% extends "_base.html" %}
 
-{% block body %}
-<div class="main-container">
-    <div>
-        <p>Carrots</p>
-    </div>
+{% block body_heading %}
+    {{monthly_budget.date|date:"F Y"}}
+{% endblock body_heading %}
+
+
+        
+{% block heading_nav %}
+    <a class="return-link" href='{% url "yearly_detail" year=monthly_budget.date.year%}'><- {{monthly_budget.date|date:"Y"}} Overview</a>
+{% endblock heading_nav %}
+
     
-    <div>
-        <h1 class="page-title">
-            {{monthly_budget.date|date:"F Y"}}
-        </h1>
+{% block body %}
+<div class="card-base">
+    <h2>Summary</h2>
+    <div class="summary-horizontal-grid-monthly card-table-header">
+        <div class="card-table-heading">Budgeted</div>
+        <div class="card-table-heading">Spent</div>
+        <div class="card-table-heading">Saved</div>
+        <div class="card-table-heading">Income</div>
+        <div class="card-table-heading">Remaining</div>
+        <div class="card-table-heading">Free</div>
+    </div>
+    <div class="summary-horizontal-grid-monthly">
+        <div>${{total_budgeted.amount__sum}}</div>
+        <div class="">${{total_spent.amount}}</div>
+        <div class="card-table-heading">$Saved</div>
+        <div class="">${{total_income.amount}}</div>
+        <div class="">${{total_remaining.diff__sum}}</div>
+        <div class="">${{free_income}}</div>
+    </div>
+</div>
 
-        <a class="return-link" href='{% url "yearly_detail" year=monthly_budget.date.year%}'><- {{monthly_budget.date|date:"Y"}} Overview</a>
-
-        <div class="content-container">
-            <div class="content">
-            <div class="card-base">
-                <h2>Summary</h2>
-                <div class="summary-horizontal-grid-monthly card-table-header">
-                    <div class="card-table-heading">Budgeted</div>
-                    <div class="card-table-heading">Spent</div>
-                    <div class="card-table-heading">Saved</div>
-                    <div class="card-table-heading">Income</div>
-                    <div class="card-table-heading">Remaining</div>
-                    <div class="card-table-heading">Free</div>
-                </div>
-                <div class="summary-horizontal-grid-monthly">
-                    <div>${{total_budgeted.amount__sum}}</div>
-                    <div class="">${{total_spent.amount}}</div>
-                    <div class="card-table-heading">$Saved</div>
-                    <div class="">${{total_income.amount}}</div>
-                    <div class="">${{total_remaining.diff__sum}}</div>
-                    <div class="">${{free_income}}</div>
-                </div>
-            </div>
-
-            <div class="card-container-horz">
-                <div class="card-base">
-                    <div class="card-header">
-                        <h2>Budget</h2>
-                        <div class="card-header-action"><a href='{% url "budgetitem_create" year=monthly_budget.date.year month=monthly_budget.date.month %}'> + Add budget item</a>
-                        </div>
-                    </div>
-                    
-                    <div class="budget-horizontal-grid-monthly card-table-header">
-                        <div class="card-table-heading">Category</div>
-                        <div class="card-table-heading">Budgeted</div>
-                        <div class="card-table-heading">Spent</div>
-                        <div class="card-table-heading">Remaining</div>
-                        <div></div>
-                    </div>
-
-                {% for budget_item in budget_items%}
-                    <div class="budget-horizontal-grid-monthly">
-                        <div><a href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>{{budget_item.category}}</a></div>
-                        <div>${{budget_item.amount}}</div>
-                        <div>${{budget_item.spent}}</div>
-                        <div>${{budget_item.diff}}</div>
-                        <div><a href='{% url "budgetitem_edit" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>Edit</a></div>
-                    </div>
-                {% endfor %}
-                    <div class="budget-horizontal-grid-monthly">
-                        <div>TOTALS</div>
-                        <div>${{total_budgeted.amount__sum}}</div>
-                        <div>${{total_spent_budgeted.amount}}</div>
-                        <div>${{total_remaining.diff__sum}}</div>
-                        <div></div>
-                    </div>
-                </div>
-
-                <div class="card-base">
-                    <div class="card-header">
-                        <h2>Income</h2>
-                        <div class="card-header-action"><a href='{% url "budgetitem_create" year=monthly_budget.date.year month=monthly_budget.date.month %}'> + Add Income</a>
-                        </div>
-                    </div>
-                    
-                    <div class="income-horizontal-grid-monthly card-table-header">
-                        <div class="card-table-heading">Amount</div>
-                        <div class="card-table-heading">Source</div>
-                        <div class="card-table-heading">Date</div>
-                        <div class="card-table-heading">Notes</div>
-                        <div></div>
-                    </div>
-                    {% for income in incomes %}
-                    <div class="income-horizontal-grid-monthly">
-                        <div>${{income.amount}}</div>
-                        <div>{{income.source}}</div>
-                        <div>{{income.date}}</div>
-                        <div>{{income.notes}}</div>
-                        <div>Edit</div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-
-
-
-            <div class="card-base">
-                <h2>Purchases</h2>
-                <div class="purchase-horizontal-grid card-table-header">
-                    <div class="card-table-heading">Date</div>
-                    <div class="card-table-heading">Item</div>
-                    <div class="card-table-heading">Amount</div>
-                    <div class="card-table-heading">Source</div>
-                    <div class="card-table-heading">Location</div>
-                    <div class="card-table-heading">Category</div>
-                    <div class="card-table-heading">Edit</div>
-                    <div class="card-table-heading">Delete</div>
-                </div>
-                {% for purchase in purchases %}
-
-                <div class="purchase-horizontal-grid">
-                    <div>{{purchase.date}}</div>
-                    <div>{{purchase.item}}</div>
-                    <div>${{purchase.amount}}</div>
-                    <div>{{purchase.source}}</div>
-                    <div>{{purchase.location}}</div>
-                    <div>{{purchase.category}}</div>
-                    <div><a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'>Edit</a></div>
-                    <div><a href='{% url "purchase_delete" pk=purchase.id %}'>Delete</a></div>
-                </div>
-
-                {% endfor %}
-
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="purchase-form">
-                        {% for hidden in form.hidden_fields %}
-                        {{hidden}}
-                        {% endfor %}
-                        {% for field in form.visible_fields %}
-                        <div>
-                        {{field.errors}}
-                        <!-- {{field.label_tag}} -->
-                        {{field}}
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <button type="submit">Add</button>
-                </form>
+<div class="card-container-horz">
+    <div class="card-base">
+        <div class="card-header">
+            <h2>Budget</h2>
+            <div class="card-header-action"><a href='{% url "budgetitem_create" year=monthly_budget.date.year month=monthly_budget.date.month %}'> + Add budget item</a>
             </div>
         </div>
+        
+        <div class="budget-horizontal-grid-monthly card-table-header">
+            <div class="card-table-heading">Category</div>
+            <div class="card-table-heading">Budgeted</div>
+            <div class="card-table-heading">Spent</div>
+            <div class="card-table-heading">Remaining</div>
+            <div></div>
+        </div>
+
+    {% for budget_item in budget_items%}
+        <div class="budget-horizontal-grid-monthly">
+            <div><a href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>{{budget_item.category}}</a></div>
+            <div>${{budget_item.amount}}</div>
+            <div>${{budget_item.spent}}</div>
+            <div>${{budget_item.diff}}</div>
+            <div><a href='{% url "budgetitem_edit" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>Edit</a></div>
+        </div>
+    {% endfor %}
+        <div class="budget-horizontal-grid-monthly">
+            <div>TOTALS</div>
+            <div>${{total_budgeted.amount__sum}}</div>
+            <div>${{total_spent_budgeted.amount}}</div>
+            <div>${{total_remaining.diff__sum}}</div>
+            <div></div>
         </div>
     </div>
+
+    <div class="card-base">
+        <div class="card-header">
+            <h2>Income</h2>
+            <div class="card-header-action"><a href='{% url "budgetitem_create" year=monthly_budget.date.year month=monthly_budget.date.month %}'> + Add Income</a>
+            </div>
+        </div>
+        
+        <div class="income-horizontal-grid-monthly card-table-header">
+            <div class="card-table-heading">Amount</div>
+            <div class="card-table-heading">Source</div>
+            <div class="card-table-heading">Date</div>
+            <div class="card-table-heading">Notes</div>
+            <div></div>
+        </div>
+        {% for income in incomes %}
+        <div class="income-horizontal-grid-monthly">
+            <div>${{income.amount}}</div>
+            <div>{{income.source}}</div>
+            <div>{{income.date}}</div>
+            <div>{{income.notes}}</div>
+            <div>Edit</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card-base">
+    <h2>Purchases</h2>
+    <div class="purchase-horizontal-grid card-table-header">
+        <div class="card-table-heading">Date</div>
+        <div class="card-table-heading">Item</div>
+        <div class="card-table-heading">Amount</div>
+        <div class="card-table-heading">Source</div>
+        <div class="card-table-heading">Location</div>
+        <div class="card-table-heading">Category</div>
+        <div class="card-table-heading">Edit</div>
+        <div class="card-table-heading">Delete</div>
+    </div>
+    {% for purchase in purchases %}
+
+    <div class="purchase-horizontal-grid">
+        <div>{{purchase.date}}</div>
+        <div>{{purchase.item}}</div>
+        <div>${{purchase.amount}}</div>
+        <div>{{purchase.source}}</div>
+        <div>{{purchase.location}}</div>
+        <div>{{purchase.category}}</div>
+        <div><a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'>Edit</a></div>
+        <div><a href='{% url "purchase_delete" pk=purchase.id %}'>Delete</a></div>
+    </div>
+
+    {% endfor %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="purchase-form">
+            {% for hidden in form.hidden_fields %}
+            {{hidden}}
+            {% endfor %}
+            {% for field in form.visible_fields %}
+            <div>
+            {{field.errors}}
+            <!-- {{field.label_tag}} -->
+            {{field}}
+            </div>
+            {% endfor %}
+        </div>
+        <button type="submit">Add</button>
+    </form>
 </div>
 {% endblock body %}

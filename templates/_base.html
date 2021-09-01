@@ -13,19 +13,42 @@
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap" rel="stylesheet"> -->
 </head>
 <body>
-    {% block body %}
-    {% endblock body %}
+
+    <div class="main-container">
+        <div>
+            <ul class="nav-list">
+                <li><a href='{% url "yearly_list" %}'>Yearly List</a></li>
+                <li><a href='{% url "monthly_budget_list" %}'>Monthly Budget List</a></li>
+                <li><a href='{% url "monthly_create" %}'>Monthly Create</a></li>
+                <li><a href='{% url "yearly_create" %}'>Yearly Create</a></li>
+                <li><a href='{% url "purchase_add" %}'>Purchase Add</a></li>
+                <li><a href='{% url "category_create"%}'>Category Create</a></li>
+                <li><a href='{% url "purchase_list" %}'>Purchase List</a></li>
+            </ul>
+        </div>
+
+        <div>
+            <h1 class="page-title">
+            {% block body_heading %}
+            {% endblock body_heading %}
+            </h1>
+            {% block heading_nav %}
+            {% endblock heading_nav %}
+            <div class="content-container">
+                <div class="content">
+                    {% block body %}
+                    {% endblock body %}
+                </div>
+            </div>
+        </div>
+    </div>
+   
     
 
-    <ul>
-        <li><a href='{% url "yearly_list" %}'>Yearly List</a></li>
-        <li><a href='{% url "monthly_budget_list" %}'>Monthly Budget List</a></li>
-        <li><a href='{% url "monthly_create" %}'>Monthly Create</a></li>
-        <li><a href='{% url "yearly_create" %}'>Yearly Create</a></li>
-        <li><a href='{% url "purchase_add" %}'>Purchase Add</a></li>
-        <li><a href='{% url "category_create"%}'>Category Create</a></li>
-        <li><a href='{% url "purchase_list" %}'>Purchase List</a></li>
-    </ul>
+    <!-- <div class="main-container">
+        <div>
+            <p>Carrots</p>
+        </div> -->
     
 </body>
 </html>

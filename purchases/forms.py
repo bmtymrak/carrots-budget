@@ -23,8 +23,8 @@ class PurchaseForm(ModelForm):
     class Meta:
         model = Purchase
         fields = [
-            "item",
             "date",
+            "item",
             "amount",
             "source",
             "location",

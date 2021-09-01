@@ -1,8 +1,12 @@
 {% extends "_base.html" %}
 
+
+
+{% block body_heading %}
+        Purchases
+{% endblock body_heading %}
+
 {% block body %}
-
-
 <div class="purchase-horizontal-grid">
     <div>Date</div>
     <div>Item</div>
@@ -25,7 +29,6 @@
     <div><a href='{% url "purchase_edit" pk=purchase.id %}'>Edit</a></div>
     <div><a href='{% url "purchase_delete" pk=purchase.id %}'>Delete</a></div>
 </div>
-
 {% endfor %}
-
+</div>
 {% endblock body %}

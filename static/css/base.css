@@ -10,12 +10,15 @@ body{
 .main-container{
     display: flex;
     flex-wrap: wrap;
+    min-height: 100vh;
 }
 
 .main-container > :first-child{
-    flex-basis: 150px;
+    flex-basis: 175px;
     flex-grow: 1;
     background-color: #74B4FF;
+    padding-right: 20px;
+    padding-left: 20px;
 
 }
 
@@ -24,6 +27,21 @@ body{
     flex-grow: 999;
     min-width: 50%;
     background-color: #FAFAFA;
+}
+
+.nav-list{
+    list-style-type: none;
+    padding-left: 0px;
+}
+
+.nav-list > li{
+    padding: 5px 5px 5px 0;
+}
+
+.nav-list > li > a{
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
 }
 
 .content-container{
@@ -58,20 +76,28 @@ body{
     margin-bottom: 10px;
     padding-left: 10px;
 }
+
+.yearly-detail-grid-container{
+    display: grid;
+    grid-template-columns: 2fr 10fr;
+}
+
 .budget-horizontal-grid-year{
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 100px 70px 80px;
     border: 1px solid black;
-    font-size: 12px;
+    column-gap: 5px;
+    /* font-size: 12px; */
 }
 
 .budget-horizontal-grid-month{
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 80px 65px 80px;
     border: 1px solid black;
-    font-size: 12px;
+    /* font-size: 12px; */
+    column-gap: 5px;
 }
-
+    
 .budget-horizontal-grid-monthly{
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -81,7 +107,7 @@ body{
 
 .yearly-detail-grid{
     display: grid;
-    grid-template-columns: 150px repeat(13, 200px);
+    grid-template-columns: repeat(12, 240px);
     overflow-x: auto;
 }
 

@@ -1,4 +1,7 @@
+import datetime
+
 from django.db.models.fields import DecimalField
+from django.http.response import HttpResponseRedirect
 from purchases.forms import PurchaseForm
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -31,6 +34,20 @@ class YearlyBudgetCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     fields = ["date"]
     template_name = "budgets/yearly_budget_create.html"
     success_url = reverse_lazy("purchase_list")
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        # print(form.instance.date.year)
+        self.object = form.save()
+
+        for month in range(1, 13):
+            MonthlyBudget.objects.create(
+                date=datetime.date(self.object.date.year, month, 1),
+                user=self.request.user,
+                yearly_budget=self.object,
+            )
+
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class YearlyBudgetListView(LoginRequiredMixin, ListView):
@@ -91,6 +108,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         total_spent = budgetitems.aggregate(Sum("spent"))
         total_remaining = budgetitems.aggregate(Sum("diff"))
+        total_budgeted = budgetitems.aggregate(Sum("amount_total"))
 
         monthly_purchases = Purchase.objects.filter(
             category=OuterRef("category"),
@@ -118,11 +136,23 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             .annotate(diff=F("amount") - F("spent"))
         ).order_by("monthly_budget__date__month", "category__name")
 
-        # print(budgetitems)
+        print(list(monthly_budgetitems))
+        # for item in list(budgetitems):
+        #     print(item["category__name"])
 
-        kwargs.update({"budget_items": budgetitems})
-        kwargs.update({"monthly_budgetitems": monthly_budgetitems})
-        kwargs.update({"total_spent": total_spent, "total_remaining": total_remaining})
+        categories = [item["category__name"] for item in list(budgetitems)]
+
+        print(categories)
+
+        kwargs.update(
+            {
+                "budget_items": budgetitems,
+                "monthly_budgetitems": monthly_budgetitems,
+                "total_spent": total_spent,
+                "total_remaining": total_remaining,
+                "total_budgeted": total_budgeted,
+            }
+        )
 
         return kwargs
 
@@ -213,7 +243,10 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
 
         total_income = incomes.aggregate(amount=Sum("amount"))
 
-        free_income = total_income["amount"] - total_spent["amount"]
+        try:
+            free_income = total_income["amount"] - total_spent["amount"]
+        except TypeError:
+            free_income = 0
 
         kwargs.update(
             {
@@ -317,6 +350,23 @@ class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
             date__year=self.kwargs["year"],
             date__month=self.kwargs["month"],
         )
+
+        monthly_budgets = list(
+            MonthlyBudget.objects.filter(date__year=self.kwargs["year"])
+        )
+
+        for monthly_budget in monthly_budgets:
+            if monthly_budget != form.instance.monthly_budget:
+                BudgetItem.objects.create(
+                    user=self.request.user,
+                    category=form.instance.category,
+                    monthly_budget=monthly_budget,
+                    yearly_budget=YearlyBudget.objects.get(
+                        user=self.request.user, date__year=self.kwargs["year"]
+                    ),
+                )
+
+        print(monthly_budgets)
 
         return super().form_valid(form)
 
