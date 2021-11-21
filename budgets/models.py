@@ -17,6 +17,11 @@ class YearlyBudget(models.Model):
     def __str__(self):
         return f"{self.user}-{self.date.year}"
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["date", "user"], name="unique_yearlybudget")
+        ]
+
 
 class MonthlyBudget(models.Model):
     monthly = models.BooleanField(null=True, blank=True, default=True)
@@ -40,6 +45,13 @@ class MonthlyBudget(models.Model):
 
     def __str__(self):
         return f"{self.date.year} - {self.date.month} - {self.user}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["date", "user"], name="unique_monthlybudget"
+            )
+        ]
 
 
 class BudgetItem(models.Model):
@@ -76,6 +88,8 @@ class BudgetItem(models.Model):
         blank=True,
     )
     notes = models.TextField(blank=True)
+
+    savings = models.BooleanField(blank=True, null=False)
 
     def __str__(self):
         if self.monthly_budget:

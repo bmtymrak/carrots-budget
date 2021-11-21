@@ -18,6 +18,11 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["name", "user"], name="unique_category")
+        ]
+
 
 class Subcategory(models.Model):
     name = models.CharField(max_length=250, blank=False)
@@ -31,6 +36,11 @@ class Subcategory(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["name", "user"], name="unique_subcategory")
+        ]
 
 
 class Purchase(models.Model):

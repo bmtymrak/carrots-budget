@@ -28,7 +28,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        return qs.filter(user=self.request.user)
+        return qs.filter(user=self.request.user).prefetch_related("category")
 
 
 class PurchaseDetailView(LoginRequiredMixin, DetailView):
@@ -70,7 +70,11 @@ class PurchaseDeleteView(LoginRequiredMixin, DeleteView):
         return obj
 
     def get_success_url(self):
-        return reverse_lazy("purchase_list")
+        if self.request.POST.get("next"):
+            return self.request.POST.get("next")
+
+        else:
+            return reverse_lazy("purchase_list")
 
 
 class PurchaseAddView(LoginRequiredMixin, TemplateView):
@@ -99,38 +103,6 @@ class PurchaseAddView(LoginRequiredMixin, TemplateView):
             return self.render_to_response({"purchase_formset": formset})
 
 
-# class PurchaseAddView(LoginRequiredMixin, AddUserMixin, CreateView):
-#     model = Purchase
-#     form_class = PurchaseForm
-#     template_name = "purchases/purchase_add.html"
-#     success_url = reverse_lazy("purchase_list")
-
-#     def get_form_kwargs(self):
-#         kwargs = super().get_form_kwargs()
-#         kwargs["request"] = self.request
-#         return kwargs
-
-#     def get_context_data(self, **kwargs):
-#         data = super().get_context_data(**kwargs)
-#         if self.request.POST:
-#             data["purchases"] = PurchaseFormSet(self.request.POST)
-#         else:
-#             data["purchases"] = PurchaseFormSet(form_kwargs={"user": self.request.user})
-#         return data
-
-#     def form_valid(self, form):
-#         context = self.get_context_data()
-#         purchases = context["purchases"]
-
-#         with transaction.atomic():
-#             form.instance.user = self.request.user
-#             self.object = form.save()
-#         if purchases.is_valid():
-#             purchases.instance = self.object
-#             purchases.save()
-#         return super().form_valid(form)
-
-
 class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Category
     fields = ["name", "rollover"]
@@ -146,4 +118,26 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 
 class IncomeAddView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Income
+    fields = ["date", "amount", "source", "payer", "category", "notes"]
+    template_name = "purchases/income_create.html"
 
+    def get_success_url(self):
+        if self.request.POST.get("next"):
+            return self.request.POST.get("next")
+
+        else:
+            return reverse_lazy("yearly_list")
+
+
+class IncomeEditView(LoginRequiredMixin, UpdateView):
+    model = Income
+    fields = ["date", "amount", "source", "payer", "category", "notes"]
+    template_name = "purchases/income_edit.html"
+    # success_url = reverse_lazy("monthly_budget_list")
+
+    def get_success_url(self):
+        if self.request.POST.get("next"):
+            return self.request.POST.get("next")
+
+        else:
+            return reverse_lazy("purchase_list")

@@ -5,7 +5,7 @@
     {% csrf_token %}
     {{form.as_p}}
     <input type="hidden" name="next" value="{{request.GET.next}}">
-    <button type="submit">Delete</button>
+    <button type="submit">Save</button>
 </form>
 
 {% endblock body %}

@@ -18,5 +18,5 @@ class BudgetItemForm(ModelForm):
 
     class Meta:
         model = BudgetItem
-        fields = ["category", "new_category", "amount", "notes"]
+        fields = ["category", "new_category", "amount", "savings", "notes"]
 

@@ -28,10 +28,10 @@
         </div>
 
         <div>
-            <h1 class="page-title">
-            {% block body_heading %}
-            {% endblock body_heading %}
-            </h1>
+            <div class="page-header">
+                {% block header %}
+                {% endblock header %}
+            </div>
             {% block heading_nav %}
             {% endblock heading_nav %}
             <div class="content-container">

@@ -1,8 +1,8 @@
 {% extends "_base.html" %}
 
-{% block body_heading %}
-    {{yearly_budget.date.year}}
-{% endblock body_heading %}
+{% block header %}
+    <h1 class="page-title">{{yearly_budget.date.year}}</h1>
+{% endblock header %}
 {% block body %}
 <div class="card-base">
     <h2>Summary</h2>
@@ -15,11 +15,11 @@
         <div class="card-table-heading">Free</div>
     </div>
     <div class="summary-horizontal-grid-monthly">
-        <div>${{total_budgeted.amount_total__sum}}</div>
-        <div class="">${{total_spent.spent__sum}}</div>
-        <div class="card-table-heading">$Saved</div>
+        <div>${{total_budgeted}}</div>
+        <div class="">${{total_spending_spent.amount}}</div>
+        <div class="">${{total_saved.amount}}</div>
         <div class="">${{total_income.amount}}</div>
-        <div class="">${{total_remaining.diff__sum}}</div>
+        <div class="">${{total_remaining}}</div>
         <div class="">${{free_income}}</div>
     </div>
 </div>
@@ -28,6 +28,8 @@
     <div class="card-base">
         <div class="card-header">
             <h2>Budget</h2>
+            <div class="card-header-action"><a href='{% url "budgetitem_create" year=yearly_budget.date.year %}'> + Add budget item</a>
+            </div>
         </div>
         
         <div class="budget-horizontal-grid-monthly card-table-header">
@@ -37,21 +39,50 @@
             <div class="card-table-heading">Remaining</div>
             <div></div>
         </div>
-
-    {% for budget_item in budget_items%}
         <div class="budget-horizontal-grid-monthly">
-            <div>{{budget_item.category__name}}</div>
+    {% for budget_item in budget_items%}
+            <div data-tooltip="{{budget_item.category__name}}">{{budget_item.category__name}}</div>
             <div>${{budget_item.amount_total}}</div>
             <div>${{budget_item.spent}}</div>
             <div>${{budget_item.diff}}</div>
-
-        </div>
+            <div>Edit</div>
     {% endfor %}
+        </div>
         <div class="budget-horizontal-grid-monthly">
-            <div>TOTALS</div>
-            <div>${{total_budgeted.amount_total__sum}}</div>
-            <div>${{total_spent.spent__sum}}</div>
-            <div>${{total_remaining.diff__sum}}</div>
+            <div>Spending Total</div>
+            <div>${{total_spending_budgeted.amount}}</div>
+            <div>${{total_spending_spent.amount}}</div>
+            <div>${{total_spending_remaining.amount}}</div>
+            <div></div>
+        </div>
+        <div class="budget-horizontal-grid-monthly card-table-header">
+            <div class="card-table-heading">Category</div>
+            <div class="card-table-heading">Budgeted</div>
+            <div class="card-table-heading">Saved</div>
+            <div class="card-table-heading">Remaining</div>
+            <div></div>
+        </div>
+        <div class="budget-horizontal-grid-monthly">
+        {% for savings_item in savings_items %}
+            <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div>
+            <div>${{savings_item.amount_total}}</div>
+            <div>${{savings_item.saved}}</div>
+            <div>${{savings_item.diff}}</div>
+            <div>Edit</div>
+        {% endfor %}
+        </div>
+        <div class="budget-horizontal-grid-monthly">
+            <div>Savings Total</div>
+            <div>${{total_savings_budgeted.amount}}</div>
+            <div>${{total_saved.amount}}</div>
+            <div>${{total_savings_remaining.amount}}</div>
+            <div></div>
+        </div>
+        <div class="budget-horizontal-grid-monthly">
+            <div>Total</div>
+            <div>${{total_budgeted}}</div>
+            <div>${{total_spent}}</div>
+            <div>${{total_remaining}}</div>
             <div></div>
         </div>
     </div>
@@ -63,7 +94,124 @@
     <div class="card-header">
         <h2>Monthly Budgets</h2>
     </div>
-<div class="yearly-detail-grid-container">
+
+    <div class="yearly-detail-grid-container">
+    
+        <div>
+            <div>Year-To-Date</div>
+        <div class="budget-horizontal-grid-year">
+            <div>Category</div>
+            <div>Spent</div>
+            <div>Remaining</div>
+        </div>
+        {% for budget_item in budget_items%}
+        <div class="budget-horizontal-grid-year">
+            <div data-tooltip='{{budget_item.category__name}}'>{{budget_item.category__name}}</div>
+            <div>{{budget_item.spent}}</div>
+            <div>{{budget_item.diff}}</div>
+        </div>
+        {% endfor %}
+        <div class="budget-horizontal-grid-year">
+            <div>Total</div>
+            <div>{{total_spending_spent.amount}}</div>
+            <div>{{total_spending_remaining.amount}}</div>
+        </div>
+        <div class="budget-horizontal-grid-year">
+            <div>Category</div>
+            <div>Saved</div>
+            <div>Remaining</div>
+        </div>
+        </div>
+        <div class="yearly-detail-grid">
+            {% if monthly_bs %}
+            {% for month in monthly_bs %}
+            <div>
+                <a href='{% url "monthly_detail" month=month.0.0 year=yearly_budget.date.year %}'>{{month.0.1}}</a>
+    
+                <div class="budget-horizontal-grid-month">
+                    <div>Budgeted</div>
+                    <div>Spent</div>
+                    <div>Remaining</div>
+                </div>
+                {% for budget_item in month.1 %}
+                <div class="budget-horizontal-grid-month">
+                    <div>{{budget_item.amount}}</div>
+                    <div>{{budget_item.spent}}</div>
+                    <div>{{budget_item.diff}}</div>
+                </div>
+                {% endfor %}
+                <div class="budget-horizontal-grid-month">
+                    <div>{{month.2}}</div>
+                    <div>{{month.3}}</div>
+                    <div>{{month.4}}</div>
+                </div>
+                <div class="budget-horizontal-grid-month">
+                    <div>Budgeted</div>
+                    <div>Saved</div>
+                    <div>Remaining</div>
+                </div>
+            </div>
+            {% endfor %}
+    
+            {% else %}
+            {% for monthly_budget in monthly_budgets %}
+            <div>
+    
+    
+                <div class="budget-horizontal-grid-month">
+                    <div>Budgeted</div>
+                    <div>Spent</div>
+                    <div>Remaining</div>
+                </div>
+                <div class="budget-horizontal-grid-month">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="budget-horizontal-grid-month">
+                    <div>Total</div>
+                </div>
+            </div>
+            {% endfor %}
+            {% endif %}
+    
+    
+        </div>
+    </div>
+
+</div>
+</div>
+
+<div class="card-base">
+    <h2>Uncategorized Purchases</h2>
+    <div class="purchase-horizontal-grid card-table-header">
+        <div class="card-table-heading">Date</div>
+        <div class="card-table-heading">Item</div>
+        <div class="card-table-heading">Amount</div>
+        <div class="card-table-heading">Source</div>
+        <div class="card-table-heading">Location</div>
+        <div class="card-table-heading">Category</div>
+        <div class="card-table-heading">Edit</div>
+        <div class="card-table-heading">Delete</div>
+    </div>
+    {% for purchase in purchases_uncategorized %}
+
+    <div class="purchase-horizontal-grid">
+        <div>{{purchase.date}}</div>
+        <div>{{purchase.item}}</div>
+        <div>${{purchase.amount}}</div>
+        <div>{{purchase.source}}</div>
+        <div>{{purchase.location}}</div>
+        <div>{{purchase.category}}</div>
+        <div><a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'>Edit</a></div>
+        <div><a href='{% url "purchase_delete" pk=purchase.id %}?next={{request.path|urlencode}}'>Delete</a></div>
+ 
+    </div>
+
+    {% endfor %}
+</div>
+
+<!-- <div class="yearly-detail-grid-container">
     
     <div>
         <div>Year-To-Date</div>
@@ -74,18 +222,19 @@
     </div>
     {% for budget_item in budget_items%}
     <div class="budget-horizontal-grid-year">
-        <div>{{budget_item.category__name}}</div>
+        <div data-tooltip='{{budget_item.category__name}}'>{{budget_item.category__name}}</div>
         <div>{{budget_item.spent}}</div>
         <div>{{budget_item.diff}}</div>
     </div>
     {% endfor %}
     <div class="budget-horizontal-grid-year">
         <div>Total</div>
-        <div>{{total_spent.spent__sum}}</div>
-        <div>{{total_remaining.diff__sum}}</div>
+        <div>{{total_spent.amount}}</div>
+        <div>{{total_remaining.amount}}</div>
     </div>
 </div>
     <div class="yearly-detail-grid">
+        {% if monthly_budgetitems %}
         {% regroup monthly_budgetitems by monthly_budget.date.month as month_items %}
 
         {% for month in month_items %}
@@ -93,14 +242,12 @@
             <a href='{% url "monthly_detail" year=yearly_budget.date.year month=month.grouper %}'>{{ month.grouper}}</a></li>
 
             <div class="budget-horizontal-grid-month">
-                <!-- <div>Category</div> -->
                 <div>Budgeted</div>
                 <div>Spent</div>
                 <div>Remaining</div>
             </div>
             {% for budget_item in month.list %}
             <div class="budget-horizontal-grid-month">
-                <!-- <div>{{budget_item.category}}</div> -->
                 <div>{{budget_item.amount}}</div>
                 <div>{{budget_item.spent}}</div>
                 <div>{{budget_item.diff}}</div>
@@ -111,8 +258,107 @@
             </div>
         </div>
         {% endfor %}
+
+        {% else %}
+        {% for monthly_budget in monthly_budgets %}
+        <div>
+            <a href='{% url "monthly_detail" year=yearly_budget.date.year month=monthly_budget.date.month %}'>{{ monthly_budget.date.month}}</a></li>
+
+            <div class="budget-horizontal-grid-month">
+                <div>Budgeted</div>
+                <div>Spent</div>
+                <div>Remaining</div>
+            </div>
+            <div class="budget-horizontal-grid-month">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <div class="budget-horizontal-grid-month">
+                <div>Total</div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+
     </div>
-</div>
-</div>
-</div>
+</div> -->
+
+
+
+
+<!-- <div class="yearly-detail-grid-container">
+    
+    <div>
+        <div>Year-To-Date</div>
+    <div class="budget-horizontal-grid-year">
+        <div>Category</div>
+        <div>Spent</div>
+        <div>Remaining</div>
+    </div>
+    {% for budget_item in budget_items%}
+    <div class="budget-horizontal-grid-year">
+        <div data-tooltip='{{budget_item.category__name}}'>{{budget_item.category__name}}</div>
+        <div>{{budget_item.spent}}</div>
+        <div>{{budget_item.diff}}</div>
+    </div>
+    {% endfor %}
+    <div class="budget-horizontal-grid-year">
+        <div>Total</div>
+        <div>{{total_spent.amount}}</div>
+        <div>{{total_remaining.amount}}</div>
+    </div>
+    </div>
+    <div class="yearly-detail-grid">
+        {% if monthly_list %}
+        {% for month in monthly_list %}
+        <div>
+            <a href=''>{{month.0}}</a>
+
+            <div class="budget-horizontal-grid-month">
+                <div>Budgeted</div>
+                <div>Spent</div>
+                <div>Remaining</div>
+            </div>
+            {% for budget_item in month.1.0 %}
+            <div class="budget-horizontal-grid-month">
+                <div>{{budget_item.amount}}</div>
+                <div>{{budget_item.spent}}</div>
+                <div>{{budget_item.diff}}</div>
+            </div>
+            {% endfor %}
+            <div class="budget-horizontal-grid-month">
+                <div>{{month.1.1.budgeted.amount}}</div>
+                <div>{{month.1.1.spent.amount}}</div>
+                <div>{{month.1.1.remaining.amount}}</div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% else %}
+        {% for monthly_budget in monthly_budgets %}
+        <div>
+
+
+            <div class="budget-horizontal-grid-month">
+                <div>Budgeted</div>
+                <div>Spent</div>
+                <div>Remaining</div>
+            </div>
+            <div class="budget-horizontal-grid-month">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <div class="budget-horizontal-grid-month">
+                <div>Total</div>
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+
+    </div>
+</div> -->
 {% endblock body %}

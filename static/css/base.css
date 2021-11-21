@@ -72,7 +72,7 @@ body{
 
 .income-horizontal-grid-monthly{
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     margin-bottom: 10px;
     padding-left: 10px;
 }
@@ -82,12 +82,39 @@ body{
     grid-template-columns: 2fr 10fr;
 }
 
+
 .budget-horizontal-grid-year{
     display: grid;
     grid-template-columns: 100px 70px 80px;
     border: 1px solid black;
     column-gap: 5px;
     /* font-size: 12px; */
+}
+
+[data-tooltip]:before {            
+    position : absolute;
+    content : attr(data-tooltip);
+    opacity : 0;
+    display: none;
+
+    transition: all 0.05s ease;
+    /* padding: 5px; */
+    /* color: #333; */
+    /* border-radius: 10px; */
+    /* box-shadow: 2px 2px 1px silver;   */
+}
+
+[data-tooltip]:hover:before {    
+    display: block;    
+    opacity : 1;
+
+    background: #FFFFFF;
+    /* margin-top: -2.5px; */
+    /* margin-left: 20px;   */
+}
+.budget-horizontal-grid-year > div{
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .budget-horizontal-grid-month{
@@ -104,6 +131,12 @@ body{
     margin-bottom: 10px;
     padding-left: 10px;
 }
+
+.budget-horizontal-grid-monthly > div{
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 
 .yearly-detail-grid{
     display: grid;
@@ -123,8 +156,17 @@ body{
     max-width: 100%;
 }
 
-.page-title{
+.page-header{
+    display: flex;
+    justify-content: center;
+    width: 100%;
     border-bottom: 3px solid black;
+    margin-left: 10px;
+    margin-bottom: 10px;
+
+}
+
+.page-title{
     margin-left: 10px;
     margin-top: 20px;
     margin-bottom: 10px;
@@ -206,4 +248,16 @@ h2{
     color: black;
     margin-left: 10px;
     font-weight: bold;
+}
+
+.budget-subtotal{
+    background-color: #c9d2fa;
+    border-radius: 7px;
+    padding: 5px;
+}
+
+.card-table-subtotal{
+    font-size: 16px;
+    font-weight: 600;
+    margin: 2px 5px 2px 5px;
 }

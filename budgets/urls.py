@@ -10,6 +10,7 @@ from .views import (
     BudgetItemDetailView,
     YearlyBudgetListView,
     YearlyBudgetDetailView,
+    BudgetItemDeleteView,
 )
 
 urlpatterns = [
@@ -25,7 +26,7 @@ urlpatterns = [
         name="monthly_detail",
     ),
     path(
-        "<int:year>/<int:month>/budgetitem-create",
+        "<int:year>/budgetitem-create",
         BudgetItemCreateView.as_view(),
         name="budgetitem_create",
     ),
@@ -38,6 +39,11 @@ urlpatterns = [
         "<int:year>/<int:month>/<str:category>",
         BudgetItemDetailView.as_view(),
         name="budget_item_detail",
+    ),
+    path(
+        "<int:year>/<int:month>/<str:category>/delete",
+        BudgetItemDeleteView.as_view(),
+        name="budget_item_delete",
     ),
     path("yearly-create", YearlyBudgetCreateView.as_view(), name="yearly_create"),
     path("<int:year>", YearlyBudgetDetailView.as_view(), name="yearly_detail"),

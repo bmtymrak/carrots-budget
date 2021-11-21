@@ -1,10 +1,15 @@
 {% extends "_base.html" %}
 
+
 {% block body %}
+
 <form method="POST">
     {% csrf_token %}
     {{form.as_p}}
-    <input type="hidden" name="next" value="{{request.GET.next}}">
+    <div>
+        <input type="checkbox" name="delete-all" value="true">
+        <label>Delete all budgets items for this year with this category?</label>
+    </div>
     <button type="submit">Delete</button>
 </form>
 
