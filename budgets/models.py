@@ -21,6 +21,7 @@ class YearlyBudget(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["date", "user"], name="unique_yearlybudget")
         ]
+        ordering = ["date"]
 
 
 class MonthlyBudget(models.Model):
@@ -101,5 +102,44 @@ class BudgetItem(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["monthly_budget", "category", "user"], name="unique_budgetitem"
+            )
+        ]
+
+
+class Rollover(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="rollovers",
+        null=False,
+    )
+
+    yearly_budget = models.ForeignKey(
+        YearlyBudget,
+        on_delete=models.CASCADE,
+        related_name="rollovers",
+        blank=True,
+        null=False,
+    )
+
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name="rollovers",
+        blank=True,
+        null=False,
+    )
+
+    amount = models.DecimalField(
+        max_digits=12, decimal_places=2, blank=True, null=True, default=0
+    )
+
+    def __str__(self):
+        return f"Rollover {self.yearly_budget.date.year}-{self.category}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["yearly_budget", "category", "user"], name="unique_rollover"
             )
         ]

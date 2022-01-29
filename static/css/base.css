@@ -77,6 +77,10 @@ body{
     padding-left: 10px;
 }
 
+.budget-monthly-single-col{
+    margin-bottom: 10px;
+}
+
 .yearly-detail-grid-container{
     display: grid;
     grid-template-columns: 2fr 10fr;
@@ -203,6 +207,11 @@ h2{
     justify-content: space-between;
 }
 
+.card-header-container{
+    display: flex;
+    flex-wrap: nowrap;
+}
+
 .card-header-action{
     display: flex;
     align-items: center;
@@ -218,6 +227,10 @@ h2{
     color: white;
     text-decoration: none;
 
+}
+
+.card-main{
+    display: flex;
 }
 
 .card-container-horz{
@@ -260,4 +273,11 @@ h2{
     font-size: 16px;
     font-weight: 600;
     margin: 2px 5px 2px 5px;
+}
+
+.rollover-edit{
+    width: 75px;
+    padding: 0px;
+    border: none;
+    font-size: 16px;
 }

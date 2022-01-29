@@ -22,6 +22,7 @@ class Category(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["name", "user"], name="unique_category")
         ]
+        ordering = ["name"]
 
 
 class Subcategory(models.Model):

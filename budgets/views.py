@@ -1,13 +1,21 @@
 import datetime
+import json
 from collections import Counter
 
-from django.db.models.fields import DecimalField
+from django.db.models.fields import DecimalField, BooleanField
 from django.http.response import HttpResponseRedirect
+from django.http import JsonResponse
 from django.views.generic.edit import DeleteView
 from purchases.forms import PurchaseForm
 from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, DetailView, UpdateView
+from django.views.generic import (
+    ListView,
+    CreateView,
+    DetailView,
+    UpdateView,
+    TemplateView,
+)
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import (
     Sum,
@@ -20,7 +28,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce
 
-from .models import MonthlyBudget, YearlyBudget, BudgetItem
+from .models import MonthlyBudget, YearlyBudget, BudgetItem, Rollover
 from purchases.models import Category, Purchase, Income
 from .forms import BudgetItemForm
 
@@ -123,8 +131,23 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                     ),
                     output_field=DecimalField(),
                 ),
+                rollover=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            Rollover.objects.filter(
+                                user=self.request.user,
+                                yearly_budget__date__year=self.object.date.year - 1,
+                                category=OuterRef("category"),
+                            ).values("amount")
+                            # .annotate(amount="amount")
+                            # .values("amount")
+                        ),
+                        Value(0),
+                    ),
+                    output_field=DecimalField(),
+                ),
                 amount_total=Sum("amount", distinct=False),
-                diff=F("amount_total") - F("spent") + F("income"),
+                diff=F("amount_total") - F("spent") + F("income") + F("rollover"),
             )
         ).order_by("category__name")
 
@@ -337,6 +360,27 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         monthly_budgets = MonthlyBudget.objects.filter(date__year=self.object.date.year)
 
+        rollovers = (
+            Rollover.objects.filter(user=self.request.user, yearly_budget=self.object)
+            .annotate(
+                savings=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            budgetitems.filter(category=OuterRef("category")).values(
+                                "savings"
+                            )
+                        ),
+                        Value(True),
+                    ),
+                    output_field=BooleanField(),
+                )
+            )
+            .prefetch_related("category")
+        )
+
+        rollovers_spending = rollovers.filter(savings=False).order_by("category__name")
+        rollovers_savings = rollovers.filter(savings=True).order_by("category__name")
+
         # Shouldn't be creating new objects on GET request
         # next_year = YearlyBudget.objects.get_or_404(
         #     user=self.request.user, date__year=(self.object.date.year + 1)
@@ -361,6 +405,8 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 "monthly_budgets": monthly_budgets,
                 "monthly_bs": monthly_bs,
                 "purchases_uncategorized": purchases_uncategorized,
+                "rollovers_spending": rollovers_spending,
+                "rollovers_savings": rollovers_savings,
             }
         )
 
@@ -683,6 +729,13 @@ class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
                 savings=form.instance.savings,
             )
 
+        Rollover.objects.create(
+            user=self.request.user,
+            category=form.instance.category,
+            yearly_budget=YearlyBudget.objects.get(
+                user=self.request.user, date__year=self.kwargs["year"]
+            ),
+        )
         # print(monthly_budgets)
 
         return HttpResponseRedirect(self.get_success_url())
@@ -807,4 +860,54 @@ class BudgetItemDeleteView(LoginRequiredMixin, DeleteView):
 
         else:
             return reverse_lazy("yearly_list")
+
+
+class YearlyBudgetItemDetailView(LoginRequiredMixin, TemplateView):
+
+    template_name = "budgets/budgetitem_detail_yearly.html"
+
+    def get_context_data(self, **kwargs):
+        kwargs = super().get_context_data(**kwargs)
+        year = self.kwargs["year"]
+        category = self.kwargs["category"]
+
+        purchases = (
+            Purchase.objects.filter(
+                user=self.request.user, date__year=year, category__name=category
+            )
+            .order_by("date")
+            .prefetch_related("category")
+        )
+
+        incomes = Income.objects.filter(
+            user=self.request.user, date__year=year, category__name=category
+        )
+
+        kwargs.update(
+            {
+                "category": category,
+                "year": year,
+                "purchases": purchases,
+                "incomes": incomes,
+            }
+        )
+
+        return kwargs
+
+
+def rollover_update_view(request):
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        data = json.load(request)
+        amount = data["amount"]
+        category = data["category"]
+        year = data["year"]
+
+        obj = Rollover.objects.filter(
+            user=request.user, category__name=category, yearly_budget__date__year=year
+        ).get()
+
+        obj.amount = amount
+        obj.save()
+
+        return JsonResponse({"amount": amount})
 
