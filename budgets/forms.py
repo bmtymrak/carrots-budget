@@ -1,4 +1,4 @@
-from django.forms import ModelForm, CharField
+from django.forms import ModelForm, CharField, modelformset_factory
 from .models import BudgetItem
 
 from .models import MonthlyBudget
@@ -20,3 +20,5 @@ class BudgetItemForm(ModelForm):
         model = BudgetItem
         fields = ["category", "new_category", "amount", "savings", "notes"]
 
+
+BudgetItemFormset = modelformset_factory(BudgetItem, fields=("amount",), extra=0)

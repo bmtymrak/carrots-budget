@@ -1,0 +1,25 @@
+{% extends "_base.html" %}
+
+{% block body %}
+
+<form method="POST">
+    {% csrf_token %}
+    {{budgetitem_formset.management_form}}
+    {% for form in budgetitem_formset %}
+    <div class="purchase-form">
+        {% for hidden in form.hidden_fields %}
+        {{hidden}}
+        {% endfor %}
+        {% for field in form.visible_fields %}
+        <div>
+        {{field.errors}}
+        {{field.label_tag}}
+        {{field}}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    <button type="submit">Save</button>
+</form>
+
+{% endblock body %}

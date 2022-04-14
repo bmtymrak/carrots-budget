@@ -48,7 +48,7 @@
                     <div>${{budget_item.amount_total}}</div>
                     <div>${{budget_item.spent}}</div>
                     <div>${{budget_item.diff}}</div>
-                    <div>Edit</div>
+                    <div><a href='{% url "budgetitem_bulkedit" year=yearly_budget.date.year category=budget_item.category__name %}'>Edit</a></div>
                     {% endfor %}
                 </div>
                 <div class="budget-horizontal-grid-monthly">

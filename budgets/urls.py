@@ -12,6 +12,7 @@ from .views import (
     YearlyBudgetDetailView,
     BudgetItemDeleteView,
     YearlyBudgetItemDetailView,
+    BudgetItemBulkEditView,
     rollover_update_view,
 )
 
@@ -51,6 +52,11 @@ urlpatterns = [
         "<int:year>/<str:category>",
         YearlyBudgetItemDetailView.as_view(),
         name="yearly_budget_item_detail",
+    ),
+    path(
+        "<int:year>/<str:category>/edit",
+        BudgetItemBulkEditView.as_view(),
+        name="budgetitem_bulkedit",
     ),
     path("yearly-create", YearlyBudgetCreateView.as_view(), name="yearly_create"),
     path("<int:year>", YearlyBudgetDetailView.as_view(), name="yearly_detail"),

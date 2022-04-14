@@ -7,7 +7,7 @@ from django.http.response import HttpResponseRedirect
 from django.http import JsonResponse
 from django.views.generic.edit import DeleteView
 from purchases.forms import PurchaseForm
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import (
     ListView,
@@ -30,7 +30,7 @@ from django.db.models.functions import Coalesce
 
 from .models import MonthlyBudget, YearlyBudget, BudgetItem, Rollover
 from purchases.models import Category, Purchase, Income
-from .forms import BudgetItemForm
+from .forms import BudgetItemForm, BudgetItemFormset
 
 
 class AddUserMixin:
@@ -860,6 +860,35 @@ class BudgetItemDeleteView(LoginRequiredMixin, DeleteView):
 
         else:
             return reverse_lazy("yearly_list")
+
+
+class BudgetItemBulkEditView(LoginRequiredMixin, TemplateView):
+    template_name = "budgets/budgetitem_bulk_edit.html"
+
+    def get(self, *args, **kwargs):
+        formset = BudgetItemFormset(
+            queryset=BudgetItem.objects.filter(
+                user=self.request.user,
+                yearly_budget=YearlyBudget.objects.get(
+                    user=self.request.user, date__year=self.kwargs["year"]
+                ),
+                category__name=self.kwargs["category"],
+            )
+        )
+
+        return self.render_to_response({"budgetitem_formset": formset})
+
+    def post(self, *args, **kwargs):
+        formset = BudgetItemFormset(data=self.request.POST)
+        print(self.kwargs)
+
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.save()
+            return redirect(
+                reverse_lazy("yearly_detail", kwargs={"year": self.kwargs["year"]})
+            )
 
 
 class YearlyBudgetItemDetailView(LoginRequiredMixin, TemplateView):
