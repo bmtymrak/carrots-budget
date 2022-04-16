@@ -13,7 +13,7 @@ class HomePageView(TemplateView):
         else:
             handler = self.http_method_not_allowed
 
-        if self.request.user:
+        if self.request.user.is_authenticated:
             return redirect("yearly_list")
         else:
             return handler(request, *args, **kwargs)
