@@ -66,7 +66,7 @@ class YearlyBudgetListView(LoginRequiredMixin, ListView):
     template_name = "budgets/yearly_budget_list.html"
 
     def get_queryset(self):
-        queryset = self.model.objects.filter(user=self.request.user)
+        queryset = self.model.objects.filter(user=self.request.user).order_by("-date")
         return queryset
 
 

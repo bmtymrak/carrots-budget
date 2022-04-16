@@ -1,10 +1,32 @@
 {% extends "_base.html" %}
 
+{% block header %}
+    <h1 class="page-title">Budgets</h1>
+{% endblock header %}
+
 {% block body %}
 
 <ul>
     {% for budget in yearly_budgets %}
-    <li><a href='{% url "yearly_detail" year=budget.date.year %}'>{{budget.date.year}}</a></li>
+    <div class="card-base">
+        <h2><a href='{% url "yearly_detail" year=budget.date.year %}'>{{budget.date.year}}</a></h2>
+        <div class="summary-horizontal-grid-monthly card-table-header">
+            <div class="card-table-heading">Budgeted</div>
+            <div class="card-table-heading">Spent</div>
+            <div class="card-table-heading">Saved</div>
+            <div class="card-table-heading">Income</div>
+            <div class="card-table-heading">Remaining</div>
+            <div class="card-table-heading">Free</div>
+        </div>
+        <div class="summary-horizontal-grid-monthly">
+            <div>${{total_budgeted}}</div>
+            <div class="">${{total_spending_spent.amount}}</div>
+            <div class="">${{total_saved.amount}}</div>
+            <div class="">${{total_income.amount}}</div>
+            <div class="">${{total_remaining}}</div>
+            <div class="">${{free_income}}</div>
+        </div>
+    </div>
     {% endfor %}
 </ul>
 
