@@ -4,7 +4,7 @@ from django.db.models.fields.related import ForeignKey
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=250, blank=False)
+    name = models.CharField(db_index=True, max_length=250, blank=False)
     rollover = models.BooleanField(null=False, default=False)
     notes = models.TextField(blank=True)
     user = models.ForeignKey(
@@ -46,7 +46,7 @@ class Subcategory(models.Model):
 
 class Purchase(models.Model):
     item = models.CharField(max_length=250, blank=True)
-    date = models.DateField(null=True, default=None)
+    date = models.DateField(db_index=True, null=True, default=None)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
