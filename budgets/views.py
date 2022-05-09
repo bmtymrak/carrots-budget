@@ -813,11 +813,15 @@ class BudgetItemDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         kwargs = super().get_context_data()
 
-        purchases = Purchase.objects.all().filter(
-            user=self.request.user,
-            category__name=self.kwargs["category"],
-            date__year=self.kwargs["year"],
-            date__month=self.kwargs["month"],
+        purchases = (
+            Purchase.objects.all()
+            .filter(
+                user=self.request.user,
+                category__name=self.kwargs["category"],
+                date__year=self.kwargs["year"],
+                date__month=self.kwargs["month"],
+            )
+            .order_by("date")
         )
 
         kwargs.update({"purchases": purchases})
