@@ -1,5 +1,6 @@
 import datetime
 import json
+import time
 from collections import Counter
 
 from django.db.models.fields import DecimalField, BooleanField
@@ -83,6 +84,8 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         return obj
 
     def get_context_data(self, **kwargs):
+
+        context_data_start = time.perf_counter()
         kwargs = super().get_context_data(**kwargs)
 
         purchases = Purchase.objects.filter(
@@ -99,11 +102,12 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             date__year=self.object.date.year,
         )
 
+        budget_item_start_time = time.perf_counter()
         budgetitems = (
             BudgetItem.objects.filter(user=self.request.user)
             .filter(
                 monthly_budget__date__year=self.object.date.year,
-                # monthly_budget__date__month__lte=datetime.datetime.now().month - 2,
+                # monthly_budget__date__month__lte=datetime.datetime.now().month,
                 savings=False,
             )
             .values("category__name")
@@ -148,8 +152,66 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 ),
                 amount_total=Sum("amount", distinct=False),
                 diff=F("amount_total") - F("spent") + F("income") + F("rollover"),
+                remaining_current_year=F("amount_total") - F("spent") + F("income"),
             )
         ).order_by("category__name")
+
+        budgetitems_ytd = (
+            BudgetItem.objects.filter(user=self.request.user)
+            .filter(
+                monthly_budget__date__year=self.object.date.year,
+                monthly_budget__date__month__lte=datetime.datetime.now().month,
+                savings=False,
+            )
+            .values("category__name")
+            .annotate(
+                spent=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            purchases.filter(category=OuterRef("category"))
+                            .values("category")
+                            .annotate(total=Sum("amount"))
+                            .values("total")
+                        ),
+                        Value(0),
+                    ),
+                    output_field=DecimalField(),
+                ),
+                income=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            incomes.values("category")
+                            .annotate(total=Sum("amount"))
+                            .values("total")
+                        ),
+                        Value(0),
+                    ),
+                    output_field=DecimalField(),
+                ),
+                amount_total_ytd=Sum("amount", distinct=False),
+                diff_ytd=F("amount_total_ytd") - F("spent"),
+                remaining_current_year_ytd=F("amount_total_ytd")
+                - F("spent")
+                + F("income"),
+            )
+        ).order_by("category__name")
+
+        budget_items_combined = list(
+            zip(
+                budgetitems.values("category__name"),
+                budgetitems.values("amount_total"),
+                budgetitems.values("spent"),
+                budgetitems.values("diff"),
+                budgetitems_ytd.values("amount_total_ytd"),
+                budgetitems_ytd.values("diff_ytd"),
+            )
+        )
+
+        print(budget_items_combined[0])
+
+        budget_item_end_time = time.perf_counter()
+
+        print(f"Budget Item Query = {budget_item_end_time-budget_item_start_time}")
 
         savings_items = (
             BudgetItem.objects.filter(
@@ -176,49 +238,259 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
         ).order_by("category__name")
 
-        total_spending_spent = budgetitems.aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("spent"), Value(0)), output_field=DecimalField()
+        savings_items_ytd = (
+            BudgetItem.objects.filter(
+                user=self.request.user,
+                monthly_budget__date__year=self.object.date.year,
+                monthly_budget__date__month__lte=datetime.datetime.now().month,
+                savings=True,
             )
-        )
-        total_spending_remaining = budgetitems.aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("diff"), Value(0)), output_field=DecimalField()
+            .values("category__name")
+            .annotate(
+                saved=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            purchases.filter(category=OuterRef("category"))
+                            .values("category")
+                            .annotate(total=Sum("amount"))
+                            .values("total")
+                        ),
+                        Value(0),
+                    ),
+                    output_field=DecimalField(),
+                ),
+                amount_total_ytd=Sum("amount", distinct=False),
+                diff_ytd=F("amount_total_ytd") - F("saved"),
             )
-        )
-        total_spending_budgeted = budgetitems.aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("amount_total"), Value(0)), output_field=DecimalField()
+        ).order_by("category__name")
+
+        savings_items_combined = list(
+            zip(
+                savings_items.values("category__name"),
+                savings_items.values("amount_total"),
+                savings_items.values("saved"),
+                savings_items.values("diff"),
+                savings_items_ytd.values("amount_total_ytd"),
+                savings_items_ytd.values("diff_ytd"),
             )
         )
 
-        total_saved = savings_items.aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("saved"), Value(0)), output_field=DecimalField()
-            )
+        print(savings_items_combined[0])
+        # incomes_totals = Income.objects.filter(
+        #     # category=OuterRef("category"),
+        #     user=self.request.user,
+        #     date__year=self.object.date.year,
+        # ).values("date__year")
+
+        # purchases_totals = Purchase.objects.filter(
+        #     # category=OuterRef("category"),
+        #     user=self.request.user,
+        #     date__year=self.object.date.year,
+        # ).values("date__year")
+
+        # budgetitems_totals = (
+        #     BudgetItem.objects.filter(user=self.request.user)
+        #     .filter(
+        #         monthly_budget__date__year=self.object.date.year,
+        #         # monthly_budget__date__month__lte=datetime.datetime.now().month,
+        #         savings=False,
+        #     )
+        #     .values("monthly_budget__date__year")
+        #     .annotate(
+        #         spent=ExpressionWrapper(
+        #             Coalesce(
+        #                 Subquery(
+        #                     purchases_totals.annotate(total=Sum("amount")).values(
+        #                         "total"
+        #                     )
+        #                 ),
+        #                 Value(0),
+        #             ),
+        #             output_field=DecimalField(),
+        #         ),
+        #         income=ExpressionWrapper(
+        #             Coalesce(
+        #                 Subquery(
+        #                     incomes_totals.annotate(total=Sum("amount")).values("total")
+        #                 ),
+        #                 Value(0),
+        #             ),
+        #             output_field=DecimalField(),
+        #         ),
+        #         rollover=ExpressionWrapper(
+        #             Coalesce(
+        #                 Subquery(
+        #                     Rollover.objects.filter(
+        #                         user=self.request.user,
+        #                         yearly_budget__date__year=self.object.date.year - 1,
+        #                     )
+        #                     .values("yearly_budget__date__year")
+        #                     .annotate(amount=Sum("amount"))
+        #                     .values("amount")
+        #                 ),
+        #                 Value(0),
+        #             ),
+        #             output_field=DecimalField(),
+        #         ),
+        #         # total_spending_spent=ExpressionWrapper(
+        #         #     Coalesce(Sum("spent"), Value(0)), output_field=DecimalField()
+        #         # ),
+        #         amount_total=Sum("amount", distinct=False),
+        #         total_spending_spent=F("spent"),
+        #         diff=F("amount_total") - F("spent") + F("income") + F("rollover"),
+        #         remaining_current_year=F("amount_total") - F("spent") + F("income"),
+        #     )
+        # )
+
+        # print(budgetitems_totals)
+        # print(f"budgetitems_tototal = {budgetitems_totals.total_spending_spent}")
+
+        total_calcs_start = time.perf_counter()
+
+        # total_spending_spent = budgetitems.aggregate(
+        #     amount=ExpressionWrapper(
+        #         Coalesce(Sum("spent"), Value(0)), output_field=DecimalField()
+        #     )
+        # )
+
+        # total_spending_remaining = budgetitems.aggregate(
+        #     amount=ExpressionWrapper(
+        #         Coalesce(Sum("diff"), Value(0)), output_field=DecimalField()
+        #     )
+        # )
+
+        # total_spending_budgeted = budgetitems.aggregate(
+        #     amount=ExpressionWrapper(
+        #         Coalesce(Sum("amount_total"), Value(0)), output_field=DecimalField()
+        #     )
+        # )
+
+        # total_saved = savings_items.aggregate(
+        #     amount=ExpressionWrapper(
+        #         Coalesce(Sum("saved"), Value(0)), output_field=DecimalField()
+        #     )
+        # )
+
+        # total_savings_budgeted = savings_items.aggregate(
+        #     amount=ExpressionWrapper(
+        #         Coalesce(Sum("amount_total"), Value(0)), output_field=DecimalField()
+        #     )
+        # )
+
+        # total_savings_remaining = savings_items.aggregate(
+        #     amount=ExpressionWrapper(
+        #         Coalesce(Sum("diff"), Value(0)), output_field=DecimalField()
+        #     )
+        # )
+
+        # total_budgeted = (
+        #     total_spending_budgeted["amount"] + total_savings_budgeted["amount"]
+        # )
+
+        # total_spent = total_spending_spent["amount"] + total_saved["amount"]
+
+        # total_remaining = (
+        #     total_spending_remaining["amount"] + total_savings_remaining["amount"]
+        # )
+
+        total_calcs_end = time.perf_counter()
+
+        print(f"Total calcs = {total_calcs_end-total_calcs_start}")
+
+        total_sum_calcs_start = time.perf_counter()
+
+        # total_spending_items = sum([x["spent"] for x in budgetitems.values("spent")])
+        # total_spending_remain = sum([x["diff"] for x in budgetitems.values("diff")])
+        # total_spending_budg = sum(
+        #     [x["amount_total"] for x in budgetitems.values("amount_total")]
+        # )
+
+        # total_savings_saved = sum([x["saved"] for x in savings_items.values("saved")])
+        # total_savings_budg = sum(
+        #     [x["amount_total"] for x in savings_items.values("amount_total")]
+        # )
+        # total_savings_remain = sum([x["diff"] for x in savings_items.values("diff")])
+
+        total_sum_calcs_end = time.perf_counter()
+
+        print(f"Total sum calcs = {total_sum_calcs_end-total_sum_calcs_start}")
+
+        total_loop_calcs_start = time.perf_counter()
+
+        total_spending_spent = 0
+        total_spending_remaining = 0
+        total_spending_budgeted = 0
+        total_spending_remaining_current_year = 0
+        for item in budgetitems:
+            total_spending_spent += item["spent"]
+            total_spending_remaining += item["diff"]
+            total_spending_budgeted += item["amount_total"]
+            total_spending_remaining_current_year += item["remaining_current_year"]
+
+        total_saved = 0
+        total_savings_budgeted = 0
+        total_savings_remaining = 0
+        for item in savings_items:
+            total_saved += item["saved"]
+            total_savings_remaining += item["diff"]
+            total_savings_budgeted += item["amount_total"]
+
+        total_budgeted = total_spending_budgeted + total_savings_budgeted
+
+        total_spent = total_spending_spent + total_saved
+
+        total_remaining = total_spending_remaining + total_savings_remaining
+
+        total_remaining_current_year = (
+            total_spending_remaining_current_year + total_savings_remaining
         )
 
-        total_savings_budgeted = savings_items.aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("amount_total"), Value(0)), output_field=DecimalField()
-            )
-        )
+        total_loop_calcs_end = time.perf_counter()
 
-        total_savings_remaining = savings_items.aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("diff"), Value(0)), output_field=DecimalField()
-            )
-        )
+        print(f"Total loop calcs = {total_loop_calcs_end-total_loop_calcs_start}")
 
-        total_budgeted = (
-            total_spending_budgeted["amount"] + total_savings_budgeted["amount"]
-        )
+        total_spending_spent_ytd = 0
+        total_spending_remaining_ytd = 0
+        total_spending_budgeted_ytd = 0
+        for item in budgetitems_ytd:
+            total_spending_spent_ytd += item["spent"]
+            total_spending_remaining_ytd += item["diff_ytd"]
+            total_spending_budgeted_ytd += item["amount_total_ytd"]
 
-        total_spent = total_spending_spent["amount"] + total_saved["amount"]
+        total_saved_ytd = 0
+        total_savings_budgeted_ytd = 0
+        total_savings_remaining_ytd = 0
+        for item in savings_items_ytd:
+            total_saved_ytd += item["saved"]
+            total_savings_remaining_ytd += item["diff_ytd"]
+            total_savings_budgeted_ytd += item["amount_total_ytd"]
 
-        total_remaining = (
-            total_spending_remaining["amount"] + total_savings_remaining["amount"]
-        )
+        total_budgeted_ytd = total_spending_budgeted_ytd + total_savings_budgeted_ytd
+
+        total_spent_ytd = total_spending_spent_ytd + total_saved_ytd
+
+        total_remaining_ytd = total_spending_remaining_ytd + total_savings_remaining_ytd
+
+        # total_saved_ytd = 0
+        # total_savings_budgeted_ytd = 0
+        # total_savings_remaining_ytd = 0
+        # for item in savings_items:
+        #     total_saved_ytd += item["saved"]
+        #     total_savings_remaining_ytd += item["diff"]
+        #     total_savings_budgeted_ytd += item["amount_total"]
+
+        # total_budgeted = total_spending_budgeted + total_savings_budgeted
+
+        # total_spent = total_spending_spent + total_saved
+
+        # total_remaining = total_spending_remaining + total_savings_remaining
+
+        # print(total_spent_loop_calc)
+        # print(total_budgeted_loop)
+        # print(total_spent_budg_loop)
+        # print(total_saved_loop)
+        # print(total_remaining_loop)
+        # print(total_saved_remain_loop)
 
         monthly_purchases = Purchase.objects.filter(
             category=OuterRef("category"),
@@ -226,6 +498,8 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             date__month=OuterRef("monthly_budget__date__month"),
             user=self.request.user,
         ).values("date__month", "category")
+
+        monthly_budget_item_start_time = time.perf_counter()
 
         monthly_budgetitems = (
             (
@@ -248,6 +522,12 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
             .order_by("monthly_budget__date__month", "savings", "category__name",)
             .select_related()
+        )
+
+        monthly_budget_item_end_time = time.perf_counter()
+
+        print(
+            f"Monthly Budget Item Query = {monthly_budget_item_end_time-monthly_budget_item_start_time}"
         )
 
         monthly_savings_transactions = Purchase.objects.filter(
@@ -280,9 +560,20 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             .select_related()
         )
 
+        monthly_budget_item_sort_start_time = time.perf_counter()
+
+        monthly_budget_item_count_start = time.perf_counter()
+
         number_of_budget_items = monthly_budgetitems.filter(
             monthly_budget__date__month=1
         ).count()
+
+        monthly_budget_item_count_end = time.perf_counter()
+        print(
+            f"Monthly Budget Item Count = {monthly_budget_item_count_end - monthly_budget_item_count_start}"
+        )
+
+        monthly_budget_item_list_start = time.perf_counter()
 
         if number_of_budget_items:
             monthly_budgs = [
@@ -293,6 +584,12 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             ]
         else:
             monthly_budgs = [[] for i in range(12)]
+
+        monthly_budget_item_list_end = time.perf_counter()
+
+        print(
+            f"Monthly Budget Item List = {monthly_budget_item_list_end - monthly_budget_item_list_start}"
+        )
 
         number_of_savings_items = monthly_savingsitems.filter(
             monthly_budget__date__month=1
@@ -346,11 +643,23 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
         )
 
+        monthly_budget_item_sort_end_time = time.perf_counter()
+
+        print(
+            f"Monthly Budget Item Sort = {monthly_budget_item_sort_end_time-monthly_budget_item_sort_start_time}"
+        )
+
         incomes = Income.objects.filter(
             user=self.request.user, date__year=self.object.date.year,
         ).order_by("date")
 
-        total_income = incomes.filter(category=None).aggregate(
+        total_income = incomes.aggregate(
+            amount=ExpressionWrapper(
+                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
+            )
+        )
+
+        total_income_budgeted = incomes.filter(category=None).aggregate(
             amount=ExpressionWrapper(
                 Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
             )
@@ -390,17 +699,31 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         kwargs.update(
             {
                 "budget_items": budgetitems,
+                "budgetitems_ytd": budgetitems_ytd,
+                "budget_items_combined": budget_items_combined,
+                "savings_items_combined": savings_items_combined,
                 "savings_items": savings_items,
                 "total_spending_spent": total_spending_spent,
                 "total_spending_remaining": total_spending_remaining,
                 "total_spending_budgeted": total_spending_budgeted,
+                "total_spending_spent_ytd": total_spending_spent_ytd,
+                "total_spending_remaining_ytd": total_spending_remaining_ytd,
+                "total_spending_budgeted_ytd": total_spending_budgeted_ytd,
                 "total_saved": total_saved,
                 "total_savings_budgeted": total_savings_budgeted,
                 "total_savings_remaining": total_savings_remaining,
+                "total_saved_ytd": total_saved_ytd,
+                "total_savings_budgeted_ytd": total_savings_budgeted_ytd,
+                "total_savings_remaining_ytd": total_savings_remaining_ytd,
                 "total_spent": total_spent,
                 "total_budgeted": total_budgeted,
                 "total_remaining": total_remaining,
+                "total_remaining_current_year": total_remaining_current_year,
+                "total_spent_ytd": total_spent_ytd,
+                "total_budgeted_ytd": total_budgeted_ytd,
+                "total_remaining_ytd": total_remaining_ytd,
                 "total_income": total_income,
+                "total_income_budgeted": total_income_budgeted,
                 "free_income": free_income,
                 "monthly_budgets": monthly_budgets,
                 "monthly_bs": monthly_bs,
@@ -409,6 +732,9 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 "rollovers_savings": rollovers_savings,
             }
         )
+
+        context_data_end = time.perf_counter()
+        print(f"Context Data = {context_data_end-context_data_start}")
 
         return kwargs
 

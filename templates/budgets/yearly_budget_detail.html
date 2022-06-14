@@ -7,19 +7,35 @@
 <div class="card-base">
     <h2>Summary</h2>
     <div class="summary-horizontal-grid-monthly card-table-header">
-        <div class="card-table-heading">Budgeted</div>
+        <div class="card-table-heading">Budgeted YTD</div>
         <div class="card-table-heading">Spent</div>
         <div class="card-table-heading">Saved</div>
-        <div class="card-table-heading">Income</div>
+        <div class="card-table-heading">Income Budgeted</div>
         <div class="card-table-heading">Remaining</div>
         <div class="card-table-heading">Free</div>
     </div>
     <div class="summary-horizontal-grid-monthly">
-        <div>${{total_budgeted}}</div>
-        <div class="">${{total_spending_spent.amount}}</div>
-        <div class="">${{total_saved.amount}}</div>
-        <div class="">${{total_income.amount}}</div>
+        <div>${{total_budgeted_ytd}}</div>
+        <div class="">${{total_spending_spent}}</div>
+        <div class="">${{total_saved}}</div>
+        <div class="">${{total_income_budgeted.amount}}</div>
         <div class="">${{total_remaining}}</div>
+        <div class="">${{free_income}}</div>
+    </div>
+    <div class="summary-horizontal-grid-monthly card-table-header">
+        <div class="card-table-heading">Budgeted</div>
+        <div class="card-table-heading">Spent</div>
+        <div class="card-table-heading">Saved</div>
+        <div class="card-table-heading">Total Income</div>
+        <div class="card-table-heading">Remaining Current Year</div>
+        <div class="card-table-heading">Free</div>
+    </div>
+    <div class="summary-horizontal-grid-monthly">
+        <div>${{total_budgeted}}</div>
+        <div class="">${{total_spending_spent}}</div>
+        <div class="">${{total_saved}}</div>
+        <div class="">${{total_income.amount}}</div>
+        <div class="">${{total_remaining_current_year}}</div>
         <div class="">${{free_income}}</div>
     </div>
 </div>
@@ -35,27 +51,36 @@
             <div>
                 <div class="budget-horizontal-grid-monthly card-table-header">
                     <div class="card-table-heading">Category</div>
+                    <div class="card-table-heading">Budgeted YTD</div>
+                    <div class="card-table-heading">Spent YTD</div>
+                    <div class="card-table-heading">+/- YTD</div>
                     <div class="card-table-heading">Budgeted</div>
-                    <div class="card-table-heading">Spent</div>
-                    <div class="card-table-heading">Remaining</div>
+                    <div class="card-table-heading">+/-</div>
                     <div></div>
                 </div>
 
                 <div class="budget-horizontal-grid-monthly">
-                    {% for budget_item in budget_items%}
+                    {% for budget_item in budget_items_combined %}
+                    {% comment %}
                     <!-- <div data-tooltip="{{budget_item.category__name}}"><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div> -->
-                    <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div>
-                    <div>${{budget_item.amount_total}}</div>
-                    <div>${{budget_item.spent}}</div>
-                    <div>${{budget_item.diff}}</div>
-                    <div><a href='{% url "budgetitem_bulkedit" year=yearly_budget.date.year category=budget_item.category__name %}'>Edit</a></div>
+                    {% endcomment %}
+                    <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.0.category__name %}'>{{budget_item.0.category__name}}</a></div>
+                    <div>${{budget_item.4.amount_total_ytd}}</div>
+                    <div>${{budget_item.2.spent}}</div>
+                    <div>${{budget_item.5.diff_ytd}}</div>
+                    <div>${{budget_item.1.amount_total}}</div>
+                    <div>${{budget_item.3.diff}}</div>
+                    <div><a href='{% url "budgetitem_bulkedit" year=yearly_budget.date.year category=budget_item.0.category__name %}'>Edit</a></div>
+                    
                     {% endfor %}
                 </div>
                 <div class="budget-horizontal-grid-monthly">
                     <div>Spending Total</div>
-                    <div>${{total_spending_budgeted.amount}}</div>
-                    <div>${{total_spending_spent.amount}}</div>
-                    <div>${{total_spending_remaining.amount}}</div>
+                    <div>${{total_spending_budgeted_ytd}}</div>
+                    <div>${{total_spending_spent_ytd}}</div>
+                    <div>${{total_spending_remaining_ytd}}</div>
+                    <div>${{total_spending_budgeted}}</div>
+                    <div>{{total_spending_remaining}}</div>
                     <div></div>
                 </div>
             </div>
@@ -76,31 +101,40 @@
             <div style="flex-grow:1;">
                 <div class="budget-horizontal-grid-monthly card-table-header">
                     <div class="card-table-heading">Category</div>
-                    <div class="card-table-heading">Budgeted</div>
+                    <div class="card-table-heading">Budgeted YTD</div>
                     <div class="card-table-heading">Saved</div>
-                    <div class="card-table-heading">Remaining</div>
-                    <div></div>
+                    <div class="card-table-heading">+/- YTD</div>
+                    <div class="card-table-heading">Budgeted</div>
+                    <div class="card-table-heading">+/-</div>
+                    <div class="card-table-heading"></div>
                 </div>
                 <div class="budget-horizontal-grid-monthly">
-                    {% for savings_item in savings_items %}
-                    <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div>
-                    <div>${{savings_item.amount_total}}</div>
-                    <div>${{savings_item.saved}}</div>
-                    <div>${{savings_item.diff}}</div>
+                    {% for savings_item in savings_items_combined %}
+                    <!-- <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div> -->
+                    <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=savings_item.0.category__name %}'>{{savings_item.0.category__name}}</a></div>
+                    <div>${{savings_item.4.amount_total_ytd}}</div>
+                    <div>${{savings_item.2.saved}}</div>
+                    <div>${{savings_item.5.diff_ytd}}</div>
+                    <div>${{savings_item.1.amount_total}}</div>
+                    <div>{{savings_item.3.diff}}</div>
                     <div>Edit</div>
                     {% endfor %}
                 </div>
                 <div class="budget-horizontal-grid-monthly">
                     <div>Savings Total</div>
-                    <div>${{total_savings_budgeted.amount}}</div>
-                    <div>${{total_saved.amount}}</div>
-                    <div>${{total_savings_remaining.amount}}</div>
+                    <div>${{total_savings_budgeted_ytd}}</div>
+                    <div>${{total_saved_ytd}}</div>
+                    <div>${{total_savings_remaining_ytd}}</div>
+                    <div>${{total_savings_budgeted}}</div>
+                    <div>${{total_savings_remaining}}</div>
                     <div></div>
                 </div>
                 <div class="budget-horizontal-grid-monthly">
                     <div>Total</div>
+                    <div>${{total_budgeted_ytd}}</div>
+                    <div>${{total_spent_ytd}}</div>
+                    <div>${{total_remaining_ytd}}</div>
                     <div>${{total_budgeted}}</div>
-                    <div>${{total_spent}}</div>
                     <div>${{total_remaining}}</div>
                     <div></div>
                 </div>
