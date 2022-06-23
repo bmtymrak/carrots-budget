@@ -71,6 +71,7 @@ class Purchase(models.Model):
         related_name="purchases",
     )
     notes = models.TextField(blank=True)
+    savings = models.BooleanField(null=False, default=False)
 
     def __str__(self):
         return self.item

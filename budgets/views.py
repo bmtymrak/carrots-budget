@@ -97,7 +97,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         purchases_uncategorized = purchases.filter(category=None)
 
         incomes = Income.objects.filter(
-            category=OuterRef("category"),
+            # category=OuterRef("category"),
             user=self.request.user,
             date__year=self.object.date.year,
         )
@@ -127,7 +127,8 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 income=ExpressionWrapper(
                     Coalesce(
                         Subquery(
-                            incomes.values("category")
+                            incomes.filter(category=OuterRef("category"))
+                            .values("category")
                             .annotate(total=Sum("amount"))
                             .values("total")
                         ),
@@ -180,7 +181,8 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 income=ExpressionWrapper(
                     Coalesce(
                         Subquery(
-                            incomes.values("category")
+                            incomes.filter(category=OuterRef("category"))
+                            .values("category")
                             .annotate(total=Sum("amount"))
                             .values("total")
                         ),
@@ -703,6 +705,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 "budget_items_combined": budget_items_combined,
                 "savings_items_combined": savings_items_combined,
                 "savings_items": savings_items,
+                "incomes": incomes,
                 "total_spending_spent": total_spending_spent,
                 "total_spending_remaining": total_spending_remaining,
                 "total_spending_budgeted": total_spending_budgeted,

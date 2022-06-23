@@ -19,6 +19,7 @@ class PurchaseForm(ModelForm):
             placeholder="Notes", rows="1", cols="15"
         )
         self.fields["date"].widget.attrs.update(placeholder="Date", size="10")
+        self.fields["savings"].label = "Savings"
 
     class Meta:
         model = Purchase
@@ -31,6 +32,7 @@ class PurchaseForm(ModelForm):
             "category",
             "subcategory",
             "notes",
+            "savings",
         ]
 
 
