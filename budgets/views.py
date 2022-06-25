@@ -2,6 +2,7 @@ import datetime
 import json
 import time
 from collections import Counter
+from urllib import request
 
 from django.db.models.fields import DecimalField, BooleanField
 from django.http.response import HttpResponseRedirect
@@ -84,6 +85,8 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         return obj
 
     def get_context_data(self, **kwargs):
+
+        ytd_month = self.request.GET.get("ytd", datetime.datetime.now().month)
 
         context_data_start = time.perf_counter()
         kwargs = super().get_context_data(**kwargs)
@@ -230,6 +233,21 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                             .values("category")
                             .annotate(total=Sum("amount"))
                             .values("total")
+                        ),
+                        Value(0),
+                    ),
+                    output_field=DecimalField(),
+                ),
+                rollover=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            Rollover.objects.filter(
+                                user=self.request.user,
+                                yearly_budget__date__year=self.object.date.year - 1,
+                                category=OuterRef("category"),
+                            ).values("amount")
+                            # .annotate(amount="amount")
+                            # .values("amount")
                         ),
                         Value(0),
                     ),
@@ -651,11 +669,27 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             f"Monthly Budget Item Sort = {monthly_budget_item_sort_end_time-monthly_budget_item_sort_start_time}"
         )
 
-        incomes = Income.objects.filter(
-            user=self.request.user, date__year=self.object.date.year,
+        incomes = (
+            Income.objects.filter(
+                user=self.request.user, date__year=self.object.date.year,
+            )
+            .order_by("date")
+            .select_related("category")
+        )
+
+        incomes_ytd = Income.objects.filter(
+            user=self.request.user,
+            date__year=self.object.date.year,
+            date__month__lte=datetime.datetime.now().month,
         ).order_by("date")
 
         total_income = incomes.aggregate(
+            amount=ExpressionWrapper(
+                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
+            )
+        )
+
+        total_income_ytd = incomes_ytd.aggregate(
             amount=ExpressionWrapper(
                 Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
             )
@@ -667,7 +701,26 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
         )
 
-        free_income = total_income["amount"] - total_spent
+        total_income_budgeted_ytd = incomes_ytd.filter(category=None).aggregate(
+            amount=ExpressionWrapper(
+                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
+            )
+        )
+
+        total_income_spent_diff = total_income["amount"] - total_spent
+        budgeted_income_spent_diff = total_income_budgeted["amount"] - total_spent
+
+        budgeted_income_diff = total_income_budgeted["amount"] - total_budgeted
+        budgeted_income_diff_ytd = (
+            total_income_budgeted_ytd["amount"] - total_budgeted_ytd
+        )
+
+        free_income = (
+            budgetitems.filter(rollover=0).aggregate(
+                amount=Sum("remaining_current_year")
+            )["amount"]
+            + savings_items.filter(rollover=0).aggregate(amount=Sum("diff"))["amount"]
+        )
 
         monthly_budgets = MonthlyBudget.objects.filter(date__year=self.object.date.year)
 
@@ -733,6 +786,10 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 "purchases_uncategorized": purchases_uncategorized,
                 "rollovers_spending": rollovers_spending,
                 "rollovers_savings": rollovers_savings,
+                "budgeted_income_diff": budgeted_income_diff,
+                "budgeted_income_diff_ytd": budgeted_income_diff_ytd,
+                "total_income_spent_diff": total_income_spent_diff,
+                "budgeted_income_spent_diff": budgeted_income_spent_diff,
             }
         )
 
