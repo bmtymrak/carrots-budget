@@ -164,7 +164,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             BudgetItem.objects.filter(user=self.request.user)
             .filter(
                 monthly_budget__date__year=self.object.date.year,
-                monthly_budget__date__month__lte=datetime.datetime.now().month,
+                monthly_budget__date__month__lte=ytd_month,
                 savings=False,
             )
             .values("category__name")
@@ -262,7 +262,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             BudgetItem.objects.filter(
                 user=self.request.user,
                 monthly_budget__date__year=self.object.date.year,
-                monthly_budget__date__month__lte=datetime.datetime.now().month,
+                monthly_budget__date__month__lte=ytd_month,
                 savings=True,
             )
             .values("category__name")
