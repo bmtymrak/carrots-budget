@@ -88,7 +88,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         ytd_month = self.request.GET.get("ytd", datetime.datetime.now().month)
 
-        context_data_start = time.perf_counter()
         kwargs = super().get_context_data(**kwargs)
 
         purchases = Purchase.objects.filter(
@@ -105,7 +104,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             date__year=self.object.date.year,
         )
 
-        budget_item_start_time = time.perf_counter()
         budgetitems = (
             BudgetItem.objects.filter(user=self.request.user)
             .filter(
@@ -212,12 +210,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
         )
 
-        print(budget_items_combined[0])
-
-        budget_item_end_time = time.perf_counter()
-
-        print(f"Budget Item Query = {budget_item_end_time-budget_item_start_time}")
-
         savings_items = (
             BudgetItem.objects.filter(
                 user=self.request.user,
@@ -295,148 +287,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
         )
 
-        print(savings_items_combined[0])
-        # incomes_totals = Income.objects.filter(
-        #     # category=OuterRef("category"),
-        #     user=self.request.user,
-        #     date__year=self.object.date.year,
-        # ).values("date__year")
-
-        # purchases_totals = Purchase.objects.filter(
-        #     # category=OuterRef("category"),
-        #     user=self.request.user,
-        #     date__year=self.object.date.year,
-        # ).values("date__year")
-
-        # budgetitems_totals = (
-        #     BudgetItem.objects.filter(user=self.request.user)
-        #     .filter(
-        #         monthly_budget__date__year=self.object.date.year,
-        #         # monthly_budget__date__month__lte=datetime.datetime.now().month,
-        #         savings=False,
-        #     )
-        #     .values("monthly_budget__date__year")
-        #     .annotate(
-        #         spent=ExpressionWrapper(
-        #             Coalesce(
-        #                 Subquery(
-        #                     purchases_totals.annotate(total=Sum("amount")).values(
-        #                         "total"
-        #                     )
-        #                 ),
-        #                 Value(0),
-        #             ),
-        #             output_field=DecimalField(),
-        #         ),
-        #         income=ExpressionWrapper(
-        #             Coalesce(
-        #                 Subquery(
-        #                     incomes_totals.annotate(total=Sum("amount")).values("total")
-        #                 ),
-        #                 Value(0),
-        #             ),
-        #             output_field=DecimalField(),
-        #         ),
-        #         rollover=ExpressionWrapper(
-        #             Coalesce(
-        #                 Subquery(
-        #                     Rollover.objects.filter(
-        #                         user=self.request.user,
-        #                         yearly_budget__date__year=self.object.date.year - 1,
-        #                     )
-        #                     .values("yearly_budget__date__year")
-        #                     .annotate(amount=Sum("amount"))
-        #                     .values("amount")
-        #                 ),
-        #                 Value(0),
-        #             ),
-        #             output_field=DecimalField(),
-        #         ),
-        #         # total_spending_spent=ExpressionWrapper(
-        #         #     Coalesce(Sum("spent"), Value(0)), output_field=DecimalField()
-        #         # ),
-        #         amount_total=Sum("amount", distinct=False),
-        #         total_spending_spent=F("spent"),
-        #         diff=F("amount_total") - F("spent") + F("income") + F("rollover"),
-        #         remaining_current_year=F("amount_total") - F("spent") + F("income"),
-        #     )
-        # )
-
-        # print(budgetitems_totals)
-        # print(f"budgetitems_tototal = {budgetitems_totals.total_spending_spent}")
-
-        total_calcs_start = time.perf_counter()
-
-        # total_spending_spent = budgetitems.aggregate(
-        #     amount=ExpressionWrapper(
-        #         Coalesce(Sum("spent"), Value(0)), output_field=DecimalField()
-        #     )
-        # )
-
-        # total_spending_remaining = budgetitems.aggregate(
-        #     amount=ExpressionWrapper(
-        #         Coalesce(Sum("diff"), Value(0)), output_field=DecimalField()
-        #     )
-        # )
-
-        # total_spending_budgeted = budgetitems.aggregate(
-        #     amount=ExpressionWrapper(
-        #         Coalesce(Sum("amount_total"), Value(0)), output_field=DecimalField()
-        #     )
-        # )
-
-        # total_saved = savings_items.aggregate(
-        #     amount=ExpressionWrapper(
-        #         Coalesce(Sum("saved"), Value(0)), output_field=DecimalField()
-        #     )
-        # )
-
-        # total_savings_budgeted = savings_items.aggregate(
-        #     amount=ExpressionWrapper(
-        #         Coalesce(Sum("amount_total"), Value(0)), output_field=DecimalField()
-        #     )
-        # )
-
-        # total_savings_remaining = savings_items.aggregate(
-        #     amount=ExpressionWrapper(
-        #         Coalesce(Sum("diff"), Value(0)), output_field=DecimalField()
-        #     )
-        # )
-
-        # total_budgeted = (
-        #     total_spending_budgeted["amount"] + total_savings_budgeted["amount"]
-        # )
-
-        # total_spent = total_spending_spent["amount"] + total_saved["amount"]
-
-        # total_remaining = (
-        #     total_spending_remaining["amount"] + total_savings_remaining["amount"]
-        # )
-
-        total_calcs_end = time.perf_counter()
-
-        print(f"Total calcs = {total_calcs_end-total_calcs_start}")
-
-        total_sum_calcs_start = time.perf_counter()
-
-        # total_spending_items = sum([x["spent"] for x in budgetitems.values("spent")])
-        # total_spending_remain = sum([x["diff"] for x in budgetitems.values("diff")])
-        # total_spending_budg = sum(
-        #     [x["amount_total"] for x in budgetitems.values("amount_total")]
-        # )
-
-        # total_savings_saved = sum([x["saved"] for x in savings_items.values("saved")])
-        # total_savings_budg = sum(
-        #     [x["amount_total"] for x in savings_items.values("amount_total")]
-        # )
-        # total_savings_remain = sum([x["diff"] for x in savings_items.values("diff")])
-
-        total_sum_calcs_end = time.perf_counter()
-
-        print(f"Total sum calcs = {total_sum_calcs_end-total_sum_calcs_start}")
-
-        total_loop_calcs_start = time.perf_counter()
-
         total_spending_spent = 0
         total_spending_remaining = 0
         total_spending_budgeted = 0
@@ -465,10 +315,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             total_spending_remaining_current_year + total_savings_remaining
         )
 
-        total_loop_calcs_end = time.perf_counter()
-
-        print(f"Total loop calcs = {total_loop_calcs_end-total_loop_calcs_start}")
-
         total_spending_spent_ytd = 0
         total_spending_remaining_ytd = 0
         total_spending_budgeted_ytd = 0
@@ -491,35 +337,12 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         total_remaining_ytd = total_spending_remaining_ytd + total_savings_remaining_ytd
 
-        # total_saved_ytd = 0
-        # total_savings_budgeted_ytd = 0
-        # total_savings_remaining_ytd = 0
-        # for item in savings_items:
-        #     total_saved_ytd += item["saved"]
-        #     total_savings_remaining_ytd += item["diff"]
-        #     total_savings_budgeted_ytd += item["amount_total"]
-
-        # total_budgeted = total_spending_budgeted + total_savings_budgeted
-
-        # total_spent = total_spending_spent + total_saved
-
-        # total_remaining = total_spending_remaining + total_savings_remaining
-
-        # print(total_spent_loop_calc)
-        # print(total_budgeted_loop)
-        # print(total_spent_budg_loop)
-        # print(total_saved_loop)
-        # print(total_remaining_loop)
-        # print(total_saved_remain_loop)
-
         monthly_purchases = Purchase.objects.filter(
             category=OuterRef("category"),
             date__year=self.object.date.year,
             date__month=OuterRef("monthly_budget__date__month"),
             user=self.request.user,
         ).values("date__month", "category")
-
-        monthly_budget_item_start_time = time.perf_counter()
 
         monthly_budgetitems = (
             (
@@ -542,12 +365,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
             .order_by("monthly_budget__date__month", "savings", "category__name",)
             .select_related()
-        )
-
-        monthly_budget_item_end_time = time.perf_counter()
-
-        print(
-            f"Monthly Budget Item Query = {monthly_budget_item_end_time-monthly_budget_item_start_time}"
         )
 
         monthly_savings_transactions = Purchase.objects.filter(
@@ -580,20 +397,9 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             .select_related()
         )
 
-        monthly_budget_item_sort_start_time = time.perf_counter()
-
-        monthly_budget_item_count_start = time.perf_counter()
-
         number_of_budget_items = monthly_budgetitems.filter(
             monthly_budget__date__month=1
         ).count()
-
-        monthly_budget_item_count_end = time.perf_counter()
-        print(
-            f"Monthly Budget Item Count = {monthly_budget_item_count_end - monthly_budget_item_count_start}"
-        )
-
-        monthly_budget_item_list_start = time.perf_counter()
 
         if number_of_budget_items:
             monthly_budgs = [
@@ -604,12 +410,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             ]
         else:
             monthly_budgs = [[] for i in range(12)]
-
-        monthly_budget_item_list_end = time.perf_counter()
-
-        print(
-            f"Monthly Budget Item List = {monthly_budget_item_list_end - monthly_budget_item_list_start}"
-        )
 
         number_of_savings_items = monthly_savingsitems.filter(
             monthly_budget__date__month=1
@@ -661,12 +461,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 monthly_spent,
                 monthly_remaining,
             )
-        )
-
-        monthly_budget_item_sort_end_time = time.perf_counter()
-
-        print(
-            f"Monthly Budget Item Sort = {monthly_budget_item_sort_end_time-monthly_budget_item_sort_start_time}"
         )
 
         incomes = (
@@ -745,12 +539,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         rollovers_spending = rollovers.filter(savings=False).order_by("category__name")
         rollovers_savings = rollovers.filter(savings=True).order_by("category__name")
 
-        # Shouldn't be creating new objects on GET request
-        # next_year = YearlyBudget.objects.get_or_404(
-        #     user=self.request.user, date__year=(self.object.date.year + 1)
-        # )
-        # print(next_year)
-
         kwargs.update(
             {
                 "budget_items": budgetitems,
@@ -792,9 +580,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 "budgeted_income_spent_diff": budgeted_income_spent_diff,
             }
         )
-
-        context_data_end = time.perf_counter()
-        print(f"Context Data = {context_data_end-context_data_start}")
 
         return kwargs
 
@@ -906,8 +691,6 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
             ).select_related()
         ).order_by("category__name")
 
-        # for item in budgetitems:
-        #     print(item.income)
         savings_items = (
             (
                 BudgetItem.objects.filter(
@@ -1092,18 +875,11 @@ class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
                 )
             form.instance.category = category
 
-        # form.instance.monthly_budget = MonthlyBudget.objects.get(
-        #     user=self.request.user,
-        #     date__year=self.kwargs["year"],
-        #     date__month=self.kwargs["month"],
-        # )
-
         monthly_budgets = list(
             MonthlyBudget.objects.filter(date__year=self.kwargs["year"])
         )
 
         for monthly_budget in monthly_budgets:
-            # if monthly_budget != form.instance.monthly_budget:
             BudgetItem.objects.create(
                 user=self.request.user,
                 category=form.instance.category,
@@ -1122,7 +898,6 @@ class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
                 user=self.request.user, date__year=self.kwargs["year"]
             ),
         )
-        # print(monthly_budgets)
 
         return HttpResponseRedirect(self.get_success_url())
 
