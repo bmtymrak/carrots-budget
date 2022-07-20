@@ -3,6 +3,7 @@ import json
 import time
 from collections import Counter
 from urllib import request
+import calendar
 
 from django.db.models.fields import DecimalField, BooleanField
 from django.http.response import HttpResponseRedirect
@@ -578,6 +579,9 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 "budgeted_income_diff_ytd": budgeted_income_diff_ytd,
                 "total_income_spent_diff": total_income_spent_diff,
                 "budgeted_income_spent_diff": budgeted_income_spent_diff,
+                "months": [
+                    (calendar.month_name[month], month) for month in range(1, 12)
+                ],
             }
         )
 

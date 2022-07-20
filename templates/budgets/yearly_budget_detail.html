@@ -3,6 +3,19 @@
 {% block header %}
     <h1 class="page-title">{{yearly_budget.date.year}}</h1>
 {% endblock header %}
+
+{% block heading_nav %}
+    <div class="month-nav-wrapper">
+        <div class="month-nav-container">
+        {% for month in months %}
+            <div class="month-nav-card">
+                <a href='{% url "monthly_detail" month=month.1 year=yearly_budget.date.year %}'>{{month.0}}</a>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+{% endblock heading_nav %}
+
 {% block body %}
 <div class="card-base">
     <h2>Summary</h2>
