@@ -838,6 +838,9 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
                 "total_income": total_income,
                 "free_income": free_income,
                 "uncategorized_purchases": uncategorized_purchases,
+                "months": [
+                    (calendar.month_name[month], month) for month in range(1, 12)
+                ],
             }
         )
 

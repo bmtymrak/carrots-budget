@@ -8,6 +8,15 @@
         
 {% block heading_nav %}
     <a class="return-link" href='{% url "yearly_detail" year=monthly_budget.date.year%}'><- {{monthly_budget.date|date:"Y"}} Overview</a>
+    <div class="month-nav-wrapper">
+        <div class="month-nav-container">
+        {% for month in months %}
+            <div class="month-nav-card">
+                <a href='{% url "monthly_detail" month=month.1 year=monthly_budget.date.year %}'>{{month.0}}</a>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
 {% endblock heading_nav %}
 
     
