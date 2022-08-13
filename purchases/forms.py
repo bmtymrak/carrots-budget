@@ -37,3 +37,4 @@ class PurchaseForm(ModelForm):
 
 
 PurchaseFormSet = modelformset_factory(Purchase, form=PurchaseForm, extra=10)
+PurchaseFormSetReceipt = modelformset_factory(Purchase, form=PurchaseForm, extra=1)

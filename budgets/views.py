@@ -9,7 +9,7 @@ from django.db.models.fields import DecimalField, BooleanField
 from django.http.response import HttpResponseRedirect
 from django.http import JsonResponse
 from django.views.generic.edit import DeleteView
-from purchases.forms import PurchaseForm
+from purchases.forms import PurchaseForm, PurchaseFormSetReceipt
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import (
@@ -580,7 +580,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 "total_income_spent_diff": total_income_spent_diff,
                 "budgeted_income_spent_diff": budgeted_income_spent_diff,
                 "months": [
-                    (calendar.month_name[month], month) for month in range(1, 12)
+                    (calendar.month_name[month], month) for month in range(1, 13)
                 ],
             }
         )
@@ -626,7 +626,48 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
             date__month=self.kwargs.get("month"),
             user=self.request.user,
         )
-        return self.render_to_response(self.get_context_data())
+
+        purchase_formset = PurchaseFormSetReceipt(
+            queryset=Purchase.objects.none(), form_kwargs={"user": self.request.user}
+        )
+        return self.render_to_response(
+            self.get_context_data(purchase_formset=purchase_formset)
+        )
+
+    def post(self, request, *arg, **kwargs):
+        self.object = MonthlyBudget.objects.get(
+            date__year=self.kwargs.get("year"),
+            date__month=self.kwargs.get("month"),
+            user=self.request.user,
+        )
+
+        formset_data = self.request.POST.copy()  # Makes Querydict mutable
+        formset_date = formset_data["form-0-date"]
+
+        for key in formset_data.keys():
+            if "date" in key:
+                formset_data[key] = formset_date
+
+        purchase_formset = PurchaseFormSetReceipt(
+            form_kwargs={"user": self.request.user}, data=formset_data
+        )
+
+        if purchase_formset.is_valid():
+            instances = purchase_formset.save(commit=False)
+            source = instances[0].source
+            location = instances[0].location
+            for instance in instances:
+                instance.user = self.request.user
+                instance.source = source
+                instance.location = location
+                instance.save()
+
+            return HttpResponseRedirect(self.get_success_url())
+
+        else:
+            return self.render_to_response(
+                self.get_context_data(purchase_formset=purchase_formset)
+            )
 
     def get_context_data(self, **kwargs):
         kwargs = super().get_context_data(**kwargs)
@@ -839,7 +880,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
                 "free_income": free_income,
                 "uncategorized_purchases": uncategorized_purchases,
                 "months": [
-                    (calendar.month_name[month], month) for month in range(1, 12)
+                    (calendar.month_name[month], month) for month in range(1, 13)
                 ],
             }
         )
