@@ -96,4 +96,3 @@ class Income(models.Model):
         related_name="incomes",
     )
     notes = models.TextField(blank=True)
-
