@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Document{% endblock title %}</title>
+    <title>{% block title %}Carrots Budgeting{% endblock title %}</title>
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,12 +18,9 @@
         <div>
             <ul class="nav-list">
                 {% if user.is_authenticated %}
-                <li><a href='{% url "yearly_list" %}'>Yearly List</a></li>
-                <li><a href='{% url "monthly_budget_list" %}'>Monthly Budget List</a></li>
-                <li><a href='{% url "monthly_create" %}'>Monthly Create</a></li>
-                <li><a href='{% url "yearly_create" %}'>Yearly Create</a></li>
-                <li><a href='{% url "purchase_add" %}'>Purchase Add</a></li>
-                <li><a href='{% url "category_create"%}'>Category Create</a></li>
+                <li><a href='{% url "yearly_list" %}'>Budgets</a></li>
+                <li><a href='{% url "yearly_create" %}'>New Budget</a></li>
+                <li><a href='{% url "purchase_add" %}'>Add a Purchase</a></li>
                 <li><a href='{% url "purchase_list" %}'>Purchase List</a></li>
                 <li><a href="{% url 'account_logout' %}">Logout</a></li>
                 {% else %}
