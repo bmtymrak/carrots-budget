@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 
 from .models import Purchase, Category, Income
-from .forms import PurchaseForm, PurchaseFormSet
+from .forms import PurchaseForm, PurchaseFormSet, IncomeForm
 
 
 class AddUserMixin:
@@ -48,7 +48,6 @@ class PurchaseEditView(LoginRequiredMixin, UpdateView):
 
     def get_object(self):
         obj = Purchase.objects.get(user=self.request.user, id=self.kwargs.get("pk"))
-        print(obj)
         return obj
 
     def get_success_url(self):
@@ -94,7 +93,6 @@ class PurchaseAddView(LoginRequiredMixin, TemplateView):
         if formset.is_valid():
             instances = formset.save(commit=False)
             for instance in instances:
-                print(instance)
                 instance.user = self.request.user
                 instance.save()
             return redirect(reverse_lazy("purchase_list"))
@@ -118,8 +116,13 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 
 class IncomeAddView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Income
-    fields = ["date", "amount", "source", "payer", "category", "notes"]
+    form_class = IncomeForm
     template_name = "purchases/income_create.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
     def get_success_url(self):
         if self.request.POST.get("next"):
@@ -131,9 +134,13 @@ class IncomeAddView(LoginRequiredMixin, AddUserMixin, CreateView):
 
 class IncomeEditView(LoginRequiredMixin, UpdateView):
     model = Income
-    fields = ["date", "amount", "source", "payer", "category", "notes"]
+    form_class = IncomeForm
     template_name = "purchases/income_edit.html"
-    # success_url = reverse_lazy("monthly_budget_list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user})
+        return kwargs
 
     def get_success_url(self):
         if self.request.POST.get("next"):

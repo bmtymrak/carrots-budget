@@ -1,5 +1,5 @@
 from django.forms import ModelForm, modelformset_factory
-from .models import Purchase, Category, Subcategory
+from .models import Purchase, Category, Subcategory, Income
 
 
 class PurchaseForm(ModelForm):
@@ -12,7 +12,9 @@ class PurchaseForm(ModelForm):
         self.fields["subcategory"].empty_label = "Sub-category"
 
         self.fields["item"].widget.attrs.update(placeholder="Item", size="12")
-        self.fields["amount"].widget.attrs.update(placeholder="Price",)
+        self.fields["amount"].widget.attrs.update(
+            placeholder="Price",
+        )
         self.fields["source"].widget.attrs.update(placeholder="Source", size="12")
         self.fields["location"].widget.attrs.update(placeholder="Location", size="12")
         self.fields["notes"].widget.attrs.update(
@@ -38,3 +40,21 @@ class PurchaseForm(ModelForm):
 
 PurchaseFormSet = modelformset_factory(Purchase, form=PurchaseForm, extra=10)
 PurchaseFormSetReceipt = modelformset_factory(Purchase, form=PurchaseForm, extra=1)
+
+
+class IncomeForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(user=self.user)
+
+    class Meta:
+        model = Income
+        fields = [
+            "date",
+            "amount",
+            "source",
+            "payer",
+            "category",
+            "notes",
+        ]
