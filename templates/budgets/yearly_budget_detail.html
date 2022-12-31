@@ -1,4 +1,5 @@
 {% extends "_base.html" %}
+{% load static %}
 
 {% block header %}
     <h1 class="page-title">{{yearly_budget.date.year}}</h1>
@@ -20,78 +21,88 @@
 <div class="card-base">
     <h2>Summary</h2>
     <div class="summary-horizontal-grid-monthly card-table-header">
-        <div class="card-table-heading">Budgeted YTD</div>
+        <div class="card-table-heading">Budgeted</div>
         <div class="card-table-heading">Spent</div>
         <div class="card-table-heading">Saved</div>
-        <div class="card-table-heading">Income Budgeted</div>
-        <div class="card-table-heading">Remaining</div>
-        <div class="card-table-heading">Free at end of year</div>
-    </div>
-    <div class="summary-horizontal-grid-monthly">
-        <div>${{total_budgeted_ytd}}</div>
-        <div class="">${{total_spending_spent}}</div>
-        <div class="">${{total_saved}}</div>
-        <div class="">${{total_income_budgeted.amount}}</div>
-        <div class="">${{total_remaining}}</div>
-        <div class="">${{free_income}}</div>
-    </div>
-    <div class="summary-horizontal-grid-monthly card-table-header">
-        <div class="card-table-heading">Budgeted</div>
-        <div class="card-table-heading">Spent + Saved</div>
-        <div class="card-table-heading"></div>
-        <div class="card-table-heading">Total Income</div>
-        <div class="card-table-heading">Remaining Current Year</div>
-        <div class="card-table-heading">Total Income - Total spent+saved</div>
+        <div class="card-table-heading">Income</div>
+        <div class="card-table-heading">Budgeted Income</div>
+        <div class="card-table-heading">Category Income</div>
     </div>
     <div class="summary-horizontal-grid-monthly">
         <div>${{total_budgeted}}</div>
-        <div class="">${{total_spent}}</div>
+        <div class="">${{total_spending_spent}}</div>
         <div class="">${{total_saved}}</div>
         <div class="">${{total_income.amount}}</div>
-        <div class="">${{total_remaining_current_year}}</div>
-        <div class="">${{total_income_spent_diff}}</div>
+        <div class="">${{total_income_budgeted.amount}}</div>
+        <div class="">${{total_income_category.amount}}</div>
     </div>
     <div class="summary-horizontal-grid-monthly card-table-header">
-        <div class="card-table-heading">Income-Budgeted</div>
-        <div class="card-table-heading">Income-Budgeted YTD</div>
+        <div class="card-table-heading">Budgeted Income-Budgeted</div>
+        <div class="card-table-heading">Spent + Saved</div>
+        <div class="card-table-heading">Budgeted Income - (Spent + Saved)</div>
         <div class="card-table-heading"></div>
         <div class="card-table-heading"></div>
-        <div class="card-table-heading">Remaining YTD</div>
-        <div class="card-table-heading">Budgeted Income - Total spent+saved</div>
+        <div class="card-table-heading"></div>
     </div>
     <div class="summary-horizontal-grid-monthly">
         <div class="">${{budgeted_income_diff}}</div>
-        <div class="">${{budgeted_income_diff_ytd}}</div>
-        <div class="">${{total_saved}}</div>
-        <div class="">${{total_income.amount}}</div>
-        <div class="">${{total_remaining_ytd}}</div>
+        <div class="">${{total_spent_saved}}</div>
         <div class="">${{budgeted_income_spent_diff}}</div>
+        <div class=""></div>
+        <div class=""></div>
+        <div class=""></div>
+    </div>
+    <h3>YTD</h3>
+    <div class="month-select-container">
+        <p>YTD Month Select:</p>
+        <select class="month-select" name="month">
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+        </select>
+    </div>
+    <div class="summary-horizontal-grid-monthly card-table-header">
+        <div class="card-table-heading">Budgeted YTD</div>
+        <div class="card-table-heading">Spent YTD</div>
+        <div class="card-table-heading">Saved YTD</div>
+        <div class="card-table-heading">Income YTD</div>
+        <div class="card-table-heading">Budgeted Income YTD</div>
+        <div class="card-table-heading">Category Income YTD</div>
+    </div>
+    <div class="summary-horizontal-grid-monthly">
+        <div class="">${{total_budgeted_ytd}}</div>
+        <div class="">${{total_spending_spent_ytd}}</div>
+        <div class="">${{total_saved_ytd}}</div>
+        <div class="">${{total_income_ytd.amount}}</div>
+        <div class="">${{total_income_budgeted_ytd.amount}}</div>
+        <div class="">${{total_income_category_ytd.amount}}</div>
+    </div>
+    <div class="summary-horizontal-grid-monthly card-table-header">
+        <div class="card-table-heading">Budgeted Income-Budgeted YTD</div>
+        <div class="card-table-heading">Spent + Saved</div>
+        <div class="card-table-heading">Budgeted Income - (Spent + Saved)</div>
+        <div class="card-table-heading"></div>
+        <div class="card-table-heading"></div>
+        <div class="card-table-heading"></div>
+    </div>
+    <div class="summary-horizontal-grid-monthly">
+        <div class="">${{budgeted_income_diff_ytd}}</div>
+        <div class="">${{total_spent_saved_ytd}}</div>
+        <div class="">${{budgeted_income_spent_diff_ytd}}</div>
+        <div class=""></div>
+        <div class=""></div>
+        <div class=""></div>
     </div>
 </div>
-
-<select class="month-select" name="month">
-    <option value="1">January</option>
-    <option value="2">February</option>
-    <option value="3">March</option>
-    <option value="4">April</option>
-    <option value="5">May</option>
-    <option value="6">June</option>
-    <option value="7">July</option>
-    <option value="8">August</option>
-    <option value="9">September</option>
-    <option value="10">October</option>
-    <option value="11">November</option>
-    <option value="12">December</option>
-</select>
-
-<script>
-    const monthYtdSelect = document.querySelector(".month-select")
-    const monthYtd = `{{request.GET.ytd}}`
-    monthYtdSelect.selectedIndex = `${monthYtd- 1}`
-    monthYtdSelect.onchange = function(){
-        window.location=`{{request.path}}?ytd=${this.value}`
-}
-</script>
 
 <div class="card-container-horz">
     <div class="card-base">
@@ -108,6 +119,7 @@
                     <div class="card-table-heading">Spent YTD</div>
                     <div class="card-table-heading">+/- YTD</div>
                     <div class="card-table-heading">Budgeted</div>
+                    <div class="card-table-heading">Spent</div>
                     <div class="card-table-heading">+/-</div>
                     <div></div>
                 </div>
@@ -119,11 +131,12 @@
                     {% endcomment %}
                     <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.0.category__name %}'>{{budget_item.0.category__name}}</a></div>
                     <div>${{budget_item.4.amount_total_ytd}}</div>
-                    <div>${{budget_item.2.spent}}</div>
+                    <div>${{budget_item.6.spent}}</div>
                     <div>${{budget_item.5.diff_ytd}}</div>
                     <div>${{budget_item.1.amount_total}}</div>
+                    <div>${{budget_item.2.spent}}</div>
                     <div>${{budget_item.3.diff}}</div>
-                    <div><a href='{% url "budgetitem_bulkedit" year=yearly_budget.date.year category=budget_item.0.category__name %}'>Edit</a></div>
+                    <div><a href='{% url "budgetitem_bulkedit" year=yearly_budget.date.year category=budget_item.0.category__name %}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
                     
                     {% endfor %}
                 </div>
@@ -133,6 +146,7 @@
                     <div>${{total_spending_spent_ytd}}</div>
                     <div>${{total_spending_remaining_ytd}}</div>
                     <div>${{total_spending_budgeted}}</div>
+                    <div>${{total_spending_spent}}</div>
                     <div>{{total_spending_remaining}}</div>
                     <div></div>
                 </div>
@@ -155,9 +169,10 @@
                 <div class="budget-horizontal-grid-monthly card-table-header">
                     <div class="card-table-heading">Category</div>
                     <div class="card-table-heading">Budgeted YTD</div>
-                    <div class="card-table-heading">Saved</div>
+                    <div class="card-table-heading">Saved YTD</div>
                     <div class="card-table-heading">+/- YTD</div>
                     <div class="card-table-heading">Budgeted</div>
+                    <div class="card-table-heading">Saved</div>
                     <div class="card-table-heading">+/-</div>
                     <div class="card-table-heading"></div>
                 </div>
@@ -166,11 +181,12 @@
                     <!-- <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div> -->
                     <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=savings_item.0.category__name %}'>{{savings_item.0.category__name}}</a></div>
                     <div>${{savings_item.4.amount_total_ytd}}</div>
-                    <div>${{savings_item.2.saved}}</div>
+                    <div>${{savings_item.6.saved}}</div>
                     <div>${{savings_item.5.diff_ytd}}</div>
                     <div>${{savings_item.1.amount_total}}</div>
+                    <div>${{savings_item.2.saved}}</div>
                     <div>{{savings_item.3.diff}}</div>
-                    <div>Edit</div>
+                    <div><a href='{% url "budgetitem_bulkedit" year=yearly_budget.date.year category=savings_item.0.category__name %}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
                     {% endfor %}
                 </div>
                 <div class="budget-horizontal-grid-monthly">
@@ -179,15 +195,17 @@
                     <div>${{total_saved_ytd}}</div>
                     <div>${{total_savings_remaining_ytd}}</div>
                     <div>${{total_savings_budgeted}}</div>
+                    <div>${{total_saved}}</div>
                     <div>${{total_savings_remaining}}</div>
                     <div></div>
                 </div>
                 <div class="budget-horizontal-grid-monthly">
                     <div>Total</div>
                     <div>${{total_budgeted_ytd}}</div>
-                    <div>${{total_spent_ytd}}</div>
+                    <div>${{total_spent_saved_ytd}}</div>
                     <div>${{total_remaining_ytd}}</div>
                     <div>${{total_budgeted}}</div>
+                    <div>${{total_spent_saved}}</div>
                     <div>${{total_remaining}}</div>
                     <div></div>
                 </div>
@@ -232,103 +250,10 @@
         <div>{{income.category}}</div>
         <div>{{income.date}}</div>
         <div>{{income.notes}}</div>
-        <div><a href='{% url "income_edit" pk=income.id %}?next={{request.path|urlencode}}'>Edit</a></div>
+        <div><a href='{% url "income_edit" pk=income.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
     </div>
     {% endfor %}
 </div>
-
-    <div class="card-base">
-        <div class="card-header">
-            <h2>Monthly Budgets</h2>
-        </div>
-
-        <div class="yearly-detail-grid-container">
-        
-            <div>
-                <div>Year-To-Date</div>
-            <div class="budget-horizontal-grid-year">
-                <div>Category</div>
-                <div>Spent</div>
-                <div>Remaining</div>
-            </div>
-            {% for budget_item in budget_items%}
-            <div class="budget-horizontal-grid-year">
-                <div data-tooltip='{{budget_item.category__name}}'>{{budget_item.category__name}}</div>
-                <div>{{budget_item.spent}}</div>
-                <div>{{budget_item.diff}}</div>
-            </div>
-            {% endfor %}
-            <div class="budget-horizontal-grid-year">
-                <div>Total</div>
-                <div>{{total_spending_spent.amount}}</div>
-                <div>{{total_spending_remaining.amount}}</div>
-            </div>
-            <div class="budget-horizontal-grid-year">
-                <div>Category</div>
-                <div>Saved</div>
-                <div>Remaining</div>
-            </div>
-            </div>
-            <div class="yearly-detail-grid">
-                {% if monthly_bs %}
-                {% for month in monthly_bs %}
-                <div>
-                    <a href='{% url "monthly_detail" month=month.0.0 year=yearly_budget.date.year %}'>{{month.0.1}}</a>
-        
-                    <div class="budget-horizontal-grid-month">
-                        <div>Budgeted</div>
-                        <div>Spent</div>
-                        <div>Remaining</div>
-                    </div>
-                    {% for budget_item in month.1 %}
-                    <div class="budget-horizontal-grid-month">
-                        <div>{{budget_item.amount}}</div>
-                        <div>{{budget_item.spent}}</div>
-                        <div>{{budget_item.diff}}</div>
-                    </div>
-                    {% endfor %}
-                    <div class="budget-horizontal-grid-month">
-                        <div>{{month.2}}</div>
-                        <div>{{month.3}}</div>
-                        <div>{{month.4}}</div>
-                    </div>
-                    <div class="budget-horizontal-grid-month">
-                        <div>Budgeted</div>
-                        <div>Saved</div>
-                        <div>Remaining</div>
-                    </div>
-                </div>
-                {% endfor %}
-        
-                {% else %}
-                {% for monthly_budget in monthly_budgets %}
-                <div>
-        
-        
-                    <div class="budget-horizontal-grid-month">
-                        <div>Budgeted</div>
-                        <div>Spent</div>
-                        <div>Remaining</div>
-                    </div>
-                    <div class="budget-horizontal-grid-month">
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                    </div>
-                    <div class="budget-horizontal-grid-month">
-                        <div>Total</div>
-                    </div>
-                </div>
-                {% endfor %}
-                {% endif %}
-        
-        
-            </div>
-        </div>
-
-    </div>
-</div>
-
 <div class="card-base">
     <h2>Uncategorized Purchases</h2>
     <div class="purchase-horizontal-grid card-table-header">
@@ -350,13 +275,17 @@
         <div>{{purchase.source}}</div>
         <div>{{purchase.location}}</div>
         <div>{{purchase.category}}</div>
-        <div><a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'>Edit</a></div>
+        <div><a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
         <div><a href='{% url "purchase_delete" pk=purchase.id %}?next={{request.path|urlencode}}'>Delete</a></div>
  
     </div>
 
     {% endfor %}
 </div>
+
+</div>
+
+
 
 <script>
 
@@ -405,6 +334,13 @@
         item.addEventListener('blur', saveRollover)
     })
 
+
+        const monthYtdSelect = document.querySelector(".month-select")
+        const monthYtd = `{{request.GET.ytd}}`
+        monthYtdSelect.selectedIndex = `${monthYtd- 1}`
+        monthYtdSelect.onchange = function(){
+            window.location=`{{request.path}}?ytd=${this.value}`
+    }
 
 </script>
 {% endblock body %}

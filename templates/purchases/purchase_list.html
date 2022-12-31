@@ -1,10 +1,11 @@
 {% extends "_base.html" %}
+{% load static %}
 
 
 
-{% block body_heading %}
-        Purchases
-{% endblock body_heading %}
+{% block header %}
+        <h1>Purchases</h1>
+{% endblock header %}
 
 {% block body %}
 <div class="purchase-horizontal-grid">
@@ -17,18 +18,18 @@
     <div>Edit</div>
     <div>Delete</div>
 </div>
-{% for purchase in purchases %}
 
 <div class="purchase-horizontal-grid">
+    {% for purchase in purchases %}
     <div>{{purchase.date}}</div>
     <div>{{purchase.item}}</div>
     <div>{{purchase.amount}}</div>
     <div>{{purchase.source}}</div>
     <div>{{purchase.location}}</div>
     <div>{{purchase.category}}</div>
-    <div><a href='{% url "purchase_edit" pk=purchase.id %}'>Edit</a></div>
-    <div><a href='{% url "purchase_delete" pk=purchase.id %}'>Delete</a></div>
+    <div><a href='{% url "purchase_edit" pk=purchase.id %}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px" alt="Edit"></a></div>
+    <div><a href='{% url "purchase_delete" pk=purchase.id %}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px" alt="Delete"></a></div>
+    {% endfor %}
 </div>
-{% endfor %}
 </div>
 {% endblock body %}

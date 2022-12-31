@@ -1,9 +1,9 @@
 {% extends "_base.html" %}
 
 {% block body %}
-<form method="POST">
+<form class="form-grid" method="POST">
     {% csrf_token %}
-    {{form.as_p}}
+    {{form}}
     <input type="hidden" name="next" value="{{request.GET.next}}">
     <button type="submit">Save</button>
 </form>

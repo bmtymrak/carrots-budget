@@ -1,4 +1,5 @@
 {% extends "_base.html" %}
+{% load static %}
 
 {% block header %}
     <h1 class="page-title">{{monthly_budget.date|date:"F Y"}}</h1>
@@ -57,22 +58,26 @@
             <div></div>
         </div>
 
-    {% for budget_item in budget_items%}
         <div class="budget-horizontal-grid-monthly">
+            {% for budget_item in budget_items%}
             <div><a data-tooltip="{{budget_item.category}}" href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>{{budget_item.category}}</a></div>
             <div>${{budget_item.amount}}</div>
             <div>${{budget_item.spent}}</div>
             <div>${{budget_item.diff}}</div>
-            <div><a href='{% url "budgetitem_edit" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>Edit</a></div>
+            <div><a href='{% url "budgetitem_edit" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
+            <div></div>
+            <div></div>
+            <div></div>
+
+            {% endfor %}
         </div>
-    {% endfor %}
     {% if uncategorized_purchases.amount %}
         <div class="budget-horizontal-grid-monthly">
             <div><a data-tooltip="Uncategorized" href=''>{{Uncategorized}}</a>Uncategorized</div>
             <div>${{uncategorized_purchases.budgeted}}</div>
             <div>${{uncategorized_purchases.amount}}</div>
             <div>${{uncategorized_purchases.remaining}}</div>
-            <div><a href=''>Edit</a></div>
+            <div><a href=''><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
         </div>
     {% endif %}
 
@@ -90,16 +95,19 @@
             <div class="card-table-heading">Remaining</div>
             <div></div>
         </div>
-    {% for savings_item in savings_items %}
     <div class="budget-horizontal-grid-monthly">
+        {% for savings_item in savings_items %}
         <div><a href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=savings_item.category.name %}'>{{savings_item.category}}</a></div>
         <div>${{savings_item.amount}}</div>
         <div>${{savings_item.saved}}</div>
         <div>${{savings_item.diff}}</div>
-        <div><a href='{% url "budgetitem_edit" year=monthly_budget.date.year month=monthly_budget.date.month category=savings_item.category.name %}'>Edit</a></div>
+        <div><a href='{% url "budgetitem_edit" year=monthly_budget.date.year month=monthly_budget.date.month category=savings_item.category.name %}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        {% endfor %}
     </div>
 
-    {% endfor %}
     <div class="budget-horizontal-grid-monthly budget-subtotal">
         <div class="card-table-subtotal">Savings Totals</div>
         <div class="card-table-subtotal">${{total_savings_budgeted.amount}}</div>
@@ -131,16 +139,16 @@
             <div class="card-table-heading">Notes</div>
             <div></div>
         </div>
-        {% for income in incomes %}
         <div class="income-horizontal-grid-monthly">
+            {% for income in incomes %}
             <div>${{income.amount}}</div>
             <div>{{income.source}}</div>
             <div>{{income.category}}</div>
             <div>{{income.date}}</div>
             <div>{{income.notes}}</div>
-            <div><a href='{% url "income_edit" pk=income.id %}?next={{request.path|urlencode}}'>Edit</a></div>
+            <div><a href='{% url "income_edit" pk=income.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
 </div>
 
@@ -156,20 +164,20 @@
         <div class="card-table-heading">Edit</div>
         <div class="card-table-heading">Delete</div>
     </div>
-    {% for purchase in purchases %}
 
     <div class="purchase-horizontal-grid">
+        {% for purchase in purchases %}
         <div>{{purchase.date}}</div>
         <div>{{purchase.item}}</div>
         <div>${{purchase.amount}}</div>
         <div>{{purchase.source}}</div>
         <div>{{purchase.location}}</div>
         <div>{{purchase.category}}</div>
-        <div><a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'>Edit</a></div>
-        <div><a href='{% url "purchase_delete" pk=purchase.id %}?next={{request.path|urlencode}}'>Delete</a></div>
+        <div><a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
+        <div><a href='{% url "purchase_delete" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></a></div>
+        {% endfor %}
     </div>
 
-    {% endfor %}
 
 
 

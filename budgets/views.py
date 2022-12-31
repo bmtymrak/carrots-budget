@@ -1,8 +1,10 @@
 import datetime
 import json
 import calendar
+import time
 
 from django.db.models.fields import DecimalField, BooleanField
+from django.db import connection
 from django.http.response import HttpResponseRedirect
 from django.http import JsonResponse
 from django.views.generic.edit import DeleteView
@@ -47,7 +49,6 @@ class YearlyBudgetCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        # print(form.instance.date.year)
         self.object = form.save()
 
         for month in range(1, 13):
@@ -89,7 +90,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         kwargs = super().get_context_data(**kwargs)
 
         purchases = Purchase.objects.filter(
-            # category=OuterRef("category"),
             user=self.request.user,
             date__year=self.object.date.year,
         )
@@ -97,7 +97,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         purchases_uncategorized = purchases.filter(category=None)
 
         incomes = Income.objects.filter(
-            # category=OuterRef("category"),
             user=self.request.user,
             date__year=self.object.date.year,
         )
@@ -106,7 +105,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             BudgetItem.objects.filter(user=self.request.user)
             .filter(
                 monthly_budget__date__year=self.object.date.year,
-                # monthly_budget__date__month__lte=datetime.datetime.now().month,
                 savings=False,
             )
             .values("category__name")
@@ -143,8 +141,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                                 yearly_budget__date__year=self.object.date.year - 1,
                                 category=OuterRef("category"),
                             ).values("amount")
-                            # .annotate(amount="amount")
-                            # .values("amount")
                         ),
                         Value(0),
                     ),
@@ -169,6 +165,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                     Coalesce(
                         Subquery(
                             purchases.filter(category=OuterRef("category"))
+                            .filter(date__month__lte=ytd_month)
                             .values("category")
                             .annotate(total=Sum("amount"))
                             .values("total")
@@ -181,6 +178,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                     Coalesce(
                         Subquery(
                             incomes.filter(category=OuterRef("category"))
+                            .filter(date__month__lte=ytd_month)
                             .values("category")
                             .annotate(total=Sum("amount"))
                             .values("total")
@@ -205,6 +203,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 budgetitems.values("diff"),
                 budgetitems_ytd.values("amount_total_ytd"),
                 budgetitems_ytd.values("diff_ytd"),
+                budgetitems_ytd.values("spent"),
             )
         )
 
@@ -236,8 +235,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                                 yearly_budget__date__year=self.object.date.year - 1,
                                 category=OuterRef("category"),
                             ).values("amount")
-                            # .annotate(amount="amount")
-                            # .values("amount")
                         ),
                         Value(0),
                     ),
@@ -261,6 +258,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                     Coalesce(
                         Subquery(
                             purchases.filter(category=OuterRef("category"))
+                            .filter(date__month__lte=ytd_month)
                             .values("category")
                             .annotate(total=Sum("amount"))
                             .values("total")
@@ -282,6 +280,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 savings_items.values("diff"),
                 savings_items_ytd.values("amount_total_ytd"),
                 savings_items_ytd.values("diff_ytd"),
+                savings_items_ytd.values("saved"),
             )
         )
 
@@ -305,7 +304,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         total_budgeted = total_spending_budgeted + total_savings_budgeted
 
-        total_spent = total_spending_spent + total_saved
+        total_spent_saved = total_spending_spent + total_saved
 
         total_remaining = total_spending_remaining + total_savings_remaining
 
@@ -331,141 +330,9 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         total_budgeted_ytd = total_spending_budgeted_ytd + total_savings_budgeted_ytd
 
-        total_spent_ytd = total_spending_spent_ytd + total_saved_ytd
+        total_spent_saved_ytd = total_spending_spent_ytd + total_saved_ytd
 
         total_remaining_ytd = total_spending_remaining_ytd + total_savings_remaining_ytd
-
-        monthly_purchases = Purchase.objects.filter(
-            category=OuterRef("category"),
-            date__year=self.object.date.year,
-            date__month=OuterRef("monthly_budget__date__month"),
-            user=self.request.user,
-        ).values("date__month", "category")
-
-        monthly_budgetitems = (
-            (
-                BudgetItem.objects.filter(user=self.request.user)
-                .filter(
-                    monthly_budget__date__year=self.object.date.year,
-                )
-                .annotate(
-                    spent=ExpressionWrapper(
-                        Coalesce(
-                            Subquery(
-                                monthly_purchases.annotate(total=Sum("amount")).values(
-                                    "total"
-                                )
-                            ),
-                            Value(0),
-                        ),
-                        output_field=DecimalField(),
-                    ),
-                )
-                .annotate(diff=F("amount") - F("spent"))
-            )
-            .order_by(
-                "monthly_budget__date__month",
-                "savings",
-                "category__name",
-            )
-            .select_related()
-        )
-
-        monthly_savings_transactions = Purchase.objects.filter(
-            category=OuterRef("category"),
-            date__year=self.object.date.year,
-            date__month=OuterRef("monthly_budget__date__month"),
-            user=self.request.user,
-        ).values("date__month", "category")
-
-        monthly_savingsitems = (
-            (
-                BudgetItem.objects.filter(user=self.request.user)
-                .filter(monthly_budget__date__year=self.object.date.year, savings=True)
-                .annotate(
-                    spent=ExpressionWrapper(
-                        Coalesce(
-                            Subquery(
-                                monthly_savings_transactions.annotate(
-                                    total=Sum("amount")
-                                ).values("total")
-                            ),
-                            Value(0),
-                        ),
-                        output_field=DecimalField(),
-                    ),
-                )
-                .annotate(diff=F("amount") - F("spent"))
-            )
-            .order_by("monthly_budget__date__month", "category__name")
-            .select_related()
-        )
-
-        number_of_budget_items = monthly_budgetitems.filter(
-            monthly_budget__date__month=1
-        ).count()
-
-        if number_of_budget_items:
-            monthly_budgs = [
-                list(monthly_budgetitems)[i : i + number_of_budget_items]
-                for i in range(
-                    0, len(list(monthly_budgetitems)), number_of_budget_items
-                )
-            ]
-        else:
-            monthly_budgs = [[] for i in range(12)]
-
-        number_of_savings_items = monthly_savingsitems.filter(
-            monthly_budget__date__month=1
-        ).count()
-
-        if number_of_savings_items:
-            monthly_saves = [
-                list(monthly_savingsitems)[i : i + number_of_savings_items]
-                for i in range(
-                    0, len(list(monthly_savingsitems)), number_of_savings_items
-                )
-            ]
-        else:
-            monthly_saves = [[] for i in range(12)]
-
-        monthly_budgeted = []
-        monthly_spent = []
-        monthly_remaining = []
-        for month in monthly_budgs:
-            budgeted = 0
-            spent = 0
-            remaining = 0
-            for bud in month:
-                budgeted += bud.amount
-                spent += bud.spent
-                remaining += bud.diff
-            monthly_budgeted.append(budgeted)
-            monthly_spent.append(spent)
-            monthly_remaining.append(remaining)
-
-        monthly_bs = list(
-            zip(
-                [
-                    (1, "January"),
-                    (2, "February"),
-                    (3, "March"),
-                    (4, "April"),
-                    (5, "May"),
-                    (6, "June"),
-                    (7, "July"),
-                    (8, "August"),
-                    (9, "September"),
-                    (10, "October"),
-                    (11, "November"),
-                    (12, "December"),
-                ],
-                monthly_budgs,
-                monthly_budgeted,
-                monthly_spent,
-                monthly_remaining,
-            )
-        )
 
         incomes = (
             Income.objects.filter(
@@ -479,7 +346,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         incomes_ytd = Income.objects.filter(
             user=self.request.user,
             date__year=self.object.date.year,
-            date__month__lte=datetime.datetime.now().month,
+            date__month__lte=ytd_month,
         ).order_by("date")
 
         total_income = incomes.aggregate(
@@ -506,8 +373,23 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
         )
 
-        total_income_spent_diff = total_income["amount"] - total_spent
-        budgeted_income_spent_diff = total_income_budgeted["amount"] - total_spent
+        total_income_category = incomes.filter(~Q(category=None)).aggregate(
+            amount=ExpressionWrapper(
+                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
+            )
+        )
+
+        total_income_category_ytd = incomes_ytd.filter(~Q(category=None)).aggregate(
+            amount=ExpressionWrapper(
+                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
+            )
+        )
+
+        total_income_spent_diff = total_income["amount"] - total_spent_saved
+        budgeted_income_spent_diff = total_income_budgeted["amount"] - total_spent_saved
+        budgeted_income_spent_diff_ytd = (
+            total_income_budgeted_ytd["amount"] - total_spent_saved_ytd
+        )
 
         budgeted_income_diff = total_income_budgeted["amount"] - total_budgeted
         budgeted_income_diff_ytd = (
@@ -516,12 +398,17 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         free_income = (
             budgetitems.filter(rollover=0).aggregate(
-                amount=Sum("remaining_current_year")
+                amount=ExpressionWrapper(
+                    Coalesce(Sum("remaining_current_year"), Value(0)),
+                    output_field=DecimalField(),
+                )
             )["amount"]
-            + savings_items.filter(rollover=0).aggregate(amount=Sum("diff"))["amount"]
+            + savings_items.filter(rollover=0).aggregate(
+                amount=ExpressionWrapper(
+                    Coalesce(Sum("diff"), Value(0)), output_field=DecimalField()
+                )
+            )["amount"]
         )
-
-        monthly_budgets = MonthlyBudget.objects.filter(date__year=self.object.date.year)
 
         rollovers = (
             Rollover.objects.filter(user=self.request.user, yearly_budget=self.object)
@@ -546,11 +433,8 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         kwargs.update(
             {
-                "budget_items": budgetitems,
-                "budgetitems_ytd": budgetitems_ytd,
                 "budget_items_combined": budget_items_combined,
                 "savings_items_combined": savings_items_combined,
-                "savings_items": savings_items,
                 "incomes": incomes,
                 "total_spending_spent": total_spending_spent,
                 "total_spending_remaining": total_spending_remaining,
@@ -564,18 +448,20 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 "total_saved_ytd": total_saved_ytd,
                 "total_savings_budgeted_ytd": total_savings_budgeted_ytd,
                 "total_savings_remaining_ytd": total_savings_remaining_ytd,
-                "total_spent": total_spent,
+                "total_spent_saved": total_spent_saved,
                 "total_budgeted": total_budgeted,
                 "total_remaining": total_remaining,
                 "total_remaining_current_year": total_remaining_current_year,
-                "total_spent_ytd": total_spent_ytd,
+                "total_spent_saved_ytd": total_spent_saved_ytd,
                 "total_budgeted_ytd": total_budgeted_ytd,
                 "total_remaining_ytd": total_remaining_ytd,
                 "total_income": total_income,
+                "total_income_ytd": total_income_ytd,
                 "total_income_budgeted": total_income_budgeted,
+                "total_income_budgeted_ytd": total_income_budgeted_ytd,
+                "total_income_category": total_income_category,
+                "total_income_category_ytd": total_income_category_ytd,
                 "free_income": free_income,
-                "monthly_budgets": monthly_budgets,
-                "monthly_bs": monthly_bs,
                 "purchases_uncategorized": purchases_uncategorized,
                 "rollovers_spending": rollovers_spending,
                 "rollovers_savings": rollovers_savings,
@@ -583,6 +469,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 "budgeted_income_diff_ytd": budgeted_income_diff_ytd,
                 "total_income_spent_diff": total_income_spent_diff,
                 "budgeted_income_spent_diff": budgeted_income_spent_diff,
+                "budgeted_income_spent_diff_ytd": budgeted_income_spent_diff_ytd,
                 "months": [
                     (calendar.month_name[month], month) for month in range(1, 13)
                 ],
@@ -625,6 +512,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
     template_name = "budgets/monthly_budget_detail.html"
 
     def get(self, request, *args, **kwargs):
+
         self.object = MonthlyBudget.objects.get(
             date__year=self.kwargs.get("year"),
             date__month=self.kwargs.get("month"),
@@ -634,6 +522,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
         purchase_formset = PurchaseFormSetReceipt(
             queryset=Purchase.objects.none(), form_kwargs={"user": self.request.user}
         )
+
         return self.render_to_response(
             self.get_context_data(purchase_formset=purchase_formset)
         )
@@ -674,6 +563,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
             )
 
     def get_context_data(self, **kwargs):
+
         kwargs = super().get_context_data(**kwargs)
 
         category_purchases = Purchase.objects.filter(
@@ -702,15 +592,6 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
                                     "total"
                                 )
                             ),
-                            # Sum(
-                            # "category__purchases__amount",
-                            # filter=Q(
-                            #     category__purchases__date__month=self.object.date.month,
-                            #     category__purchases__date__year=self.object.date.year,
-                            #     category__purchases__user=self.request.user,
-                            # ),
-                            # distinct=True,
-                            # ),
                             Value(0),
                         ),
                         output_field=DecimalField(),
@@ -721,15 +602,6 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
                                 category_incomes.annotate(total=Sum("amount")).values(
                                     "total"
                                 )
-                                # )
-                                # Sum(
-                                #     "category__incomes__amount",
-                                #     filter=Q(
-                                #         category__incomes__date__month=self.object.date.month,
-                                #         category__incomes__date__year=self.object.date.year,
-                                #         category__incomes__user=self.request.user,
-                                #     ),
-                                #     distinct=True,
                             ),
                             Value(0),
                         ),
@@ -834,7 +706,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
             total_spending_budgeted["amount"] + total_savings_budgeted["amount"]
         )
 
-        total_spent = total_spending_spent["amount"] + total_saved["amount"]
+        total_spent_saved = total_spending_spent["amount"] + total_saved["amount"]
 
         total_remaining = (
             total_spending_remaining["amount"] + total_savings_remaining["amount"]
@@ -866,10 +738,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
             )
         )
 
-        # try:
-        free_income = total_income["amount"] - total_spent
-        # except TypeError:
-        #     free_income = 0
+        free_income = total_income["amount"] - total_spent_saved
 
         kwargs.update(
             {
@@ -878,7 +747,8 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
                 "purchases": purchases,
                 "incomes": incomes,
                 "total_budgeted": total_budgeted,
-                "total_spent": total_spent,
+                "total_spent": total_spending_spent["amount"],
+                "total_spent_saved": total_spent_saved,
                 "total_spending_budgeted": total_spending_budgeted,
                 "total_spending_spent": total_spending_spent,
                 "total_spending_remaining": total_spending_remaining,
@@ -898,6 +768,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
         return kwargs
 
     def get_form_kwargs(self):
+
         kwargs = super().get_form_kwargs()
         kwargs.update({"user": self.request.user})
         kwargs["instance"] = None
@@ -929,7 +800,9 @@ class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     def form_valid(self, form):
         if form.cleaned_data["new_category"]:
             try:
-                category = Category.objects.get(name=form.cleaned_data["new_category"])
+                category = Category.objects.get(
+                    name=form.cleaned_data["new_category"], user=self.request.user
+                )
             except:
                 category = Category.objects.create(
                     name=form.cleaned_data["new_category"], user=self.request.user
@@ -937,7 +810,9 @@ class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
             form.instance.category = category
 
         monthly_budgets = list(
-            MonthlyBudget.objects.filter(date__year=self.kwargs["year"])
+            MonthlyBudget.objects.filter(
+                date__year=self.kwargs["year"], user=self.request.user
+            )
         )
 
         for monthly_budget in monthly_budgets:
@@ -1112,7 +987,6 @@ class BudgetItemBulkEditView(LoginRequiredMixin, TemplateView):
 
     def post(self, *args, **kwargs):
         formset = BudgetItemFormset(data=self.request.POST)
-        print(self.kwargs)
 
         if formset.is_valid():
             instances = formset.save(commit=False)

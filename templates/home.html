@@ -1,10 +1,42 @@
-{% extends "_base.html" %}
+{% load static %}
 
-{% block title %}Carrots Budgeting App{% endblock title %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Carrots Budgeting{% endblock title %}</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
 
-{% block body %}
-<h1>Carrots Budgeting</h1>
-<a href="{% url 'account_login' %}">Login</a>
-<a href="{% url 'account_signup' %}">Sign Up</a>
-<a href="{% url 'account_logout' %}">Logout</a>
-{% endblock body %}
+    <div class="main-container">
+        <div>
+            <div class="content-container flex">
+                <div class="content">
+                    <div class="home-container">
+                        <div class="home-header-container">
+                            <div class="home-header-info">
+                                <h1>Carrots Budgeting</h1>
+                                <div class="home-link-container">
+                                    <a href="{% url 'account_login' %}"><div class="home-link">Login</div></a>
+                                    <a href="{% url 'account_signup' %}"><div class="home-link">Sign Up</div></a>
+                                </div>
+                            </div>
+                            <img src='{% static "images/carrots_logo.svg" %}' height="200">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>
+
+
+

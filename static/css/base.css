@@ -86,6 +86,11 @@ a {
     background-color: #fdfdfd;
 }
 
+.flex {
+    display: flex;
+    justify-content: center;
+}
+
 .nav-list {
     list-style-type: none;
     padding-left: 0px;
@@ -129,7 +134,7 @@ a {
 
 .content {
     max-width: 1050px;
-    width: 100%
+    width: 100%;
 }
 
 .summary-horizontal-grid-monthly {
@@ -141,9 +146,11 @@ a {
 
 .purchase-horizontal-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr .5fr .5fr;
     margin-bottom: 10px;
     padding-left: 10px;
+    column-gap: 10px;
+    row-gap: 5px;
 }
 
 .purchase-horizontal-grid div {
@@ -154,7 +161,7 @@ a {
 .income-horizontal-grid-monthly {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    margin-bottom: 10px;
+    row-gap: 5px;
     padding-left: 10px;
 }
 
@@ -213,9 +220,10 @@ a {
 
 .budget-horizontal-grid-monthly {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, 1fr) .3fr;
     margin-bottom: 10px;
     padding-left: 10px;
+    row-gap: 5px;
 }
 
 .budget-horizontal-grid-monthly>div {
@@ -283,6 +291,7 @@ h2 {
     padding: 10px 10px 10px 10px;
     margin-top: 20px;
     max-width: 100%;
+    width: 100%;
 }
 
 .card-header {
@@ -324,10 +333,6 @@ h2 {
     flex-wrap: wrap;
 }
 
-.card-container-horz> :first-child {
-    margin-right: 20px;
-}
-
 .card-table-header {
     background-color: #F1F1F1;
     border-radius: 7px;
@@ -364,4 +369,55 @@ h2 {
     padding: 0px;
     border: none;
     font-size: 16px;
+}
+
+.month-select-container {
+    display: flex;
+    margin-bottom: 5px;
+}
+
+.form-grid {
+    display: grid;
+    row-gap: 5px;
+    max-width: 400px;
+    margin: auto;
+}
+
+.home-container {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.home-header-container {
+    display: flex;
+}
+
+.home-header-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.home-link-container {
+    display: flex;
+    justify-content: space-around;
+}
+
+.home-link-container>a {
+    text-decoration: none;
+}
+
+.home-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
+    border: 3px solid black;
+    border-radius: 5px;
+    height: 50px;
+    font-weight: bold;
+    font-size: 20px;
 }
