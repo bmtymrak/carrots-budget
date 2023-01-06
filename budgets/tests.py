@@ -1,10 +1,11 @@
+from datetime import datetime
+
 from django.test import TestCase
 from accounts.models import CustomUser
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from .models import YearlyBudget
 
-from datetime import datetime
 
 User = get_user_model()
 

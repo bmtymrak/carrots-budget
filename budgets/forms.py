@@ -1,6 +1,6 @@
 from django.forms import ModelForm, CharField, modelformset_factory
-from .models import BudgetItem
 
+from .models import BudgetItem
 from .models import MonthlyBudget
 from purchases.models import Category
 

@@ -9,11 +9,11 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
+from datetime import datetime
+from pathlib import Path
 
 from django.urls import reverse
-from datetime import datetime
 
-from pathlib import Path
 import environ
 
 env = environ.Env(DEBUG=(bool, False))

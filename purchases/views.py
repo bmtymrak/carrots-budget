@@ -62,7 +62,6 @@ class PurchaseDeleteView(LoginRequiredMixin, DeleteView):
     model = Purchase
     context_object_name = "purchase"
     template_name = "purchases/purchase_delete.html"
-    # success_url = reverse_lazy("purchase_list")
 
     def get_object(self):
         obj = self.model.objects.get(user=self.request.user, id=self.kwargs.get("pk"))
