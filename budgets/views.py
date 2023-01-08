@@ -803,14 +803,10 @@ class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 
     def form_valid(self, form):
         if form.cleaned_data["new_category"]:
-            try:
-                category = Category.objects.get(
-                    name=form.cleaned_data["new_category"], user=self.request.user
-                )
-            except:
-                category = Category.objects.create(
-                    name=form.cleaned_data["new_category"], user=self.request.user
-                )
+            category, _ = Category.objects.get_or_create(
+                name=form.cleaned_data["new_category"], user=self.request.user
+            )
+
             form.instance.category = category
 
         monthly_budgets = list(
@@ -874,13 +870,11 @@ class BudgetItemEditView(LoginRequiredMixin, AddUserMixin, UpdateView):
         return obj
 
     def form_valid(self, form):
+
         if form.cleaned_data["new_category"]:
-            try:
-                category = Category.objects.get(name=form.cleaned_data["new_category"])
-            except:
-                category = Category.objects.create(
-                    name=form.cleaned_data["new_category"], user=self.request.user
-                )
+            category, _ = Category.objects.get_or_create(
+                name=form.cleaned_data["new_category"], user=self.request.user
+            )
 
             form.instance.category = category
             form.instance.monthly_budget = MonthlyBudget.objects.get(
