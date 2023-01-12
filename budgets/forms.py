@@ -10,11 +10,9 @@ class BudgetItemForm(ModelForm):
     new_category = CharField(required=False)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request")
+        self.user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
-        self.fields["category"].queryset = Category.objects.filter(
-            user=self.request.user
-        )
+        self.fields["category"].queryset = Category.objects.filter(user=self.user)
 
     class Meta:
         model = BudgetItem
