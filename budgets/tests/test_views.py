@@ -28,19 +28,12 @@ class TestYearlyBudgetDetailView(TestCase):
             response, f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}"
         )
 
-    def test_yearly_detail_view_no_data(self):
+    def test_yearly_detail_uses_correct_template(self):
         self.client.login(email="testemail@test.com", password="testpass123")
         response = self.client.get(
             reverse("yearly_detail", args=[datetime.datetime.now().year])
         )
         self.assertEqual(response.status_code, 200)
-
-    def test_loggin_in_uses_correct_template(self):
-        self.client.login(email="testemail@test.com", password="testpass123")
-        response = self.client.get(
-            reverse("yearly_detail", args=[datetime.datetime.now().year])
-        )
-
         self.assertTemplateUsed(response, "budgets/yearly_budget_detail.html")
 
 
@@ -115,7 +108,7 @@ class TestYearlyBudgetListView(TestCase):
 
         response = self.client.get(reverse("yearly_list"))
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
         self.assertTemplateUsed(response, "budgets/yearly_budget_list.html")
 
     def test_only_show_current_user_budgets(self):
@@ -143,12 +136,24 @@ class TestMonthlyBudgetDetailView(TestCase):
             email="testuser2@test.com", username="testuser2", password="testpass123"
         )
 
-        yearly_budget = YearlyBudget.objects.create(
+        cls.yearly_budget_user1 = YearlyBudget.objects.create(
             user=cls.user1, date=datetime.datetime.now()
         )
 
+        cls.yearly_budget_user2 = YearlyBudget.objects.create(
+            user=cls.user2, date=datetime.datetime.now()
+        )
+
+        cls.monthly_budget_user1 = MonthlyBudget.objects.create(
+            user=cls.user1,
+            yearly_budget=cls.yearly_budget_user1,
+            date=datetime.datetime.now(),
+        )
+
         MonthlyBudget.objects.create(
-            user=cls.user1, yearly_budget=yearly_budget, date=datetime.datetime.now()
+            user=cls.user2,
+            yearly_budget=cls.yearly_budget_user2,
+            date=datetime.datetime.now(),
         )
 
     def test_redirect_if_not_logged_in(self):
@@ -167,4 +172,74 @@ class TestMonthlyBudgetDetailView(TestCase):
             reverse("monthly_detail", args=[datetime.datetime.now().year, 1])
         )
 
+        self.assertEqual(200, response.status_code)
         self.assertTemplateUsed(response, "budgets/monthly_budget_detail.html")
+
+    def test_object_is_for_the_current_loggin_in_user(self):
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        response = self.client.get(
+            reverse("monthly_detail", args=[datetime.datetime.now().year, 1])
+        )
+
+        self.assertEqual(self.monthly_budget_user1, response.context["object"])
+
+    def test_formset_in_response_context(self):
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        response = self.client.get(
+            reverse("monthly_detail", args=[datetime.datetime.now().year, 1])
+        )
+
+        self.assertTrue("purchase_formset" in response.context)
+
+
+class TestBudgetItemCreateView(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user1 = User.objects.create_user(
+            email="testuser1@test.com", username="testuser1", password="testpass123"
+        )
+        cls.user2 = User.objects.create_user(
+            email="testuser2@test.com", username="testuser2", password="testpass123"
+        )
+
+        cls.yearly_budget_user1 = YearlyBudget.objects.create(
+            user=cls.user1, date=datetime.datetime.now()
+        )
+
+        cls.yearly_budget_user2 = YearlyBudget.objects.create(
+            user=cls.user2, date=datetime.datetime.now()
+        )
+
+        cls.monthly_budget_user1 = MonthlyBudget.objects.create(
+            user=cls.user1,
+            yearly_budget=cls.yearly_budget_user1,
+            date=datetime.datetime.now(),
+        )
+
+        MonthlyBudget.objects.create(
+            user=cls.user2,
+            yearly_budget=cls.yearly_budget_user2,
+            date=datetime.datetime.now(),
+        )
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(
+            reverse("budgetitem_create", args=[datetime.datetime.now().year])
+        )
+
+        self.assertRedirects(
+            response,
+            f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}/budgetitem-create",
+        )
+
+    def test_budget_item_create_uses_correct_template(self):
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        response = self.client.get(
+            reverse("budgetitem_create", args=[datetime.datetime.now().year])
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, "budgets/budgetitem_create.html")

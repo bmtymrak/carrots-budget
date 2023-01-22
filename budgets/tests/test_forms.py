@@ -29,3 +29,17 @@ class BudgetItemFormTest(TestCase):
     def test_only_current_user_categories_show_in_form(self):
         form = BudgetItemForm(user=self.user1)
         self.assertEqual(form.fields["category"].queryset.count(), 1)
+
+    def test_correct_fields_in_form(self):
+        form = BudgetItemForm(user=self.user1)
+        expected_fields = [
+            "category",
+            "new_category",
+            "amount",
+            "savings",
+            "notes",
+        ]
+
+        self.assertTrue(
+            all([field in expected_fields for field in list(form.fields.keys())])
+        )
