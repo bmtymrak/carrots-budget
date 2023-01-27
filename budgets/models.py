@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from django.conf import settings
 
@@ -16,6 +18,17 @@ class YearlyBudget(models.Model):
 
     def __str__(self):
         return f"{self.user}-{self.date.year}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if not MonthlyBudget.objects.filter(yearly_budget=self, user=self.user):
+            for month in range(1, 13):
+                MonthlyBudget.objects.create(
+                    date=datetime.date(self.date.year, month, 1),
+                    user=self.user,
+                    yearly_budget=self,
+                )
 
     class Meta:
         constraints = [

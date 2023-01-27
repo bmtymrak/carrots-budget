@@ -51,13 +51,6 @@ class YearlyBudgetCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
         form.instance.user = self.request.user
         self.object = form.save()
 
-        for month in range(1, 13):
-            MonthlyBudget.objects.create(
-                date=datetime.date(self.object.date.year, month, 1),
-                user=self.request.user,
-                yearly_budget=self.object,
-            )
-
         return HttpResponseRedirect(self.get_success_url())
 
 

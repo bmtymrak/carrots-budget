@@ -144,18 +144,6 @@ class TestMonthlyBudgetDetailView(TestCase):
             user=cls.user2, date=datetime.datetime.now()
         )
 
-        cls.monthly_budget_user1 = MonthlyBudget.objects.create(
-            user=cls.user1,
-            yearly_budget=cls.yearly_budget_user1,
-            date=datetime.datetime.now(),
-        )
-
-        MonthlyBudget.objects.create(
-            user=cls.user2,
-            yearly_budget=cls.yearly_budget_user2,
-            date=datetime.datetime.now(),
-        )
-
     def test_redirect_if_not_logged_in(self):
         response = self.client.get(
             reverse("monthly_detail", args=[datetime.datetime.now().year, 1])
@@ -175,14 +163,17 @@ class TestMonthlyBudgetDetailView(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertTemplateUsed(response, "budgets/monthly_budget_detail.html")
 
-    def test_object_is_for_the_current_loggin_in_user(self):
+    def test_object_is_for_the_current_logged_in_user(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
 
+        monthly_budget = MonthlyBudget.objects.get(
+            user=self.user1, date__year=datetime.datetime.now().year, date__month=1
+        )
         response = self.client.get(
             reverse("monthly_detail", args=[datetime.datetime.now().year, 1])
         )
 
-        self.assertEqual(self.monthly_budget_user1, response.context["object"])
+        self.assertEqual(monthly_budget, response.context["object"])
 
     def test_formset_in_response_context(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
