@@ -363,6 +363,12 @@ h2 {
     margin: 2px 5px 2px 5px;
 }
 
+.rollover-items-grid {
+    display: grid;
+    gap: 5px;
+    justify-items: center;
+}
+
 .rollover-edit {
     width: 75px;
     padding: 0px;

@@ -137,7 +137,6 @@
                     <div>${{budget_item.2.spent}}</div>
                     <div>${{budget_item.3.diff}}</div>
                     <div><a href='{% url "budgetitem_bulkedit" year=yearly_budget.date.year category=budget_item.0.category__name %}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
-                    
                     {% endfor %}
                 </div>
                 <div class="budget-horizontal-grid-monthly">
@@ -156,11 +155,13 @@
                     <div class="budget-monthly-single-col card-table-header">
                         <div class="card-table-heading">Rollover</div>
                     </div>
-                    {% for rollover in rollovers_spending %}
-                    <div>
-                        <input class="rollover-edit" data-category="{{rollover.category}}" type="number" step="0.01" value="{{rollover.amount}}">
+                    <div class="rollover-items-grid">
+                        {% for rollover in rollovers_spending %}
+                        <div>
+                            <input class="rollover-edit" data-category="{{rollover.category}}" type="number" step="0.01" value="{{rollover.amount}}">
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
             </div>
         </div>
