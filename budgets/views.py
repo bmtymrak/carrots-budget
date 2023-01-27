@@ -41,7 +41,7 @@ class AddUserMixin:
         return super().form_valid(form)
 
 
-class YearlyBudgetCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
+class YearlyBudgetCreateView(LoginRequiredMixin, CreateView):
     model = YearlyBudget
     fields = ["date"]
     template_name = "budgets/yearly_budget_create.html"
@@ -490,18 +490,6 @@ class MonthlyBudgetCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
         return super().form_valid(form)
 
 
-class MonthlyBudgetListView(LoginRequiredMixin, ListView):
-    model = MonthlyBudget
-    context_object_name = "monthly_budgets"
-    template_name = "budgets/monthly_budget_list.html"
-    ordering = "date"
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        queryset = queryset.filter(user=self.request.user)
-        return queryset
-
-
 class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Purchase
     context_object_name = "monthly_budget"
@@ -802,30 +790,8 @@ class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 
             form.instance.category = category
 
-        monthly_budgets = list(
-            MonthlyBudget.objects.filter(
-                date__year=self.kwargs["year"], user=self.request.user
-            )
-        )
-
-        for monthly_budget in monthly_budgets:
-            BudgetItem.objects.create(
-                user=self.request.user,
-                category=form.instance.category,
-                amount=form.instance.amount,
-                monthly_budget=monthly_budget,
-                yearly_budget=YearlyBudget.objects.get(
-                    user=self.request.user, date__year=self.kwargs["year"]
-                ),
-                savings=form.instance.savings,
-            )
-
-        Rollover.objects.create(
-            user=self.request.user,
-            category=form.instance.category,
-            yearly_budget=YearlyBudget.objects.get(
-                user=self.request.user, date__year=self.kwargs["year"]
-            ),
+        BudgetItem.create_items_and_rollovers(
+            self.request.user, self.kwargs["year"], form
         )
 
         return HttpResponseRedirect(self.get_success_url())
@@ -849,7 +815,7 @@ class BudgetItemEditView(LoginRequiredMixin, AddUserMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["request"] = self.request
+        kwargs["user"] = self.request.user
         return kwargs
 
     def get_object(self):

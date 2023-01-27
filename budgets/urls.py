@@ -3,7 +3,6 @@ from django.urls import path
 from .views import (
     YearlyBudgetCreateView,
     MonthlyBudgetCreateView,
-    MonthlyBudgetListView,
     MonthlyBudgetDetailView,
     BudgetItemCreateView,
     BudgetItemEditView,
@@ -17,11 +16,6 @@ from .views import (
 )
 
 urlpatterns = [
-    path(
-        "monthly-budget-list",
-        MonthlyBudgetListView.as_view(),
-        name="monthly_budget_list",
-    ),
     path("monthly-create", MonthlyBudgetCreateView.as_view(), name="monthly_create"),
     path(
         "<int:year>/<int:month>",
@@ -63,4 +57,3 @@ urlpatterns = [
     path("rollover-update", rollover_update_view, name="rollover-update"),
     path("", YearlyBudgetListView.as_view(), name="yearly_list"),
 ]
-
