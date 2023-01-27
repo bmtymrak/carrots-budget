@@ -3,7 +3,8 @@ import datetime
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from budgets.models import YearlyBudget, MonthlyBudget
+from budgets.models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
+from purchases.models import Category
 
 
 User = get_user_model()
@@ -196,24 +197,20 @@ class TestBudgetItemCreateView(TestCase):
         )
 
         cls.yearly_budget_user1 = YearlyBudget.objects.create(
-            user=cls.user1, date=datetime.datetime.now()
+            user=cls.user1, date=datetime.date.today()
         )
 
         cls.yearly_budget_user2 = YearlyBudget.objects.create(
             user=cls.user2, date=datetime.datetime.now()
         )
 
-        cls.monthly_budget_user1 = MonthlyBudget.objects.create(
-            user=cls.user1,
-            yearly_budget=cls.yearly_budget_user1,
-            date=datetime.datetime.now(),
-        )
-
         MonthlyBudget.objects.create(
             user=cls.user2,
             yearly_budget=cls.yearly_budget_user2,
-            date=datetime.datetime.now(),
+            date=datetime.datetime.now().date(),
         )
+
+        cls.category = Category.objects.create(user=cls.user1, name="Test category")
 
     def test_redirect_if_not_logged_in(self):
         response = self.client.get(
@@ -234,3 +231,19 @@ class TestBudgetItemCreateView(TestCase):
 
         self.assertEqual(200, response.status_code)
         self.assertTemplateUsed(response, "budgets/budgetitem_create.html")
+
+    def test_correct_budget_items_created(self):
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        data = {"category": self.category.pk, "amount": 1.99}
+        response = self.client.post(
+            reverse("budgetitem_create", args=[datetime.datetime.now().year]), data
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(BudgetItem.objects.all().count(), 12)
+        self.assertTrue(
+            all([item.category == self.category for item in BudgetItem.objects.all()])
+        )
+        self.assertEqual(Rollover.objects.filter(user=self.user1).count(), 1)
+        self.assertEqual(Rollover.objects.all()[0].category, self.category)
