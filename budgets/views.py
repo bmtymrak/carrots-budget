@@ -45,13 +45,22 @@ class YearlyBudgetCreateView(LoginRequiredMixin, CreateView):
     model = YearlyBudget
     fields = ["date"]
     template_name = "budgets/yearly_budget_create.html"
-    success_url = reverse_lazy("purchase_list")
 
     def form_valid(self, form):
         form.instance.user = self.request.user
         self.object = form.save()
 
         return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        url = reverse_lazy(
+            "yearly_detail",
+            kwargs={
+                "year": self.object.date.year,
+            },
+        )
+
+        return url
 
 
 class YearlyBudgetListView(LoginRequiredMixin, ListView):
@@ -772,7 +781,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
         return url
 
 
-class BudgetItemCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
+class BudgetItemCreateView(LoginRequiredMixin, CreateView):
     model = BudgetItem
     form_class = BudgetItemForm
     template_name = "budgets/budgetitem_create.html"

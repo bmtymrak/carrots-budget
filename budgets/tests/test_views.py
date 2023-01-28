@@ -77,6 +77,15 @@ class TestYearlyBudgetCreateView(TestCase):
             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
         )
 
+    def test_correct_redirect_on_successful_post(self):
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        response = self.client.post(
+            reverse("yearly_create"), {"date": datetime.date.today()}
+        )
+
+        self.assertRedirects(response, f"/budgets/{datetime.date.today().year}")
+
 
 class TestYearlyBudgetListView(TestCase):
     @classmethod
