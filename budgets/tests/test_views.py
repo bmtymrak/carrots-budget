@@ -3,8 +3,10 @@ import datetime
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+
 from budgets.models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
-from purchases.models import Category
+from purchases.models import Category, Purchase
+from budgets.forms import BudgetItemForm
 
 
 User = get_user_model()
@@ -256,3 +258,281 @@ class TestBudgetItemCreateView(TestCase):
         )
         self.assertEqual(Rollover.objects.filter(user=self.user1).count(), 1)
         self.assertEqual(Rollover.objects.all()[0].category, self.category)
+
+
+class TestBudgetItemDetailView(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user1 = User.objects.create_user(
+            email="testuser1@test.com", username="testuser1", password="testpass123"
+        )
+        cls.user2 = User.objects.create_user(
+            email="testuser2@test.com", username="testuser2", password="testpass123"
+        )
+
+        cls.yearly_budget_user1 = YearlyBudget.objects.create(
+            user=cls.user1, date=datetime.date.today()
+        )
+
+        cls.yearly_budget_user2 = YearlyBudget.objects.create(
+            user=cls.user2, date=datetime.datetime.now()
+        )
+
+        cls.monthly_budget_user1 = MonthlyBudget.objects.create(
+            user=cls.user1,
+            yearly_budget=cls.yearly_budget_user1,
+            date=datetime.datetime.now().date(),
+        )
+
+        cls.monthly_budget_user2 = MonthlyBudget.objects.create(
+            user=cls.user2,
+            yearly_budget=cls.yearly_budget_user2,
+            date=datetime.datetime.now().date(),
+        )
+
+        cls.category_user1 = Category.objects.create(
+            user=cls.user1, name="Test category"
+        )
+
+        cls.category_user2 = Category.objects.create(
+            user=cls.user2, name="Test category"
+        )
+
+        BudgetItem.objects.create(
+            user=cls.user1,
+            category=cls.category_user1,
+            amount=100,
+            monthly_budget=cls.monthly_budget_user1,
+            yearly_budget=cls.yearly_budget_user1,
+            savings=False,
+        )
+
+        BudgetItem.objects.create(
+            user=cls.user2,
+            category=cls.category_user2,
+            amount=100,
+            monthly_budget=cls.monthly_budget_user2,
+            yearly_budget=cls.yearly_budget_user2,
+            savings=False,
+        )
+
+        Purchase.objects.create(
+            user=cls.user1,
+            date=datetime.datetime.today(),
+            item="Item 1",
+            category=cls.category_user1,
+        )
+        Purchase.objects.create(
+            user=cls.user1,
+            date=datetime.datetime.today(),
+            item="Item 2",
+            category=cls.category_user1,
+        )
+        Purchase.objects.create(
+            user=cls.user1,
+            date=datetime.datetime.today(),
+            item="Item 3",
+            category=cls.category_user1,
+        )
+        Purchase.objects.create(
+            user=cls.user2,
+            date=datetime.datetime.today(),
+            item="Item 1",
+            category=cls.category_user2,
+        )
+        Purchase.objects.create(
+            user=cls.user2,
+            date=datetime.datetime.today(),
+            item="Item 2",
+            category=cls.category_user2,
+        )
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(
+            reverse(
+                "budget_item_detail",
+                args=[
+                    datetime.datetime.now().year,
+                    datetime.datetime.now().month,
+                    self.category_user1.name,
+                ],
+            )
+        )
+
+        self.assertRedirects(
+            response,
+            f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}/{datetime.datetime.now().month}/{self.category_user1.name}",
+        )
+
+    def test_budget_item_create_uses_correct_template(self):
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        response = self.client.get(
+            reverse(
+                "budget_item_detail",
+                args=[
+                    datetime.datetime.now().year,
+                    datetime.datetime.now().month,
+                    self.category_user1.name,
+                ],
+            )
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, "budgets/budgetitem_detail.html")
+
+    def test_correct_objects_shown(self):
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        response = self.client.get(
+            reverse(
+                "budget_item_detail",
+                args=[
+                    datetime.datetime.now().year,
+                    datetime.datetime.now().month,
+                    self.category_user1.name,
+                ],
+            )
+        )
+
+        self.assertEqual(
+            response.context["object"],
+            BudgetItem.objects.get(
+                user=self.user1,
+                category=self.category_user1,
+                yearly_budget__date__year=datetime.datetime.now().year,
+                monthly_budget__date__month=datetime.datetime.now().month,
+            ),
+        )
+
+        self.assertEqual(len(response.context["purchases"]), 3)
+
+
+class TestBudgetItemDeleteView(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user1 = User.objects.create_user(
+            email="testuser1@test.com", username="testuser1", password="testpass123"
+        )
+        cls.user2 = User.objects.create_user(
+            email="testuser2@test.com", username="testuser2", password="testpass123"
+        )
+
+        cls.yearly_budget_user1 = YearlyBudget.objects.create(
+            user=cls.user1, date=datetime.date.today()
+        )
+
+        cls.yearly_budget_user2 = YearlyBudget.objects.create(
+            user=cls.user2, date=datetime.datetime.now()
+        )
+
+        cls.category_user1 = Category.objects.create(
+            user=cls.user1, name="Test category"
+        )
+
+        cls.category_user2 = Category.objects.create(
+            user=cls.user2, name="Test category"
+        )
+
+        Purchase.objects.create(
+            user=cls.user1,
+            date=datetime.datetime.today(),
+            item="Item 1",
+            category=cls.category_user1,
+        )
+        Purchase.objects.create(
+            user=cls.user1,
+            date=datetime.datetime.today(),
+            item="Item 2",
+            category=cls.category_user1,
+        )
+        Purchase.objects.create(
+            user=cls.user1,
+            date=datetime.datetime.today(),
+            item="Item 3",
+            category=cls.category_user1,
+        )
+        Purchase.objects.create(
+            user=cls.user2,
+            date=datetime.datetime.today(),
+            item="Item 1",
+            category=cls.category_user2,
+        )
+        Purchase.objects.create(
+            user=cls.user2,
+            date=datetime.datetime.today(),
+            item="Item 2",
+            category=cls.category_user2,
+        )
+
+        data_user1 = {"category": cls.category_user1, "amount": 100}
+
+        form_user1 = BudgetItemForm(data_user1, user=cls.user1)
+        form_user1.is_valid()
+
+        BudgetItem.create_items_and_rollovers(
+            cls.user1, datetime.datetime.now().year, form_user1
+        )
+
+        data_user2 = {"category": cls.category_user2, "amount": 100}
+
+        form_user2 = BudgetItemForm(data_user2, user=cls.user2)
+        form_user2.is_valid()
+
+        BudgetItem.create_items_and_rollovers(
+            cls.user2, datetime.datetime.now().year, form_user2
+        )
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(
+            reverse(
+                "budget_item_delete",
+                args=[
+                    datetime.datetime.now().year,
+                    datetime.datetime.now().month,
+                    self.category_user1.name,
+                ],
+            )
+        )
+
+        self.assertRedirects(
+            response,
+            f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}/{datetime.datetime.now().month}/{self.category_user1.name}",
+        )
+
+    def test_budget_item_delete_uses_correct_template(self):
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        response = self.client.get(
+            reverse(
+                "budget_item_delete",
+                args=[
+                    datetime.datetime.now().year,
+                    datetime.datetime.now().month,
+                    self.category_user1.name,
+                ],
+            )
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertTemplateUsed(response, "budgets/budgetitem_delete.html")
+
+    def test_correct_item_deleted(self):
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        response = self.client.post(
+            reverse(
+                "budget_item_delete",
+                args=[
+                    datetime.datetime.now().year,
+                    datetime.datetime.now().month,
+                    self.category_user1,
+                ],
+            ),
+            {"delete-all": True},
+        )
+
+        self.assertEqual(BudgetItem.objects.filter(user=self.user1).count(), 0)
+        self.assertEqual(Rollover.objects.filter(user=self.user1).count(), 0)
+        self.assertEqual(BudgetItem.objects.filter(user=self.user2).count(), 12)
+        self.assertEqual(Rollover.objects.filter(user=self.user2).count(), 1)

@@ -2,6 +2,7 @@ import datetime
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 
 from budgets.models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
 from budgets.forms import BudgetItemForm
@@ -18,11 +19,41 @@ class TestYearlyBudget(TestCase):
         )
 
     def test_monthly_budgets_created(self):
-        self.client.login(email="testemail@test.com", password="testpass123")
-
         YearlyBudget.objects.create(user=self.user1, date=datetime.datetime.now())
 
         self.assertEqual(MonthlyBudget.objects.all().count(), 12)
+
+    def test_unique_constraint(self):
+        YearlyBudget.objects.create(user=self.user1, date=datetime.date.today())
+
+        with self.assertRaises(IntegrityError):
+            YearlyBudget.objects.create(user=self.user1, date=datetime.date.today())
+
+
+class TestMonthlyBudget(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user1 = User.objects.create_user(
+            email="testemail@test.com", username="testuser", password="testpass123"
+        )
+
+        cls.yearly_budget = YearlyBudget.objects.create(
+            user=cls.user1, date=datetime.date.today()
+        )
+
+    def test_unique_constraint(self):
+        MonthlyBudget.objects.create(
+            user=self.user1,
+            date=datetime.date.today(),
+            yearly_budget=self.yearly_budget,
+        )
+
+        with self.assertRaises(IntegrityError):
+            MonthlyBudget.objects.create(
+                user=self.user1,
+                date=datetime.date.today(),
+                yearly_budget=self.yearly_budget,
+            )
 
 
 class TestBudgetItem(TestCase):

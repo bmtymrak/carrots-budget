@@ -8,7 +8,8 @@
     {{form.as_p}}
     <div>
         <input type="checkbox" name="delete-all" value="true">
-        <label>Delete all budgets items for this year with this category?</label>
+        <label>Delete all budgets items for this year with in the {{object.category__name}} category? </label>
+        <p>If you only want to have no money allocated in this category for this month, you should <a href={% url "budgetitem_bulkedit" category=object.category.name year=object.monthly_budget.date.year %}>edit</a> this item to have a value of $0</p>
     </div>
     <button type="submit">Delete</button>
 </form>

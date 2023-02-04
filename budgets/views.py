@@ -19,6 +19,7 @@ from django.views.generic import (
     TemplateView,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.db.models import (
     Sum,
     F,
@@ -914,11 +915,17 @@ class BudgetItemDeleteView(LoginRequiredMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
 
-        if self.request.POST["delete-all"] == "true":
+        if self.request.POST.get("delete-all", False):
             self.model.objects.filter(
                 user=self.request.user,
                 monthly_budget__date__year=self.kwargs["year"],
                 category__name=self.kwargs["category"],
+            ).delete()
+
+            Rollover.objects.filter(
+                user=self.request.user,
+                category__name=self.kwargs["category"],
+                yearly_budget__date__year=self.kwargs["year"],
             ).delete()
 
             success_url = self.get_success_url()
@@ -996,6 +1003,7 @@ class YearlyBudgetItemDetailView(LoginRequiredMixin, TemplateView):
         return kwargs
 
 
+@login_required
 def rollover_update_view(request):
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
         data = json.load(request)

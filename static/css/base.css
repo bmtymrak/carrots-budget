@@ -54,6 +54,10 @@ h6 {
 
 /* End of custom CSS reset */
 
+:root {
+    --main-color: hsl(144deg 100% 26% / 70%);
+}
+
 * {
     font-family: 'Lato', sans-serif;
 }
@@ -73,7 +77,7 @@ a {
 .main-container> :first-child {
     flex-basis: 175px;
     flex-grow: 1;
-    background-color: #74B4FF;
+    background-color: var(--main-color);
     padding-right: 20px;
     padding-left: 20px;
 
@@ -311,7 +315,7 @@ h2 {
     padding-right: 10px;
     padding-left: 10px;
     margin-bottom: 5px;
-    background-color: #74B4FF;
+    background-color: var(--main-color);
     border-radius: 10px;
 }
 
