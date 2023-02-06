@@ -277,7 +277,7 @@
         <div>{{purchase.location}}</div>
         <div>{{purchase.category}}</div>
         <div><a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
-        <div><a href='{% url "purchase_delete" pk=purchase.id %}?next={{request.path|urlencode}}'>Delete</a></div>
+        <div><a href='{% url "purchase_delete" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></a></div>
  
     </div>
 

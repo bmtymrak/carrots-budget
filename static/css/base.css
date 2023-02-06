@@ -80,7 +80,7 @@ a {
     background-color: var(--main-color);
     padding-right: 20px;
     padding-left: 20px;
-
+    padding-top: 15px;
 }
 
 .main-container> :last-child {
@@ -109,6 +109,19 @@ a {
     color: white;
     font-weight: bold;
 }
+
+.logo-sidebar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.logo-sidebar-text {
+    color: white;
+    font-size: 24px;
+    font-weight: 800;
+}
+
 
 .month-nav-wrapper {
     display: flex;

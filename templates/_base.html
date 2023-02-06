@@ -16,6 +16,10 @@
 
     <div class="main-container">
         <div>
+            <div class="logo-sidebar-container">
+                <span class="logo-sidebar-text">Carrots</span>
+                <img src='{% static "images/carrots_logo.svg" %}' height="50">
+            </div>
             <ul class="nav-list">
                 {% if user.is_authenticated %}
                 <li><a href='{% url "yearly_list" %}'>Budgets</a></li>
