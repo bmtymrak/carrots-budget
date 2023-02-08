@@ -113,7 +113,7 @@
         </div>
         <div class="card-main">
             <div>
-                <div class="budget-horizontal-grid-monthly card-table-header">
+                <div class="budget-horizontal-grid-yearly card-table-header">
                     <div class="card-table-heading">Category</div>
                     <div class="card-table-heading">Budgeted YTD</div>
                     <div class="card-table-heading">Spent YTD</div>
@@ -124,7 +124,7 @@
                     <div></div>
                 </div>
 
-                <div class="budget-horizontal-grid-monthly">
+                <div class="budget-horizontal-grid-yearly">
                     {% for budget_item in budget_items_combined %}
                     {% comment %}
                     <!-- <div data-tooltip="{{budget_item.category__name}}"><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div> -->
@@ -139,15 +139,15 @@
                     <div><a href='{% url "budgetitem_bulkedit" year=yearly_budget.date.year category=budget_item.0.category__name %}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
                     {% endfor %}
                 </div>
-                <div class="budget-horizontal-grid-monthly">
-                    <div>Spending Total</div>
-                    <div>${{total_spending_budgeted_ytd}}</div>
-                    <div>${{total_spending_spent_ytd}}</div>
-                    <div>${{total_spending_remaining_ytd}}</div>
-                    <div>${{total_spending_budgeted}}</div>
-                    <div>${{total_spending_spent}}</div>
-                    <div>{{total_spending_remaining}}</div>
-                    <div></div>
+                <div class="budget-horizontal-grid-yearly budget-subtotal">
+                    <div class="card-table-subtotal">Spending Total</div>
+                    <div class="card-table-subtotal">${{total_spending_budgeted_ytd}}</div>
+                    <div class="card-table-subtotal">${{total_spending_spent_ytd}}</div>
+                    <div class="card-table-subtotal">${{total_spending_remaining_ytd}}</div>
+                    <div class="card-table-subtotal">${{total_spending_budgeted}}</div>
+                    <div class="card-table-subtotal">${{total_spending_spent}}</div>
+                    <div class="card-table-subtotal">{{total_spending_remaining}}</div>
+                    <div class="card-table-subtotal"></div>
                 </div>
             </div>
             <div>
@@ -167,7 +167,7 @@
         </div>
         <div class="card-main">
             <div style="flex-grow:1;">
-                <div class="budget-horizontal-grid-monthly card-table-header">
+                <div class="budget-horizontal-grid-yearly card-table-header">
                     <div class="card-table-heading">Category</div>
                     <div class="card-table-heading">Budgeted YTD</div>
                     <div class="card-table-heading">Saved YTD</div>
@@ -177,7 +177,7 @@
                     <div class="card-table-heading">+/-</div>
                     <div class="card-table-heading"></div>
                 </div>
-                <div class="budget-horizontal-grid-monthly">
+                <div class="budget-horizontal-grid-yearly">
                     {% for savings_item in savings_items_combined %}
                     <!-- <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div> -->
                     <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=savings_item.0.category__name %}'>{{savings_item.0.category__name}}</a></div>
@@ -190,25 +190,25 @@
                     <div><a href='{% url "budgetitem_bulkedit" year=yearly_budget.date.year category=savings_item.0.category__name %}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
                     {% endfor %}
                 </div>
-                <div class="budget-horizontal-grid-monthly">
-                    <div>Savings Total</div>
-                    <div>${{total_savings_budgeted_ytd}}</div>
-                    <div>${{total_saved_ytd}}</div>
-                    <div>${{total_savings_remaining_ytd}}</div>
-                    <div>${{total_savings_budgeted}}</div>
-                    <div>${{total_saved}}</div>
-                    <div>${{total_savings_remaining}}</div>
-                    <div></div>
+                <div class="budget-horizontal-grid-yearly budget-subtotal">
+                    <div class="card-table-subtotal">Savings Total</div>
+                    <div class="card-table-subtotal">${{total_savings_budgeted_ytd}}</div>
+                    <div class="card-table-subtotal">${{total_saved_ytd}}</div>
+                    <div class="card-table-subtotal">${{total_savings_remaining_ytd}}</div>
+                    <div class="card-table-subtotal">${{total_savings_budgeted}}</div>
+                    <div class="card-table-subtotal">${{total_saved}}</div>
+                    <div class="card-table-subtotal">${{total_savings_remaining}}</div>
+                    <div class="card-table-subtotal"></div>
                 </div>
-                <div class="budget-horizontal-grid-monthly">
-                    <div>Total</div>
-                    <div>${{total_budgeted_ytd}}</div>
-                    <div>${{total_spent_saved_ytd}}</div>
-                    <div>${{total_remaining_ytd}}</div>
-                    <div>${{total_budgeted}}</div>
-                    <div>${{total_spent_saved}}</div>
-                    <div>${{total_remaining}}</div>
-                    <div></div>
+                <div class="budget-horizontal-grid-yearly card-table-header budget-totals">
+                    <div class="card-table-heading">Total</div>
+                    <div class="card-table-heading">${{total_budgeted_ytd}}</div>
+                    <div class="card-table-heading">${{total_spent_saved_ytd}}</div>
+                    <div class="card-table-heading">${{total_remaining_ytd}}</div>
+                    <div class="card-table-heading">${{total_budgeted}}</div>
+                    <div class="card-table-heading">${{total_spent_saved}}</div>
+                    <div class="card-table-heading">${{total_remaining}}</div>
+                    <div class="card-table-heading"></div>
                 </div>
             </div>
             <div>
@@ -257,28 +257,30 @@
 </div>
 <div class="card-base">
     <h2>Uncategorized Purchases</h2>
-    <div class="purchase-horizontal-grid card-table-header">
+    <div class="purchase-horizontal-grid purchase-horizontal-grid-categories card-table-header">
         <div class="card-table-heading">Date</div>
         <div class="card-table-heading">Item</div>
         <div class="card-table-heading">Amount</div>
         <div class="card-table-heading">Source</div>
         <div class="card-table-heading">Location</div>
         <div class="card-table-heading">Category</div>
-        <div class="card-table-heading">Edit</div>
-        <div class="card-table-heading">Delete</div>
+        <div class="card-table-heading"></div>
     </div>
     {% for purchase in purchases_uncategorized %}
 
-    <div class="purchase-horizontal-grid">
+    <div class="purchase-horizontal-grid purchase-horizontal-grid-categories">
         <div>{{purchase.date}}</div>
         <div>{{purchase.item}}</div>
         <div>${{purchase.amount}}</div>
         <div>{{purchase.source}}</div>
         <div>{{purchase.location}}</div>
         <div>{{purchase.category}}</div>
-        <div><a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
-        <div><a href='{% url "purchase_delete" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></a></div>
- 
+        <div>
+            <div class="edit-links-container">
+                <a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a>
+                <a href='{% url "purchase_delete" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></a>
+            </div>
+        </div>
     </div>
 
     {% endfor %}

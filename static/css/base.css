@@ -163,11 +163,15 @@ a {
 
 .purchase-horizontal-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr .5fr .5fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr .75fr;
     margin-bottom: 10px;
     padding-left: 10px;
     column-gap: 10px;
     row-gap: 5px;
+}
+
+.purchase-horizontal-grid-categories {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr .75fr;
 }
 
 .purchase-horizontal-grid div {
@@ -192,12 +196,17 @@ a {
 }
 
 
-.budget-horizontal-grid-year {
+.budget-horizontal-grid-yearly {
     display: grid;
-    grid-template-columns: 100px 70px 80px;
-    border: 1px solid black;
-    column-gap: 5px;
-    /* font-size: 12px; */
+    grid-template-columns: repeat(7, 1fr) 75px;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    row-gap: 5px;
+}
+
+.budget-horizontal-grid-yearly>div {
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 [data-tooltip]:before {
@@ -237,7 +246,7 @@ a {
 
 .budget-horizontal-grid-monthly {
     display: grid;
-    grid-template-columns: repeat(7, 1fr) .3fr;
+    grid-template-columns: repeat(4, 1fr) 100px;
     margin-bottom: 10px;
     padding-left: 10px;
     row-gap: 5px;
@@ -369,9 +378,13 @@ h2 {
 }
 
 .budget-subtotal {
-    background-color: #c9d2fa;
-    border-radius: 7px;
     padding: 5px;
+    border-top: 2px solid #4ca971;
+}
+
+.budget-totals {
+    background-color: #4ca97136;
+    border: 3px solid #4ca971;
 }
 
 .card-table-subtotal {
@@ -442,4 +455,9 @@ h2 {
     height: 50px;
     font-weight: bold;
     font-size: 20px;
+}
+
+.edit-links-container {
+    display: flex;
+    justify-content: space-around;
 }
