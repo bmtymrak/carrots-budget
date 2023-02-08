@@ -956,7 +956,9 @@ class BudgetItemBulkEditView(LoginRequiredMixin, TemplateView):
             )
         )
 
-        return self.render_to_response({"budgetitem_formset": formset})
+        kwargs = self.get_context_data(**kwargs)
+        kwargs.update({"budgetitem_formset": formset})
+        return self.render_to_response(kwargs)
 
     def post(self, *args, **kwargs):
         formset = BudgetItemFormset(data=self.request.POST)

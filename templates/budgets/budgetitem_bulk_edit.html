@@ -1,24 +1,32 @@
 {% extends "_base.html" %}
 
+{% block header %}
+    <h1 class="page-title">{{view.kwargs.category}} - {{view.kwargs.year}}</h1>
+{% endblock header %}
+
 {% block body %}
 
-<form method="POST">
+<form class="budgetitem-bulk-form" method="POST">
     {% csrf_token %}
     {{budgetitem_formset.management_form}}
-    {% for form in budgetitem_formset %}
-    <div class="purchase-form">
-        {% for hidden in form.hidden_fields %}
-        {{hidden}}
-        {% endfor %}
-        {% for field in form.visible_fields %}
-        <div>
-        {{field.errors}}
-        {{field.label_tag}}
-        {{field}}
-        </div>
+    <div class="budgetitem-bulk-grid">
+        {% for form in budgetitem_formset %}
+        {% comment %} <div class="purchase-form"> {% endcomment %}
+            {% for hidden in form.hidden_fields %}
+            {{hidden}}
+            {% endfor %}
+            {% for field in form.visible_fields %}
+            <div>
+            {{field.errors}}
+            {{form.instance.monthly_budget.date | date:"F"}}
+            </div>
+            <div>
+            {{field}}
+            </div>
+            {% endfor %}
+        {% comment %} </div> {% endcomment %}
         {% endfor %}
     </div>
-    {% endfor %}
     <button type="submit">Save</button>
 </form>
 

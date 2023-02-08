@@ -418,6 +418,18 @@ h2 {
     margin: auto;
 }
 
+.budgetitem-bulk-form {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+
+.budgetitem-bulk-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
 .home-container {
     display: flex;
     width: 100%;
