@@ -244,16 +244,16 @@
         <div class="card-table-heading">Notes</div>
         <div></div>
     </div>
-    {% for income in incomes %}
     <div class="income-horizontal-grid-monthly">
+    {% for income in incomes %}
         <div>${{income.amount}}</div>
         <div>{{income.source}}</div>
         <div>{{income.category}}</div>
         <div>{{income.date}}</div>
         <div>{{income.notes}}</div>
         <div><a href='{% url "income_edit" pk=income.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
-    </div>
     {% endfor %}
+    </div>
 </div>
 <div class="card-base">
     <h2>Uncategorized Purchases</h2>
