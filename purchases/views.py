@@ -147,3 +147,16 @@ class IncomeEditView(LoginRequiredMixin, UpdateView):
 
         else:
             return reverse_lazy("purchase_list")
+
+
+class IncomeDeleteView(LoginRequiredMixin, DeleteView):
+    model = Income
+    context_object_name = "income"
+    template_name = "purchases/income_delete.html"
+
+    def get_object(self):
+        obj = self.model.objects.get(user=self.request.user, id=self.kwargs.get("pk"))
+        return obj
+
+    def get_success_url(self):
+        return self.request.POST.get("next")

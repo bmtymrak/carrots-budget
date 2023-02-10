@@ -251,7 +251,12 @@
         <div>{{income.category}}</div>
         <div>{{income.date}}</div>
         <div>{{income.notes}}</div>
-        <div><a href='{% url "income_edit" pk=income.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
+        <div>
+            <div class="edit-links-container">
+                <a href='{% url "income_edit" pk=income.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a>
+                <a href='{% url "income_delete" pk=income.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></a>
+            </div>
+        </div>
     {% endfor %}
     </div>
 </div>

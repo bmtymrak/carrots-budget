@@ -932,7 +932,9 @@ class BudgetItemDeleteView(LoginRequiredMixin, DeleteView):
             return HttpResponseRedirect(success_url)
 
         else:
-            return super().delete(self, request, *args, **kwargs)
+            self.object = self.get_object()
+            self.object.amount = 0
+            return HttpResponseRedirect(success_url)
 
     def get_success_url(self):
         if self.request.POST.get("next"):

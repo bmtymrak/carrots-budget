@@ -9,6 +9,7 @@ from .views import (
     CategoryCreateView,
     IncomeAddView,
     IncomeEditView,
+    IncomeDeleteView,
 )
 
 urlpatterns = [
@@ -18,5 +19,6 @@ urlpatterns = [
     path("<int:pk>/edit/", PurchaseEditView.as_view(), name="purchase_edit"),
     path("income-add/", IncomeAddView.as_view(), name="income_add"),
     path("income/<int:pk>/edit/", IncomeEditView.as_view(), name="income_edit"),
+    path("income/<int:pk>/delete/", IncomeDeleteView.as_view(), name="income_delete"),
     path("", PurchaseListView.as_view(), name="purchase_list"),
 ]

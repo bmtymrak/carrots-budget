@@ -3,15 +3,18 @@
 
 {% block body %}
 
-<form method="POST">
+<div>
+Deleting this budget item will set its amount to $0.00 for {{object.monthly_budget.date|date:"F"}} but it will still show up in your budget.
+</div>
+
+<form class="delete-single-item" method="POST">
     {% csrf_token %}
     {{form.as_p}}
     <div>
         <input type="checkbox" name="delete-all" value="true">
-        <label>Delete all budgets items for this year with in the {{object.category__name}} category? </label>
-        <p>If you only want to have no money allocated in this category for this month, you should <a href={% url "budgetitem_bulkedit" category=object.category.name year=object.monthly_budget.date.year %}>edit</a> this item to have a value of $0</p>
+        <label>Check the box to delete all budgets items in the {{object.category.name}} category for {{object.monthly_budget.date.year}}. This will completely remove this budget item from your budget for all months in the year. This cannot but undone.</label>
     </div>
-    <button type="submit">Delete</button>
+    <button class="button-delete" type="submit">Delete</button>
 </form>
 
 {% endblock body %}
