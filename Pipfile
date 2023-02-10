@@ -15,4 +15,4 @@ django-allauth = "~=0.44.0"
 psycopg2-binary = "==2.9.1"
 
 [requires]
-python_version = "3.8"
+python_version = ">=3.8"
