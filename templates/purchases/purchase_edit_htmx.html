@@ -1,0 +1,7 @@
+
+
+<form hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="form-grid" method="POST">
+    {{form}}
+    <input type="hidden" name="next" value="{{next}}">
+    <button type="submit">Save</button>
+</form>

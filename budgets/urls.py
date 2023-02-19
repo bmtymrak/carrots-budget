@@ -13,6 +13,7 @@ from .views import (
     YearlyBudgetItemDetailView,
     BudgetItemBulkEditView,
     rollover_update_view,
+    budgetitem_bulk_edit,
 )
 
 urlpatterns = [
@@ -46,6 +47,11 @@ urlpatterns = [
         "<int:year>/<str:category>",
         YearlyBudgetItemDetailView.as_view(),
         name="yearly_budget_item_detail",
+    ),
+    path(
+        "<int:year>/<str:category>/edit/htmx",
+        budgetitem_bulk_edit,
+        name="budgetitem_bulk_edit_htmx",
     ),
     path(
         "<int:year>/<str:category>/edit",

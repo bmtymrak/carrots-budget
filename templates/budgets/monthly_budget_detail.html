@@ -152,8 +152,8 @@
             <div>{{income.notes}}</div>
             <div>
                 <div class="edit-links-container">
-                    <a href='{% url "income_edit" pk=income.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a>
-                    <a href='{% url "income_delete" pk=income.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></a>
+                    <button class="button-blank" hx-get='{% url "income_edit_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
+                    <button class="button-blank" hx-get='{% url "income_delete_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
                 </div>
             </div>
             {% endfor %}
@@ -183,8 +183,8 @@
         <div>{{purchase.category}}</div>
         <div>
             <div class="edit-links-container">
-                <a href='{% url "purchase_edit" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a>
-                <a href='{% url "purchase_delete" pk=purchase.id %}?next={{request.path|urlencode}}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></a>
+                <button class="button-blank" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
+                <button class="button-blank" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
             </div>
         </div>
         {% endfor %}

@@ -1,0 +1,23 @@
+<div>
+    <h2>Confirm Delete</h2>
+    <div class="card-base">
+        <div class="purchase-horizontal-grid purchase-horizontal-grid-delete card-table-header">
+            <div class="card-table-heading">Date</div>
+            <div class="card-table-heading">Item</div>
+            <div class="card-table-heading">Amount</div>
+            <div class="card-table-heading">Source</div>
+            <div class="card-table-heading">Location</div>
+            <div class="card-table-heading">Category</div>
+        </div>
+    
+        <div class="purchase-horizontal-grid purchase-horizontal-grid-delete">
+            <div>{{purchase.date}}</div>
+            <div>{{purchase.item}}</div>
+            <div>${{purchase.amount}}</div>
+            <div>{{purchase.source}}</div>
+            <div>{{purchase.location}}</div>
+            <div>{{purchase.category}}</div>
+        </div>
+    </div>
+    <button hx-delete='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
+</div>

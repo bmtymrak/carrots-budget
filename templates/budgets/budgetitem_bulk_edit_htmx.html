@@ -1,0 +1,24 @@
+
+
+<form hx-post='{% url "budgetitem_bulk_edit_htmx" year=year category=category %}' class="budgetitem-bulk-form" method="POST">
+    {% csrf_token %}
+    {{formset.management_form}}
+    <div class="budgetitem-bulk-grid">
+        {% for form in formset %}
+            {% for hidden in form.hidden_fields %}
+            {{hidden}}
+            {% endfor %}
+            {% for field in form.visible_fields %}
+            <div>
+            {{field.errors}}
+            {{form.instance.monthly_budget.date | date:"F"}}
+            </div>
+            <div>
+            {{field}}
+            </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    <input type="hidden" name="next" value="{{next}}">
+    <button type="submit">Save</button>
+</form>

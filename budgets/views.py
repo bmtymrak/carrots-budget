@@ -9,7 +9,7 @@ from django.http.response import HttpResponseRedirect
 from django.http import JsonResponse
 from django.views.generic.edit import DeleteView
 from purchases.forms import PurchaseForm, PurchaseFormSetReceipt
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import (
     ListView,
@@ -40,6 +40,14 @@ class AddUserMixin:
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
+
+
+class HttpResponseHtmxRedirect(HttpResponseRedirect):
+    status_code = 200
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self["HX-Redirect"] = self["Location"]
 
 
 class YearlyBudgetCreateView(LoginRequiredMixin, CreateView):
@@ -1023,3 +1031,54 @@ def rollover_update_view(request):
         obj.save()
 
         return JsonResponse({"amount": amount})
+
+
+@login_required
+def budgetitem_bulk_edit(request, year, category):
+
+    formset = BudgetItemFormset(
+        queryset=BudgetItem.objects.filter(
+            user=request.user,
+            yearly_budget=YearlyBudget.objects.get(user=request.user, date__year=year),
+            category__name=category,
+        )
+    )
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        formset = BudgetItemFormset(data=request.POST)
+
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.save()
+            return HttpResponseHtmxRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+
+    return render(
+        request,
+        "budgets/budgetitem_bulk_edit_htmx.html",
+        {"formset": formset, "year": year, "category": category, "next": next},
+    )
+
+    income = Income.objects.get(user=request.user, pk=pk)
+
+    form = IncomeForm(instance=income, user=request.user)
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        form = IncomeForm(instance=income, data=request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+            return HttpResponseHtmxRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+
+    return render(
+        request,
+        "purchases/income_edit_htmx.html",
+        {"form": form, "income": income, "next": next},
+    )

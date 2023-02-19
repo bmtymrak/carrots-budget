@@ -1,5 +1,7 @@
 {% load static %}
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,8 +13,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap" rel="stylesheet">
+    <script src="{% static 'js/htmx.min.js' %}"></script>
 </head>
-<body>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
     <div class="main-container">
         <div>
@@ -50,5 +53,47 @@
         </div>
     </div>
     
+    <div class="overlay hidden">
+        <div id="modal" class="modal hidden">
+            <div id="modal-content">
+            </div>
+        </div>
+    </div>
 </body>
+
+<script>
+    const modal = document.querySelector("#modal")
+    const overlay = document.querySelector(".overlay")
+
+    function showModal(){
+        modal.classList.remove("hidden")
+        overlay.classList.remove("hidden")
+    }
+
+    function closeModal(){
+        modal.classList.add("hidden")
+        overlay.classList.add("hidden")
+    }
+
+    htmx.on("htmx:afterSwap", (e) => {
+        if (e.detail.target.id == "modal-content") {
+          showModal()
+        }
+      })
+
+    overlay.addEventListener("click", (event) => {
+        const clickedOutside = !event.target.closest(".modal")
+        if (clickedOutside){
+            closeModal()
+        }
+    }
+    )
+
+    window.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          closeModal();
+        }
+      });
+
+</script>
 </html>

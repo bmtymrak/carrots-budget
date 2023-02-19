@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     ListView,
     CreateView,
@@ -9,9 +9,19 @@ from django.views.generic import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect
 
 from .models import Purchase, Category, Income
 from .forms import PurchaseForm, PurchaseFormSet, IncomeForm
+
+
+class HttpResponseHtmxRedirect(HttpResponseRedirect):
+    status_code = 200
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self["HX-Redirect"] = self["Location"]
 
 
 class AddUserMixin:
@@ -160,3 +170,85 @@ class IncomeDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return self.request.POST.get("next")
+
+
+@login_required
+def purchase_delete_htmx(request, pk):
+
+    purchase = Purchase.objects.get(user=request.user, pk=pk)
+
+    next = request.GET["next"]
+
+    if request.method == "DELETE":
+        purchase.delete()
+        return HttpResponseHtmxRedirect(next)
+
+    return render(
+        request,
+        "purchases/purchase_delete_htmx.html",
+        {"purchase": purchase, "next": next},
+    )
+
+
+@login_required
+def income_delete_htmx(request, pk):
+
+    income = Income.objects.get(user=request.user, pk=pk)
+
+    next = request.GET["next"]
+
+    if request.method == "DELETE":
+        income.delete()
+        return HttpResponseHtmxRedirect(next)
+
+    return render(
+        request,
+        "purchases/income_delete_htmx.html",
+        {"income": income, "next": next},
+    )
+
+
+@login_required
+def purchase_edit(request, pk):
+    purchase = Purchase.objects.get(user=request.user, pk=pk)
+
+    form = PurchaseForm(instance=purchase, user=request.user)
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        form = PurchaseForm(instance=purchase, data=request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+            return HttpResponseHtmxRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+
+    return render(
+        request,
+        "purchases/purchase_edit_htmx.html",
+        {"form": form, "purchase": purchase, "next": next},
+    )
+
+
+@login_required
+def income_edit(request, pk):
+    income = Income.objects.get(user=request.user, pk=pk)
+
+    form = IncomeForm(instance=income, user=request.user)
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        form = IncomeForm(instance=income, data=request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+            return HttpResponseHtmxRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+
+    return render(
+        request,
+        "purchases/income_edit_htmx.html",
+        {"form": form, "income": income, "next": next},
+    )

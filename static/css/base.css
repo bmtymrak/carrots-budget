@@ -174,6 +174,10 @@ a {
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr .75fr;
 }
 
+.purchase-horizontal-grid-delete {
+    grid-template-columns: repeat(6, 1fr);
+}
+
 .purchase-horizontal-grid div {
     white-space: nowrap;
     overflow: hidden;
@@ -491,4 +495,40 @@ h2 {
     font-weight: bold;
     font-size: 24px;
     width: fit-content;
+}
+
+.button-delete-standalone {
+    margin-top: 20px;
+}
+
+.button-blank {
+    background-color: inherit;
+    border: none;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+
+.modal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fdfdfd;
+    border-radius: 20px;
+    padding: 20px 35px;
+}
+
+.hidden {
+    display: none;
 }

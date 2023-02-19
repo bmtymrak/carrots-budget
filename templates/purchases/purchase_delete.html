@@ -24,7 +24,6 @@
 </div>
 <form class="delete-single-item" method="POST">
     {% csrf_token %}
-    {{form.as_p}}
     <input type="hidden" name="next" value="{{request.GET.next}}">
     <button class="button-delete" type="submit">Delete</button>
 </form>
