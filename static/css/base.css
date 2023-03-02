@@ -511,6 +511,11 @@ h2 {
     border: none;
 }
 
+.button-budget {
+    width: fit-content;
+    margin-left: 40px;
+}
+
 .overlay {
     position: fixed;
     top: 0;
