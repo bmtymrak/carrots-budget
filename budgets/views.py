@@ -1034,6 +1034,37 @@ def rollover_update_view(request):
 
 
 @login_required
+def budgetitem_edit(request, year, month, category):
+
+    budget_item = BudgetItem.objects.get(
+        user=request.user,
+        yearly_budget__date__year=year,
+        monthly_budget__date__month=month,
+        category__name=category,
+    )
+
+    form = BudgetItemForm(instance=budget_item, user=request.user)
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        form = BudgetItemForm(
+            instance=budget_item, data=request.POST, user=request.user
+        )
+        if form.is_valid():
+            form.save()
+            return HttpResponseHtmxRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+
+    return render(
+        request,
+        "budgets/budgetitem_edit_htmx.html",
+        {"form": form, "budget_item": budget_item, "next": next},
+    )
+
+
+@login_required
 def budgetitem_bulk_edit(request, year, category):
 
     formset = BudgetItemFormset(
@@ -1063,22 +1094,34 @@ def budgetitem_bulk_edit(request, year, category):
         {"formset": formset, "year": year, "category": category, "next": next},
     )
 
-    income = Income.objects.get(user=request.user, pk=pk)
 
-    form = IncomeForm(instance=income, user=request.user)
+@login_required
+def budgetitem_delete(request, year, category):
 
-    if request.method == "POST":
-        next = request.POST.get("next")
-        form = IncomeForm(instance=income, data=request.POST, user=request.user)
-        if form.is_valid():
-            form.save()
-            return HttpResponseHtmxRedirect(next)
+    budget_items = BudgetItem.objects.filter(
+        user=request.user,
+        yearly_budget__date__year=year,
+        category__name=category,
+    )
 
-    if request.method == "GET":
-        next = request.GET["next"]
+    next = request.GET["next"]
+
+    if request.method == "DELETE":
+        budget_items.delete()
+        Rollover.objects.filter(
+            user=request.user,
+            category__name=category,
+            yearly_budget__date__year=year,
+        ).delete()
+        return HttpResponseHtmxRedirect(next)
 
     return render(
         request,
-        "purchases/income_edit_htmx.html",
-        {"form": form, "income": income, "next": next},
+        "budgets/budgetitem_delete_htmx.html",
+        {
+            "budget_items": budget_items,
+            "year": year,
+            "category": category,
+            "next": next,
+        },
     )

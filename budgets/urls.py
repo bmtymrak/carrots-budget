@@ -14,6 +14,8 @@ from .views import (
     BudgetItemBulkEditView,
     rollover_update_view,
     budgetitem_bulk_edit,
+    budgetitem_edit,
+    budgetitem_delete,
 )
 
 urlpatterns = [
@@ -34,6 +36,11 @@ urlpatterns = [
         name="budgetitem_edit",
     ),
     path(
+        "<int:year>/<int:month>/<str:category>/edit/htmx",
+        budgetitem_edit,
+        name="budgetitem_edit_htmx",
+    ),
+    path(
         "<int:year>/<int:month>/<str:category>",
         BudgetItemDetailView.as_view(),
         name="budget_item_detail",
@@ -42,6 +49,11 @@ urlpatterns = [
         "<int:year>/<int:month>/<str:category>/delete",
         BudgetItemDeleteView.as_view(),
         name="budget_item_delete",
+    ),
+    path(
+        "<int:year>/<str:category>/delete/htmx",
+        budgetitem_delete,
+        name="budget_item_delete_htmx",
     ),
     path(
         "<int:year>/<str:category>",

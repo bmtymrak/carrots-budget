@@ -497,6 +497,11 @@ h2 {
     width: fit-content;
 }
 
+.button-delete:hover {
+    background-color: rgb(149, 44, 44);
+    border: 1px solid rgb(149, 44, 44);
+}
+
 .button-delete-standalone {
     margin-top: 20px;
 }

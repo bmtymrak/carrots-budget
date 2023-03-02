@@ -1,0 +1,7 @@
+
+<h2>{{budget_item.category.name}}</h2>
+<form hx-post='{% url "budgetitem_edit_htmx" year=budget_item.monthly_budget.date.year month=budget_item.monthly_budget.date.month category=budget_item.category.name %}' class="form-grid" method="POST">
+    {{form}}
+    <input type="hidden" name="next" value="{{next}}">
+    <button type="submit">Save</button>
+</form>

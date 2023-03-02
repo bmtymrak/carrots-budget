@@ -1,0 +1,8 @@
+<div>
+    <h2>Confirm Delete</h2>
+    <div class="card-base">
+        <h3>{{category}}    
+    </div>
+    </div>
+    <button hx-delete='{% url "budget_item_delete_htmx" year=year category=category %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
+</div>
