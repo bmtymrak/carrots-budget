@@ -1,0 +1,7 @@
+
+<form hx-post='{% url "budgetitem_create_htmx" year=year %}' class="form-grid" method="POST">
+    {% csrf_token %}
+    {{form}}
+    <input type="hidden" name="next" value="{{next}}">
+    <button type="submit">Add Budget Item</button>
+</form>

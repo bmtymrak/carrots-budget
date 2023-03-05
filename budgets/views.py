@@ -1125,3 +1125,36 @@ def budgetitem_delete(request, year, category):
             "next": next,
         },
     )
+
+
+@login_required
+def budget_item_create(request, year):
+
+    if request.method == "POST":
+
+        form = BudgetItemForm(data=request.POST, user=request.user)
+        form.instance.user = request.user
+        next = request.POST.get("next")
+
+        if form.is_valid():
+
+            if form.cleaned_data["new_category"]:
+                category, _ = Category.objects.get_or_create(
+                    name=form.cleaned_data["new_category"], user=request.user
+                )
+
+                form.instance.category = category
+
+            BudgetItem.create_items_and_rollovers(request.user, year, form)
+
+            return HttpResponseHtmxRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+        form = BudgetItemForm(user=request.user)
+
+    return render(
+        request,
+        "budgets/budgetitem_create_htmx.html",
+        {"form": form, "next": next, "year": year},
+    )

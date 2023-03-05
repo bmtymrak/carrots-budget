@@ -339,10 +339,10 @@ h2 {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-right: 10px;
-    padding-left: 10px;
+    /* padding-right: 10px;
+    padding-left: 10px; */
     margin-bottom: 5px;
-    background-color: var(--main-color);
+    /* background-color: var(--main-color); */
     border-radius: 10px;
 }
 
@@ -514,6 +514,16 @@ h2 {
 .button-budget {
     width: fit-content;
     margin-left: 40px;
+}
+
+.button-create {
+    border: none;
+    background-color: var(--main-color);
+    color: white;
+    padding-right: 10px;
+    height: 100%;
+    padding-left: 10px;
+    border-radius: 10px
 }
 
 .overlay {

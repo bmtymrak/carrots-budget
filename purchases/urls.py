@@ -14,6 +14,7 @@ from .views import (
     income_delete_htmx,
     purchase_edit,
     income_edit,
+    income_create,
 )
 
 urlpatterns = [
@@ -24,6 +25,7 @@ urlpatterns = [
     path("<int:pk>/edit/", PurchaseEditView.as_view(), name="purchase_edit"),
     path("<int:pk>/edit/htmx", purchase_edit, name="purchase_edit_htmx"),
     path("income-add/", IncomeAddView.as_view(), name="income_add"),
+    path("income-create/", income_create, name="income_create"),
     path("income/<int:pk>/edit/htmx", income_edit, name="income_edit_htmx"),
     path("income/<int:pk>/edit/", IncomeEditView.as_view(), name="income_edit"),
     path("income/<int:pk>/delete/", IncomeDeleteView.as_view(), name="income_delete"),

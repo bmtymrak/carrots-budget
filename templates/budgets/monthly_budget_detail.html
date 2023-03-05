@@ -46,7 +46,7 @@
     <div class="card-base">
         <div class="card-header">
             <h2>Budget</h2>
-            <div class="card-header-action"><a href='{% url "budgetitem_create" year=monthly_budget.date.year %}?next={{request.path|urlencode}}'> + Add budget item</a>
+            <div class="card-header-action"><button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=monthly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</a>
             </div>
         </div>
         
@@ -131,7 +131,7 @@
     <div class="card-base">
         <div class="card-header">
             <h2>Income</h2>
-            <div class="card-header-action"><a href='{% url "income_add"%}?next={{request.path|urlencode}}'> + Add Income</a>
+            <div class="card-header-action"><button class="button-create" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</a>
             </div>
         </div>
         

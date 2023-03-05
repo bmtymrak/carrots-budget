@@ -252,3 +252,27 @@ def income_edit(request, pk):
         "purchases/income_edit_htmx.html",
         {"form": form, "income": income, "next": next},
     )
+
+
+@login_required
+def income_create(request):
+
+    form = IncomeForm(user=request.user)
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        form = IncomeForm(data=request.POST, user=request.user)
+        form.instance.user = request.user
+
+        if form.is_valid():
+            form.save()
+            return HttpResponseHtmxRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+
+    return render(
+        request,
+        "purchases/income_create_htmx.html",
+        {"form": form, "next": next},
+    )

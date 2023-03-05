@@ -5,7 +5,7 @@
 {% endblock header %}
 
 {% block body %}
-<div class="card-header-action button-budget"><a href='{% url "yearly_create" %}'> + Add New Budget</a></div>
+<div class="card-header-action button-budget button-create"><a href='{% url "yearly_create" %}'> + Add New Budget</a></div>
 
 <ul>
     {% for budget in yearly_budgets %}

@@ -16,6 +16,7 @@ from .views import (
     budgetitem_bulk_edit,
     budgetitem_edit,
     budgetitem_delete,
+    budget_item_create,
 )
 
 urlpatterns = [
@@ -24,6 +25,11 @@ urlpatterns = [
         "<int:year>/<int:month>",
         MonthlyBudgetDetailView.as_view(),
         name="monthly_detail",
+    ),
+    path(
+        "<int:year>/budgetitem-create-htmx",
+        budget_item_create,
+        name="budgetitem_create_htmx",
     ),
     path(
         "<int:year>/budgetitem-create",
