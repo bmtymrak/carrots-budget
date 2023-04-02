@@ -18,6 +18,12 @@
 {% endblock heading_nav %}
 
 {% block body %}
+<div class="page-header-action">
+    <button class="button-create" hx-get='{% url "purchase_create" %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
+    <button class="button-create" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
+    <button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
+</div>
+
 <div class="card-base">
     <h2>Summary</h2>
     <div class="summary-horizontal-grid-monthly card-table-header">

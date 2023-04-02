@@ -12,13 +12,15 @@ from .views import (
     IncomeDeleteView,
     purchase_delete_htmx,
     income_delete_htmx,
+    purchase_create,
     purchase_edit,
     income_edit,
     income_create,
 )
 
 urlpatterns = [
-    path("add/", PurchaseAddView.as_view(), name="purchase_add"),
+    # path("add/", PurchaseAddView.as_view(), name="purchase_add"),
+    path("add/", purchase_create, name="purchase_create"),
     path("category-create/", CategoryCreateView.as_view(), name="category_create"),
     path("<int:pk>/delete/", PurchaseDeleteView.as_view(), name="purchase_delete"),
     path("<int:pk>/delete/htmx", purchase_delete_htmx, name="purchase_delete_htmx"),

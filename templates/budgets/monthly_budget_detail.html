@@ -22,6 +22,11 @@
 
     
 {% block body %}
+    <div class="page-header-action">
+        <button class="button-create" hx-get='{% url "purchase_create" %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
+        <button class="button-create" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
+        <button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=monthly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
+    </div>
 <div class="card-base">
     <h2>Summary</h2>
     <div class="summary-horizontal-grid-monthly card-table-header">
@@ -46,7 +51,7 @@
     <div class="card-base">
         <div class="card-header">
             <h2>Budget</h2>
-            <div class="card-header-action"><button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=monthly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</a>
+            <div class="card-header-action"><button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=monthly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
             </div>
         </div>
         
@@ -189,89 +194,5 @@
         </div>
         {% endfor %}
     </div>
-
-
-
-
-    <form id="purchase-form-container" method="POST">
-        {% csrf_token %}
-        {{purchase_formset.management_form}}
-        {% for form in purchase_formset %}
-        <div class="purchase-form">
-            {% for hidden in form.hidden_fields %}
-            {{hidden}}
-            {% endfor %}
-            {% for field in form.visible_fields %}
-            <div>
-            {{field.errors}}
-            {{field.label_tag}}
-            {{field}}
-            </div>
-            {% endfor %}
-        </div>
-        {% endfor %}
-        <button id="submit-button" type="submit">Add</button>
-        <button id="add-form" type="button">Add Item</button>
-        <p id="total">Total: </p>
-    </form>
-
 </div>
-
-<script>
-    let purchaseForm = document.querySelectorAll(".purchase-form")
-    let container = document.querySelector("#purchase-form-container")
-    let addButton = document.querySelector("#add-form")
-    let submitButton = document.querySelector("#submit-button")
-    let totalForms = document.querySelector("#id_form-TOTAL_FORMS")
-    let amount = document.querySelectorAll("[id$='-amount']")
-    let total= document.querySelector('#total')
-
-    let formNum = purchaseForm.length-1
-    addButton.addEventListener('click', addForm)
-    // amount.addEventListener('change', calculateTotal)
-
-    amount.forEach(input => input.addEventListener('change', calculateTotal))
-
-    function addForm(e){
-        e.preventDefault()
-
-        let newForm = purchaseForm[0].cloneNode(true)
-        let formRegex = RegExp(`form-(\\d){1}-`,'g')
-
-        formNum++
-        newForm.innerHTML = newForm.innerHTML.replace(formRegex, `form-${formNum}-`)
-        container.insertBefore(newForm, submitButton)
-        
-        totalForms.setAttribute('value', `${formNum+1}`)
-
-        let newFormAmount = document.querySelector(`#id_form-${formNum}-amount`)
-
-        newFormAmount.addEventListener('change', calculateTotal)
-    }
-
-    function calculateTotal(e){
-        e.preventDefault()
-        let amounts = document.querySelectorAll("[id$='-amount'")
-        let totalAmount
-
-        if (amounts.length === 1){
-            totalAmount = amounts[0].value
-        }
-        else{
-            console.log(`Amounts = ${[...amounts]}`)
-            totalAmount = [...amounts].reduce((prev, curr) =>{
-                console.log(`Curr.value = ${parseFloat(curr.value)}`)
-                if (isNaN(parseFloat(curr.value))){
-                    currValue = 0
-                }
-                else{
-                    currValue = curr.value
-                }
-                return Math.round((prev + parseFloat(currValue))*100)/100}, 0)
-                console.log(`Total amount = ${totalAmount}`)
-        }
-
-        total.innerHTML = `Total: ${totalAmount}`
-    }
-</script>
 {% endblock body %}

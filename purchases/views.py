@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 
 from .models import Purchase, Category, Income
-from .forms import PurchaseForm, PurchaseFormSet, IncomeForm
+from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm
 
 
 class HttpResponseHtmxRedirect(HttpResponseRedirect):
@@ -205,6 +205,46 @@ def income_delete_htmx(request, pk):
         request,
         "purchases/income_delete_htmx.html",
         {"income": income, "next": next},
+    )
+
+
+@login_required
+def purchase_create(request):
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        formset_data = request.POST.copy()  # Makes Querydict mutable
+        formset_date = formset_data["form-0-date"]
+
+        for key in formset_data.keys():
+            if "date" in key:
+                formset_data[key] = formset_date
+
+        purchase_formset = PurchaseFormSetReceipt(
+            form_kwargs={"user": request.user}, data=formset_data
+        )
+
+        if purchase_formset.is_valid():
+            instances = purchase_formset.save(commit=False)
+            source = instances[0].source
+            location = instances[0].location
+            for instance in instances:
+                instance.user = request.user
+                instance.source = source
+                instance.location = location
+                instance.save()
+            return HttpResponseHtmxRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+        purchase_formset = PurchaseFormSetReceipt(
+            queryset=Purchase.objects.none(), form_kwargs={"user": request.user}
+        )
+
+    return render(
+        request,
+        "purchases/purchase_create.html",
+        {"purchase_formset": purchase_formset, "next": next},
     )
 
 

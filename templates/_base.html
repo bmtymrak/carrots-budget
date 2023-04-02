@@ -26,7 +26,7 @@
             <ul class="nav-list">
                 {% if user.is_authenticated %}
                 <li><a href='{% url "yearly_list" %}'>Budgets</a></li>
-                <li><a href='{% url "purchase_add" %}'>Add a Purchase</a></li>
+                <li><a href='{% url "purchase_create" %}'>Add a Purchase</a></li>
                 <li><a href='{% url "purchase_list" %}'>Purchase List</a></li>
                 <li><a href="{% url 'account_logout' %}">Logout</a></li>
                 {% else %}
