@@ -33,7 +33,7 @@ from django.db.models.functions import Coalesce
 
 from budgets.models import MonthlyBudget, YearlyBudget, BudgetItem, Rollover
 from purchases.models import Category, Purchase, Income
-from budgets.forms import BudgetItemForm, BudgetItemFormset
+from budgets.forms import BudgetItemForm, BudgetItemFormset, YearlyBudgetForm
 
 
 class AddUserMixin:
@@ -1031,6 +1031,28 @@ def rollover_update_view(request):
         obj.save()
 
         return JsonResponse({"amount": amount})
+
+
+@login_required
+def budget_create(request):
+
+    form = YearlyBudgetForm()
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        form = YearlyBudgetForm(data=request.POST)
+        form.instance.user = request.user
+
+        if form.is_valid():
+            form.save()
+            return HttpResponseHtmxRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+
+    return render(
+        request, "budgets/yearly_budget_create_htmx.html", {"form": form, "next": next}
+    )
 
 
 @login_required

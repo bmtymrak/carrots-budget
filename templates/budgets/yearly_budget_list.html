@@ -5,7 +5,7 @@
 {% endblock header %}
 
 {% block body %}
-<div class="card-header-action button-budget button-create"><a href='{% url "yearly_create" %}'> + Add New Budget</a></div>
+<button class="card-header-action button-budget button-create" hx-get='{% url "yearly_create" %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add New Budget</button>
 
 <ul>
     {% for budget in yearly_budgets %}

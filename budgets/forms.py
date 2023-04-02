@@ -1,8 +1,13 @@
 from django.forms import ModelForm, CharField, modelformset_factory
 
-from .models import BudgetItem
-from .models import MonthlyBudget
+from .models import MonthlyBudget, YearlyBudget, BudgetItem
 from purchases.models import Category
+
+
+class YearlyBudgetForm(ModelForm):
+    class Meta:
+        model = YearlyBudget
+        fields = ["date"]
 
 
 class BudgetItemForm(ModelForm):
