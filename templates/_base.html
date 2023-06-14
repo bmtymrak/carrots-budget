@@ -77,6 +77,11 @@
     htmx.on("htmx:afterSwap", (e) => {
         if (e.detail.target.id == "modal-content") {
           showModal()
+          const dateInput = document.querySelector("#id_form-0-date")
+
+          if (dateInput){
+            dateInput.focus()
+          }
         }
       })
 

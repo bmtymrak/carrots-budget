@@ -32,7 +32,6 @@
 
     let formNum = purchaseForm.length-1
     addButton.addEventListener('click', addForm)
-    // amount.addEventListener('change', calculateTotal)
 
     amount.forEach(input => input.addEventListener('change', calculateTotal))
 
@@ -51,6 +50,7 @@
         let newFormAmount = document.querySelector(`#id_form-${formNum}-amount`)
 
         newFormAmount.addEventListener('change', calculateTotal)
+        document.querySelector(`#id_form-${formNum}-item`).focus()
     }
 
     function calculateTotal(e){
