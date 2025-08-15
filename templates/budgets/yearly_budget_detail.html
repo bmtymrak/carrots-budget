@@ -35,12 +35,12 @@
         <div class="card-table-heading">Category Income</div>
     </div>
     <div class="summary-horizontal-grid-monthly">
-        <div>${{total_budgeted}}</div>
-        <div class="">${{total_spending_spent}}</div>
-        <div class="">${{total_saved}}</div>
-        <div class="">${{total_income.amount}}</div>
-        <div class="">${{total_income_budgeted.amount}}</div>
-        <div class="">${{total_income_category.amount}}</div>
+        <div>${{total_budgeted|floatformat:"-2"}}</div>
+        <div class="">${{total_spending_spent|floatformat:"-2"}}</div>
+        <div class="">${{total_saved|floatformat:"-2"}}</div>
+        <div class="">${{total_income.amount|floatformat:"-2"}}</div>
+        <div class="">${{total_income_budgeted.amount|floatformat:"-2"}}</div>
+        <div class="">${{total_income_category.amount|floatformat:"-2"}}</div>
     </div>
     <div class="summary-horizontal-grid-monthly card-table-header">
         <div class="card-table-heading">Budgeted Income-Budgeted</div>
@@ -51,9 +51,9 @@
         <div class="card-table-heading"></div>
     </div>
     <div class="summary-horizontal-grid-monthly">
-        <div class="">${{budgeted_income_diff}}</div>
-        <div class="">${{total_spent_saved}}</div>
-        <div class="">${{budgeted_income_spent_diff}}</div>
+        <div class="">${{budgeted_income_diff|floatformat:"-2"}}</div>
+        <div class="">${{total_spent_saved|floatformat:"-2"}}</div>
+        <div class="">${{budgeted_income_spent_diff|floatformat:"-2"}}</div>
         <div class=""></div>
         <div class=""></div>
         <div class=""></div>
@@ -85,12 +85,12 @@
         <div class="card-table-heading">Category Income YTD</div>
     </div>
     <div class="summary-horizontal-grid-monthly">
-        <div class="">${{total_budgeted_ytd}}</div>
-        <div class="">${{total_spending_spent_ytd}}</div>
-        <div class="">${{total_saved_ytd}}</div>
-        <div class="">${{total_income_ytd.amount}}</div>
-        <div class="">${{total_income_budgeted_ytd.amount}}</div>
-        <div class="">${{total_income_category_ytd.amount}}</div>
+        <div class="">${{total_budgeted_ytd|floatformat:"-2"}}</div>
+        <div class="">${{total_spending_spent_ytd|floatformat:"-2"}}</div>
+        <div class="">${{total_saved_ytd|floatformat:"-2"}}</div>
+        <div class="">${{total_income_ytd.amount|floatformat:"-2"}}</div>
+        <div class="">${{total_income_budgeted_ytd.amount|floatformat:"-2"}}</div>
+        <div class="">${{total_income_category_ytd.amount|floatformat:"-2"}}</div>
     </div>
     <div class="summary-horizontal-grid-monthly card-table-header">
         <div class="card-table-heading">Budgeted Income-Budgeted YTD</div>
@@ -101,9 +101,9 @@
         <div class="card-table-heading"></div>
     </div>
     <div class="summary-horizontal-grid-monthly">
-        <div class="">${{budgeted_income_diff_ytd}}</div>
-        <div class="">${{total_spent_saved_ytd}}</div>
-        <div class="">${{budgeted_income_spent_diff_ytd}}</div>
+        <div class="">${{budgeted_income_diff_ytd|floatformat:"-2"}}</div>
+        <div class="">${{total_spent_saved_ytd|floatformat:"-2"}}</div>
+        <div class="">${{budgeted_income_spent_diff_ytd|floatformat:"-2"}}</div>
         <div class=""></div>
         <div class=""></div>
         <div class=""></div>
@@ -136,12 +136,12 @@
                     <!-- <div data-tooltip="{{budget_item.category__name}}"><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div> -->
                     {% endcomment %}
                     <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.0.category__name %}'>{{budget_item.0.category__name}}</a></div>
-                    <div>${{budget_item.4.amount_total_ytd}}</div>
-                    <div>${{budget_item.6.spent}}</div>
-                    <div>${{budget_item.5.diff_ytd}}</div>
-                    <div>${{budget_item.1.amount_total}}</div>
-                    <div>${{budget_item.2.spent}}</div>
-                    <div>${{budget_item.3.diff}}</div>
+                    <div>${{budget_item.4.amount_total_ytd|floatformat:"-2"}}</div>
+                    <div>${{budget_item.6.spent|floatformat:"-2"}}</div>
+                    <div>${{budget_item.5.diff_ytd|floatformat:"-2"}}</div>
+                    <div>${{budget_item.1.amount_total|floatformat:"-2"}}</div>
+                    <div>${{budget_item.2.spent|floatformat:"-2"}}</div>
+                    <div>${{budget_item.3.diff|floatformat:"-2"}}</div>
                     <div>
                         <button class="button-blank" hx-get='{% url "budgetitem_bulk_edit_htmx" category=budget_item.0.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
                         <button class="button-blank" hx-get='{% url "budget_item_delete_htmx" category=budget_item.0.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
@@ -150,12 +150,12 @@
                 </div>
                 <div class="budget-horizontal-grid-yearly budget-subtotal">
                     <div class="card-table-subtotal">Spending Total</div>
-                    <div class="card-table-subtotal">${{total_spending_budgeted_ytd}}</div>
-                    <div class="card-table-subtotal">${{total_spending_spent_ytd}}</div>
-                    <div class="card-table-subtotal">${{total_spending_remaining_ytd}}</div>
-                    <div class="card-table-subtotal">${{total_spending_budgeted}}</div>
-                    <div class="card-table-subtotal">${{total_spending_spent}}</div>
-                    <div class="card-table-subtotal">{{total_spending_remaining}}</div>
+                    <div class="card-table-subtotal">${{total_spending_budgeted_ytd|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">${{total_spending_spent_ytd|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">${{total_spending_remaining_ytd|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">${{total_spending_budgeted|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">${{total_spending_spent|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">{{total_spending_remaining|floatformat:"-2"}}</div>
                     <div class="card-table-subtotal"></div>
                 </div>
             </div>
@@ -167,7 +167,7 @@
                     <div class="rollover-items-grid">
                         {% for rollover in rollovers_spending %}
                         <div>
-                            <input class="rollover-edit" data-category="{{rollover.category}}" type="number" step="0.01" value="{{rollover.amount}}">
+                            <input class="rollover-edit" data-category="{{rollover.category}}" type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
                         </div>
                         {% endfor %}
                     </div>
@@ -190,12 +190,12 @@
                     {% for savings_item in savings_items_combined %}
                     <!-- <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div> -->
                     <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=savings_item.0.category__name %}'>{{savings_item.0.category__name}}</a></div>
-                    <div>${{savings_item.4.amount_total_ytd}}</div>
-                    <div>${{savings_item.6.saved}}</div>
-                    <div>${{savings_item.5.diff_ytd}}</div>
-                    <div>${{savings_item.1.amount_total}}</div>
-                    <div>${{savings_item.2.saved}}</div>
-                    <div>{{savings_item.3.diff}}</div>
+                    <div>${{savings_item.4.amount_total_ytd|floatformat:"-2"}}</div>
+                    <div>${{savings_item.6.saved|floatformat:"-2"}}</div>
+                    <div>${{savings_item.5.diff_ytd|floatformat:"-2"}}</div>
+                    <div>${{savings_item.1.amount_total|floatformat:"-2"}}</div>
+                    <div>${{savings_item.2.saved|floatformat:"-2"}}</div>
+                    <div>{{savings_item.3.diff|floatformat:"-2"}}</div>
                     <div>
                         <button class="button-blank" hx-get='{% url "budgetitem_bulk_edit_htmx" category=savings_item.0.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
                         <button class="button-blank" hx-get='{% url "budget_item_delete_htmx" category=savings_item.0.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
@@ -204,22 +204,22 @@
                 </div>
                 <div class="budget-horizontal-grid-yearly budget-subtotal">
                     <div class="card-table-subtotal">Savings Total</div>
-                    <div class="card-table-subtotal">${{total_savings_budgeted_ytd}}</div>
-                    <div class="card-table-subtotal">${{total_saved_ytd}}</div>
-                    <div class="card-table-subtotal">${{total_savings_remaining_ytd}}</div>
-                    <div class="card-table-subtotal">${{total_savings_budgeted}}</div>
-                    <div class="card-table-subtotal">${{total_saved}}</div>
-                    <div class="card-table-subtotal">${{total_savings_remaining}}</div>
+                    <div class="card-table-subtotal">${{total_savings_budgeted_ytd|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">${{total_saved_ytd|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">${{total_savings_remaining_ytd|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">${{total_savings_budgeted|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">${{total_saved|floatformat:"-2"}}</div>
+                    <div class="card-table-subtotal">${{total_savings_remaining|floatformat:"-2"}}</div>
                     <div class="card-table-subtotal"></div>
                 </div>
                 <div class="budget-horizontal-grid-yearly card-table-header budget-totals">
                     <div class="card-table-heading">Total</div>
-                    <div class="card-table-heading">${{total_budgeted_ytd}}</div>
-                    <div class="card-table-heading">${{total_spent_saved_ytd}}</div>
-                    <div class="card-table-heading">${{total_remaining_ytd}}</div>
-                    <div class="card-table-heading">${{total_budgeted}}</div>
-                    <div class="card-table-heading">${{total_spent_saved}}</div>
-                    <div class="card-table-heading">${{total_remaining}}</div>
+                    <div class="card-table-heading">${{total_budgeted_ytd|floatformat:"-2"}}</div>
+                    <div class="card-table-heading">${{total_spent_saved_ytd|floatformat:"-2"}}</div>
+                    <div class="card-table-heading">${{total_remaining_ytd|floatformat:"-2"}}</div>
+                    <div class="card-table-heading">${{total_budgeted|floatformat:"-2"}}</div>
+                    <div class="card-table-heading">${{total_spent_saved|floatformat:"-2"}}</div>
+                    <div class="card-table-heading">${{total_remaining|floatformat:"-2"}}</div>
                     <div class="card-table-heading"></div>
                 </div>
             </div>
@@ -230,7 +230,7 @@
                     </div>
                     {% for rollover in rollovers_savings %}
                     <div>
-                        <input class="rollover-edit" data-category='{{rollover.category}}' type="number" step="0.01" value="{{rollover.amount}}">
+                        <input class="rollover-edit" data-category='{{rollover.category}}' type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
                     </div>
                     
                     {% endfor %}
@@ -258,7 +258,7 @@
     </div>
     <div class="income-horizontal-grid-monthly">
     {% for income in incomes %}
-        <div>${{income.amount}}</div>
+        <div>${{income.amount|floatformat:"-2"}}</div>
         <div>{{income.source}}</div>
         <div>{{income.category}}</div>
         <div>{{income.date}}</div>
@@ -288,7 +288,7 @@
     <div class="purchase-horizontal-grid purchase-horizontal-grid-categories">
         <div>{{purchase.date}}</div>
         <div>{{purchase.item}}</div>
-        <div>${{purchase.amount}}</div>
+        <div>${{purchase.amount|floatformat:"-2"}}</div>
         <div>{{purchase.source}}</div>
         <div>{{purchase.location}}</div>
         <div>{{purchase.category}}</div>

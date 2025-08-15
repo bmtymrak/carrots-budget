@@ -39,11 +39,11 @@
     </div>
     <div class="summary-horizontal-grid-monthly">
         <div>${{total_budgeted}}</div>
-        <div class="">${{total_spent}}</div>
-        <div class="">${{total_saved.amount}}</div>
-        <div class="">${{total_income.amount}}</div>
-        <div class="">${{total_remaining}}</div>
-        <div class="">${{free_income}}</div>
+        <div class="">${{total_spent|floatformat:"-2"}}</div>
+        <div class="">${{total_saved.amount|floatformat:"-2"}}</div>
+        <div class="">${{total_income.amount|floatformat:"-2"}}</div>
+        <div class="">${{total_remaining|floatformat:"-2"}}</div>
+        <div class="">${{free_income|floatformat:"-2"}}</div>
     </div>
 </div>
 
@@ -66,9 +66,9 @@
         <div class="budget-horizontal-grid-monthly">
             {% for budget_item in budget_items%}
             <div><a data-tooltip="{{budget_item.category}}" href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>{{budget_item.category}}</a></div>
-            <div>${{budget_item.amount}}</div>
-            <div>${{budget_item.spent}}</div>
-            <div>${{budget_item.diff}}</div>
+            <div>${{budget_item.amount|floatformat:"-2"}}</div>
+            <div>${{budget_item.spent|floatformat:"-2"}}</div>
+            <div>${{budget_item.diff|floatformat:"-2"}}</div>
             <div>
                 <div class="edit-links-container">
                     <button class="button-blank" hx-get='{% url "budgetitem_edit_htmx" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
@@ -81,18 +81,18 @@
     {% if uncategorized_purchases.amount %}
         <div class="budget-horizontal-grid-monthly">
             <div><a data-tooltip="Uncategorized" href=''>{{Uncategorized}}</a>Uncategorized</div>
-            <div>${{uncategorized_purchases.budgeted}}</div>
-            <div>${{uncategorized_purchases.amount}}</div>
-            <div>${{uncategorized_purchases.remaining}}</div>
+            <div>${{uncategorized_purchases.budgeted|floatformat:"-2"}}</div>
+            <div>${{uncategorized_purchases.amount|floatformat:"-2"}}</div>
+            <div>${{uncategorized_purchases.remaining|floatformat:"-2"}}</div>
             <div><a href=''><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></a></div>
         </div>
     {% endif %}
 
         <div class="budget-horizontal-grid-monthly budget-subtotal">
             <div class="card-table-subtotal">Spending Totals</div>
-            <div class="card-table-subtotal">${{total_spending_budgeted.amount}}</div>
-            <div class="card-table-subtotal">${{total_spending_spent.amount}}</div>
-            <div class="card-table-subtotal">${{total_spending_remaining.amount}}</div>
+            <div class="card-table-subtotal">${{total_spending_budgeted.amount|floatformat:"-2"}}</div>
+            <div class="card-table-subtotal">${{total_spending_spent.amount|floatformat:"-2"}}</div>
+            <div class="card-table-subtotal">${{total_spending_remaining.amount|floatformat:"-2"}}</div>
             <div class="card-table-subtotal"></div>
         </div>
         <div class="budget-horizontal-grid-monthly card-table-header">
@@ -105,9 +105,9 @@
     <div class="budget-horizontal-grid-monthly">
         {% for savings_item in savings_items %}
         <div><a href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=savings_item.category.name %}'>{{savings_item.category}}</a></div>
-        <div>${{savings_item.amount}}</div>
-        <div>${{savings_item.saved}}</div>
-        <div>${{savings_item.diff}}</div>
+        <div>${{savings_item.amount|floatformat:"-2"}}</div>
+        <div>${{savings_item.saved|floatformat:"-2"}}</div>
+        <div>${{savings_item.diff|floatformat:"-2"}}</div>
         <div>
             <div class="edit-links-container">
                 <button class="button-blank" hx-get='{% url "budgetitem_edit_htmx" year=monthly_budget.date.year month=monthly_budget.date.month category=savings_item.category.name %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
@@ -119,16 +119,16 @@
 
     <div class="budget-horizontal-grid-monthly budget-subtotal">
         <div class="card-table-subtotal">Savings Totals</div>
-        <div class="card-table-subtotal">${{total_savings_budgeted.amount}}</div>
-        <div class="card-table-subtotal">${{total_saved.amount}}</div>
-        <div class="card-table-subtotal">${{total_savings_remaining.amount}}</div>
+        <div class="card-table-subtotal">${{total_savings_budgeted.amount|floatformat:"-2"}}</div>
+        <div class="card-table-subtotal">${{total_saved.amount|floatformat:"-2"}}</div>
+        <div class="card-table-subtotal">${{total_savings_remaining.amount|floatformat:"-2"}}</div>
         <div></div>
     </div>
     <div class="budget-horizontal-grid-monthly card-table-header budget-totals">
         <div class="card-table-heading">Totals</div>
-        <div class="card-table-heading">${{total_budgeted}}</div>
-        <div class="card-table-heading">${{total_spent_saved}}</div>
-        <div class="card-table-heading">${{total_remaining}}</div>
+        <div class="card-table-heading">${{total_budgeted|floatformat:"-2"}}</div>
+        <div class="card-table-heading">${{total_spent_saved|floatformat:"-2"}}</div>
+        <div class="card-table-heading">${{total_remaining|floatformat:"-2"}}</div>
         <div class="card-table-heading"></div>
     </div>
     </div>
@@ -150,7 +150,7 @@
         </div>
         <div class="income-horizontal-grid-monthly">
             {% for income in incomes %}
-            <div>${{income.amount}}</div>
+            <div>${{income.amount|floatformat:"-2"}}</div>
             <div>{{income.source}}</div>
             <div>{{income.category}}</div>
             <div>{{income.date}}</div>
@@ -182,7 +182,7 @@
         {% for purchase in purchases %}
         <div>{{purchase.date}}</div>
         <div>{{purchase.item}}</div>
-        <div>${{purchase.amount}}</div>
+        <div>${{purchase.amount|floatformat:"-2"}}</div>
         <div>{{purchase.source}}</div>
         <div>{{purchase.location}}</div>
         <div>{{purchase.category}}</div>
