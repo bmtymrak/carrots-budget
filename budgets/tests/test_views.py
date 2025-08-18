@@ -1,12 +1,20 @@
 import datetime
 
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from decimal import Decimal
 
 from budgets.models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
 from purchases.models import Category, Purchase
 from budgets.forms import BudgetItemForm
+from .factories import (
+    YearlyBudgetFactory,
+    MonthlyBudgetFactory,
+    BudgetItemFactory,
+    RolloverFactory,
+)
+from purchases.tests.factories import CategoryFactory, PurchaseFactory, IncomeFactory
 
 
 User = get_user_model()
@@ -536,3 +544,312 @@ class TestBudgetItemDeleteView(TestCase):
         self.assertEqual(Rollover.objects.filter(user=self.user1).count(), 0)
         self.assertEqual(BudgetItem.objects.filter(user=self.user2).count(), 12)
         self.assertEqual(Rollover.objects.filter(user=self.user2).count(), 1)
+
+
+class YearlyBudgetViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = get_user_model().objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        self.year = datetime.date.today().year
+        self.yearly_budget = YearlyBudgetFactory(
+            user=self.user,
+            date=datetime.date(self.year, 1, 1)
+        )
+
+    def test_yearly_budget_list_view(self):
+        response = self.client.get(reverse('yearly_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'budgets/yearly_budget_list.html')
+        self.assertContains(response, str(self.year))
+
+    def test_yearly_budget_detail_view(self):
+        category = CategoryFactory(user=self.user)
+        budget_item = BudgetItemFactory(
+            user=self.user,
+            category=category,
+            yearly_budget=self.yearly_budget,
+            monthly_budget=MonthlyBudgetFactory(
+                user=self.user,
+                yearly_budget=self.yearly_budget
+            )
+        )
+        
+        response = self.client.get(
+            reverse('yearly_detail', kwargs={'year': self.year})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'budgets/yearly_budget_detail.html')
+        self.assertContains(response, category.name)
+
+    def test_yearly_budget_create_view(self):
+        next_year = self.year + 1
+        response = self.client.post(
+            reverse('yearly_budget_create'),
+            {'date': f'{next_year}-01-01'}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            YearlyBudget.objects.filter(
+                user=self.user,
+                date__year=next_year
+            ).exists()
+        )
+
+
+class MonthlyBudgetViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = get_user_model().objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        self.year = datetime.date.today().year
+        self.month = datetime.date.today().month
+        self.yearly_budget = YearlyBudgetFactory(
+            user=self.user,
+            date=datetime.date(self.year, 1, 1)
+        )
+        self.monthly_budget = MonthlyBudgetFactory(
+            user=self.user,
+            yearly_budget=self.yearly_budget,
+            date=datetime.date(self.year, self.month, 1)
+        )
+
+    def test_monthly_budget_detail_view(self):
+        category = CategoryFactory(user=self.user)
+        budget_item = BudgetItemFactory(
+            user=self.user,
+            category=category,
+            monthly_budget=self.monthly_budget,
+            yearly_budget=self.yearly_budget
+        )
+        
+        response = self.client.get(
+            reverse('monthly_detail', kwargs={
+                'year': self.year,
+                'month': self.month
+            })
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'budgets/monthly_budget_detail.html')
+        self.assertContains(response, category.name)
+
+    def test_monthly_budget_detail_with_purchases(self):
+        category = CategoryFactory(user=self.user)
+        budget_item = BudgetItemFactory(
+            user=self.user,
+            category=category,
+            monthly_budget=self.monthly_budget,
+            yearly_budget=self.yearly_budget,
+            amount=Decimal('500.00')
+        )
+        purchase = PurchaseFactory(
+            user=self.user,
+            category=category,
+            date=datetime.date(self.year, self.month, 15),
+            amount=Decimal('100.00')
+        )
+        
+        response = self.client.get(
+            reverse('monthly_detail', kwargs={
+                'year': self.year,
+                'month': self.month
+            })
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '100.00')
+        self.assertContains(response, '500.00')
+
+
+class BudgetItemViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = get_user_model().objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        self.year = datetime.date.today().year
+        self.month = datetime.date.today().month
+        self.yearly_budget = YearlyBudgetFactory(
+            user=self.user,
+            date=datetime.date(self.year, 1, 1)
+        )
+        self.monthly_budget = MonthlyBudgetFactory(
+            user=self.user,
+            yearly_budget=self.yearly_budget,
+            date=datetime.date(self.year, self.month, 1)
+        )
+        self.category = CategoryFactory(user=self.user)
+
+    def test_budget_item_create_view(self):
+        response = self.client.post(
+            reverse('budgetitem_create', kwargs={'year': self.year}),
+            {
+                'category': self.category.id,
+                'amount': '500.00',
+                'savings': False,
+                'notes': 'Test budget item'
+            }
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            BudgetItem.objects.filter(
+                user=self.user,
+                category=self.category,
+                yearly_budget=self.yearly_budget
+            ).exists()
+        )
+
+    def test_budget_item_create_with_new_category(self):
+        response = self.client.post(
+            reverse('budgetitem_create', kwargs={'year': self.year}),
+            {
+                'new_category': 'New Test Category',
+                'amount': '500.00',
+                'savings': False,
+                'notes': 'Test budget item'
+            }
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            BudgetItem.objects.filter(
+                user=self.user,
+                category__name='New Test Category',
+                yearly_budget=self.yearly_budget
+            ).exists()
+        )
+
+    def test_budget_item_edit_view(self):
+        budget_item = BudgetItemFactory(
+            user=self.user,
+            category=self.category,
+            monthly_budget=self.monthly_budget,
+            yearly_budget=self.yearly_budget,
+            amount=Decimal('500.00')
+        )
+        
+        response = self.client.post(
+            reverse('budgetitem_edit', kwargs={
+                'year': self.year,
+                'month': self.month,
+                'category': self.category.name
+            }),
+            {
+                'category': self.category.id,
+                'amount': '600.00',
+                'savings': False,
+                'notes': 'Updated budget item'
+            }
+        )
+        self.assertEqual(response.status_code, 302)
+        budget_item.refresh_from_db()
+        self.assertEqual(budget_item.amount, Decimal('600.00'))
+
+    def test_budget_item_delete_view(self):
+        budget_item = BudgetItemFactory(
+            user=self.user,
+            category=self.category,
+            monthly_budget=self.monthly_budget,
+            yearly_budget=self.yearly_budget
+        )
+        
+        response = self.client.delete(
+            reverse('budgetitem_delete', kwargs={
+                'year': self.year,
+                'category': self.category.name
+            }) + f'?next={reverse("yearly_list")}'
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            BudgetItem.objects.filter(id=budget_item.id).exists()
+        )
+
+    def test_budget_item_bulk_edit_view(self):
+        budget_items = [
+            BudgetItemFactory(
+                user=self.user,
+                category=self.category,
+                monthly_budget=MonthlyBudgetFactory(
+                    user=self.user,
+                    yearly_budget=self.yearly_budget,
+                    date=datetime.date(self.year, month, 1)
+                ),
+                yearly_budget=self.yearly_budget,
+                amount=Decimal('500.00')
+            )
+            for month in range(1, 13)
+        ]
+        
+        formset_data = {
+            'form-TOTAL_FORMS': '12',
+            'form-INITIAL_FORMS': '12',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+        }
+        
+        for i, item in enumerate(budget_items):
+            formset_data.update({
+                f'form-{i}-id': item.id,
+                f'form-{i}-amount': '600.00',
+            })
+        
+        response = self.client.post(
+            reverse('budgetitem_bulk_edit', kwargs={
+                'year': self.year,
+                'category': self.category.name
+            }),
+            formset_data
+        )
+        
+        self.assertEqual(response.status_code, 302)
+        for item in budget_items:
+            item.refresh_from_db()
+            self.assertEqual(item.amount, Decimal('600.00'))
+
+
+class RolloverViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = get_user_model().objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        self.year = datetime.date.today().year
+        self.yearly_budget = YearlyBudgetFactory(
+            user=self.user,
+            date=datetime.date(self.year, 1, 1)
+        )
+        self.category = CategoryFactory(user=self.user)
+        self.rollover = RolloverFactory(
+            user=self.user,
+            yearly_budget=self.yearly_budget,
+            category=self.category,
+            amount=Decimal('500.00')
+        )
+
+    def test_rollover_update_view(self):
+        response = self.client.post(
+            reverse('rollover_update'),
+            content_type='application/json',
+            data={
+                'amount': '600.00',
+                'category': self.category.name,
+                'year': self.year
+            },
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.rollover.refresh_from_db()
+        self.assertEqual(self.rollover.amount, Decimal('600.00'))

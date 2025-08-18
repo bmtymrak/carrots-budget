@@ -230,6 +230,18 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
             .values("category__name")
             .annotate(
+                income=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            incomes.filter(category=OuterRef("category"))
+                            .values("category")
+                            .annotate(total=Sum("amount"))
+                            .values("total")
+                        ),
+                        Value(0),
+                    ),
+                    output_field=DecimalField(),
+                ),
                 saved=ExpressionWrapper(
                     Coalesce(
                         Subquery(
@@ -241,7 +253,8 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                         Value(0),
                     ),
                     output_field=DecimalField(),
-                ),
+                )
+                + F("income"),
                 rollover=ExpressionWrapper(
                     Coalesce(
                         Subquery(
@@ -256,7 +269,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                     output_field=DecimalField(),
                 ),
                 amount_total=Sum("amount", distinct=False),
-                diff=F("amount_total") - F("saved"),
+                diff=F("amount_total") - F("saved") + F("income"),
             )
         ).order_by("category__name")
 
@@ -269,6 +282,19 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
             .values("category__name")
             .annotate(
+                income=ExpressionWrapper(
+                    Coalesce(
+                        Subquery(
+                            incomes.filter(category=OuterRef("category"))
+                            .filter(date__month__lte=ytd_month)
+                            .values("category")
+                            .annotate(total=Sum("amount"))
+                            .values("total")
+                        ),
+                        Value(0),
+                    ),
+                    output_field=DecimalField(),
+                ),
                 saved=ExpressionWrapper(
                     Coalesce(
                         Subquery(
@@ -281,9 +307,10 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                         Value(0),
                     ),
                     output_field=DecimalField(),
-                ),
+                )
+                + F("income"),
                 amount_total_ytd=Sum("amount", distinct=False),
-                diff_ytd=F("amount_total_ytd") - F("saved"),
+                diff_ytd=F("amount_total_ytd") - F("saved") + F("income"),
             )
         ).order_by("category__name")
 
@@ -622,6 +649,18 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
                     monthly_budget=self.object,
                     savings=True,
                 ).annotate(
+                    income=ExpressionWrapper(
+                        Coalesce(
+                            Subquery(
+                                category_incomes.filter(category=OuterRef("category"))
+                                .values("category")
+                                .annotate(total=Sum("amount"))
+                                .values("total")
+                            ),
+                            Value(0),
+                        ),
+                        output_field=DecimalField(),
+                    ),
                     saved=ExpressionWrapper(
                         Coalesce(
                             Sum(
@@ -635,9 +674,10 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
                             Value(0),
                         ),
                         output_field=DecimalField(),
-                    ),
+                    )
+                    + F("income"),
                     amount_total=Sum("amount", distinct=True),
-                    diff=F("amount_total") - F("saved"),
+                    diff=F("amount_total") - F("saved") + F("income"),
                 )
             )
             .order_by("category__name")
