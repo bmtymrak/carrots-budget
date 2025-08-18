@@ -75,6 +75,13 @@ class Purchase(models.Model):
 
     def __str__(self):
         return self.item
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'date'], name='idx_purchase_user_date'),
+            models.Index(fields=['user', 'category', 'date'], name='idx_purchase_user_cat_date'),
+            models.Index(fields=['category', 'date'], name='idx_purchase_category_date'),
+        ]
 
 
 class Income(models.Model):
@@ -96,3 +103,9 @@ class Income(models.Model):
         related_name="incomes",
     )
     notes = models.TextField(blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'date'], name='idx_income_user_date'),
+            models.Index(fields=['user', 'category', 'date'], name='idx_income_user_cat_date'),
+        ]

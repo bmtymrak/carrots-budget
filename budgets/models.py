@@ -66,6 +66,10 @@ class MonthlyBudget(models.Model):
                 fields=["date", "user"], name="unique_monthlybudget"
             )
         ]
+        indexes = [
+            models.Index(fields=['user', 'date'], name='idx_monthly_budget_user_date'),
+            models.Index(fields=['yearly_budget', 'user'], name='idx_monthly_yearly_user'),
+        ]
 
 
 class BudgetItem(models.Model):
@@ -138,6 +142,12 @@ class BudgetItem(models.Model):
                 fields=["monthly_budget", "category", "user"], name="unique_budgetitem"
             )
         ]
+        indexes = [
+            models.Index(fields=['user', 'yearly_budget', 'savings'], name='idx_bi_user_yearly_savings'),
+            models.Index(fields=['monthly_budget', 'category', 'user'], name='idx_bi_monthly_cat_user'),
+            models.Index(fields=['user', 'category'], name='idx_budgetitem_user_category'),
+            models.Index(fields=['yearly_budget', 'savings'], name='idx_budgetitem_yearly_savings'),
+        ]
 
 
 class Rollover(models.Model):
@@ -176,4 +186,8 @@ class Rollover(models.Model):
             models.UniqueConstraint(
                 fields=["yearly_budget", "category", "user"], name="unique_rollover"
             )
+        ]
+        indexes = [
+            models.Index(fields=['user', 'yearly_budget', 'category'], name='idx_rollover_user_yearly_cat'),
+            models.Index(fields=['yearly_budget', 'category'], name='idx_rollover_yearly_category'),
         ]
