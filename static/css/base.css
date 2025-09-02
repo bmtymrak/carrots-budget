@@ -133,7 +133,10 @@ a {
 .month-nav-container {
     display: flex;
     justify-content: space-around;
-    width: 1050px;
+    gap: 10px;
+    width: 100%;
+    max-width: 1050px;
+    overflow-x: auto;
 }
 
 .content-container {
@@ -152,6 +155,14 @@ a {
 .content {
     max-width: 1050px;
     width: 100%;
+    padding: 0 10px;
+}
+
+@media (max-width: 768px) {
+    .content {
+        max-width: 100%;
+        padding: 0 5px;
+    }
 }
 
 .summary-horizontal-grid-monthly {
@@ -269,13 +280,33 @@ a {
     overflow-x: auto;
 }
 
+@media (max-width: 768px) {
+    .yearly-detail-grid {
+        grid-template-columns: repeat(12, 150px);
+    }
+}
+
 .yearly-detail-grid-header {
     display: grid;
-    grid-template-columns: 150px repeat(12, 200px)
+    grid-template-columns: 150px repeat(12, 200px);
+    overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+    .yearly-detail-grid-header {
+        grid-template-columns: 100px repeat(12, 150px);
+    }
 }
 
 #purchase-form-container {
     width: 900px;
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    #purchase-form-container {
+        width: 100%;
+    }
 }
 
 .purchase-form {
@@ -564,4 +595,72 @@ h2 {
 
 .hidden {
     display: none;
+}
+
+/* Desktop menu toggle (hidden by default) */
+.menu-toggle {
+    display: none;
+}
+
+
+/* Mobile menu styles */
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+    }
+
+    .main-container> :first-child {
+        flex-basis: auto;
+        padding: 10px 20px;
+    }
+
+    .logo-sidebar-container {
+        justify-content: space-between;
+    }
+
+    .menu-toggle {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        display: block;
+    }
+
+    #primary-nav {
+        display: none;
+        background-color: var(--main-color);
+        padding: 10px;
+        border-radius: 10px;
+        margin-top: 10px;
+    }
+
+    #primary-nav.nav-open {
+        display: block;
+    }
+
+    .nav-list>li {
+        padding: 10px 0;
+    }
+
+    .nav-list>li>a {
+        display: block;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .nav-list>li>a:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Prevent horizontal scrolling on mobile */
+@media (max-width: 768px) {
+    /* body {
+        overflow-x: hidden;
+    }
+
+    .main-container {
+        overflow-x: hidden;
+    } */
 }

@@ -22,8 +22,9 @@
             <div class="logo-sidebar-container">
                 <span class="logo-sidebar-text">Carrots</span>
                 <img src='{% static "images/carrots_logo.svg" %}' height="50">
+                <button id="menu-toggle" class="menu-toggle">☰</button>
             </div>
-            <ul class="nav-list">
+            <ul class="nav-list" id="primary-nav">
                 {% if user.is_authenticated %}
                 <li><a href='{% url "yearly_list" %}'>Budgets</a></li>
                 <li><a href='{% url "purchase_create" %}'>Add a Purchase</a></li>
@@ -98,6 +99,12 @@
           closeModal();
         }
       });
+
+    // Mobile menu toggle
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+        const nav = document.getElementById('primary-nav');
+        nav.classList.toggle('nav-open');
+    });
 
 </script>
 </html>
