@@ -72,6 +72,8 @@ class Purchase(models.Model):
     )
     notes = models.TextField(blank=True)
     savings = models.BooleanField(null=False, default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.item
@@ -103,6 +105,8 @@ class Income(models.Model):
         related_name="incomes",
     )
     notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         indexes = [

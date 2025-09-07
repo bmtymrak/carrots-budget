@@ -3,7 +3,7 @@ from .models import Category, Purchase, Subcategory, Income
 
 
 class PurchaseAdmin(admin.ModelAdmin):
-    list_display = ("item", "category", "amount", "date", "user")
+    list_display = ("item", "category", "amount", "date", "user", "created_at", "updated_at")
 
 
 admin.site.register(Purchase, PurchaseAdmin)
