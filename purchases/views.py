@@ -11,6 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
+import datetime
 
 from .models import Purchase, Category, Income
 from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm
@@ -220,8 +221,16 @@ def purchase_create(request):
             if "date" in key:
                 formset_data[key] = formset_date
 
+        # Parse the date to pass to forms
+        try:
+            parsed_date = datetime.datetime.strptime(formset_date, "%Y-%m-%d").date()
+            form_kwargs = {"user": request.user, "date": parsed_date}
+        except ValueError:
+
+            form_kwargs = {"user": request.user}
+
         purchase_formset = PurchaseFormSetReceipt(
-            form_kwargs={"user": request.user}, data=formset_data
+            form_kwargs=form_kwargs, data=formset_data
         )
 
         if purchase_formset.is_valid():
@@ -237,8 +246,21 @@ def purchase_create(request):
 
     if request.method == "GET":
         next = request.GET["next"]
+        
+        # Check if a date is provided as a query parameter
+        date_param = request.GET.get("date")
+        if date_param:
+            try:
+                parsed_date = datetime.datetime.strptime(date_param, "%Y-%m-%d").date()
+                form_kwargs = {"user": request.user, "date": parsed_date}
+            except ValueError:
+                # If date parsing fails, just pass the user
+                form_kwargs = {"user": request.user}
+        else:
+            form_kwargs = {"user": request.user}
+            
         purchase_formset = PurchaseFormSetReceipt(
-            queryset=Purchase.objects.none(), form_kwargs={"user": request.user}
+            queryset=Purchase.objects.none(), form_kwargs=form_kwargs
         )
 
     return render(

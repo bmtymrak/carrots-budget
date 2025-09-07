@@ -19,7 +19,7 @@
 
 {% block body %}
 <div class="page-header-action">
-    <button class="button-create" hx-get='{% url "purchase_create" %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
+    <button class="button-create" hx-get='{% url "purchase_create" %}?date={{yearly_budget.date.year}}-01-01&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
     <button class="button-create" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
     <button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
 </div>

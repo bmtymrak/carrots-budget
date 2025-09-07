@@ -1,13 +1,39 @@
 from django.forms import ModelForm, modelformset_factory
 
 from .models import Purchase, Category, Subcategory, Income
+from budgets.models import BudgetItem, YearlyBudget
 
 
 class PurchaseForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
+        self.date = kwargs.pop("date", None)
         super().__init__(*args, **kwargs)
-        self.fields["category"].queryset = Category.objects.filter(user=self.user)
+        
+        if self.date:
+            # Filter categories to only those associated with budget items in the yearly budget for this date
+            
+            year = self.date.year
+            
+            try:
+                yearly_budget = YearlyBudget.objects.get(user=self.user, date__year=year)
+                
+                # Find budget items for this user and yearly budget, and get their categories
+                budget_item_categories = BudgetItem.objects.filter(
+                    user=self.user,
+                    yearly_budget=yearly_budget
+                ).values_list('category', flat=True)
+                
+                self.fields["category"].queryset = Category.objects.filter(
+                    id__in=budget_item_categories
+                ).distinct()
+            except YearlyBudget.DoesNotExist:
+                # If no yearly budget exists for this year, show all categories for the user
+                self.fields["category"].queryset = Category.objects.filter(user=self.user)
+        else:
+            # Default behavior: show all categories for the user
+            self.fields["category"].queryset = Category.objects.filter(user=self.user)
+            
         self.fields["category"].empty_label = "Category"
         self.fields["subcategory"].queryset = Subcategory.objects.filter(user=self.user)
         self.fields["subcategory"].empty_label = "Sub-category"
