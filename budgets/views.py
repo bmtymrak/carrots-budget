@@ -28,6 +28,7 @@ from django.db.models import (
     OuterRef,
     Subquery,
     ExpressionWrapper,
+    Exists,
 )
 from django.db.models.functions import Coalesce
 
@@ -116,56 +117,70 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             date__year=self.object.date.year,
         )
 
+        # Optimized approach: Use separate targeted aggregations instead of complex JOINs
+        purchases_by_category = dict(
+            purchases.values('category').annotate(
+                total=Sum('amount')
+            ).values_list('category', 'total')
+        )
+        
+        incomes_by_category = dict(
+            incomes.values('category').annotate(
+                total=Sum('amount')
+            ).values_list('category', 'total')
+        )
+        
+        rollovers_by_category = dict(
+            Rollover.objects.filter(
+                user=self.request.user,
+                yearly_budget__date__year=self.object.date.year - 1,
+            ).values_list('category', 'amount')
+        )
+
         budgetitems = (
             BudgetItem.objects.filter(user=self.request.user)
             .filter(
                 monthly_budget__date__year=self.object.date.year,
                 savings=False,
             )
-            .values("category__name")
+            .values("category", "category__name")
             .annotate(
-                spent=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            purchases.filter(category=OuterRef("category"))
-                            .values("category")
-                            .annotate(total=Sum("amount"))
-                            .values("total")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                ),
-                income=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            incomes.filter(category=OuterRef("category"))
-                            .values("category")
-                            .annotate(total=Sum("amount"))
-                            .values("total")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                ),
-                rollover=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            Rollover.objects.filter(
-                                user=self.request.user,
-                                yearly_budget__date__year=self.object.date.year - 1,
-                                category=OuterRef("category"),
-                            ).values("amount")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                ),
                 amount_total=Sum("amount", distinct=False),
-                diff=F("amount_total") - F("spent") + F("income") + F("rollover"),
-                remaining_current_year=F("amount_total") - F("spent") + F("income"),
             )
-        ).order_by("category__name")
+            .order_by("category__name")
+        )
+        
+        # Add calculated fields in Python (much faster than complex DB joins)
+        budgetitems_list = []
+        for item in budgetitems:
+            category_id = item['category']
+            spent = purchases_by_category.get(category_id, 0) or 0
+            income = incomes_by_category.get(category_id, 0) or 0
+            rollover = rollovers_by_category.get(category_id, 0) or 0
+            
+            item.update({
+                'spent': spent,
+                'income': income,
+                'rollover': rollover,
+                'diff': item['amount_total'] - spent + income + rollover,
+                'remaining_current_year': item['amount_total'] - spent + income,
+            })
+            budgetitems_list.append(item)
+            
+        budgetitems = budgetitems_list
+
+        # YTD purchases and incomes
+        purchases_ytd_by_category = dict(
+            purchases.filter(date__month__lte=ytd_month).values('category').annotate(
+                total=Sum('amount')
+            ).values_list('category', 'total')
+        )
+        
+        incomes_ytd_by_category = dict(
+            incomes.filter(date__month__lte=ytd_month).values('category').annotate(
+                total=Sum('amount')
+            ).values_list('category', 'total')
+        )
 
         budgetitems_ytd = (
             BudgetItem.objects.filter(user=self.request.user)
@@ -174,53 +189,51 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 monthly_budget__date__month__lte=ytd_month,
                 savings=False,
             )
-            .values("category__name")
+            .values("category", "category__name")
             .annotate(
-                spent=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            purchases.filter(category=OuterRef("category"))
-                            .filter(date__month__lte=ytd_month)
-                            .values("category")
-                            .annotate(total=Sum("amount"))
-                            .values("total")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                ),
-                income=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            incomes.filter(category=OuterRef("category"))
-                            .filter(date__month__lte=ytd_month)
-                            .values("category")
-                            .annotate(total=Sum("amount"))
-                            .values("total")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                ),
                 amount_total_ytd=Sum("amount", distinct=False),
-                diff_ytd=F("amount_total_ytd") - F("spent"),
-                remaining_current_year_ytd=F("amount_total_ytd")
-                - F("spent")
-                + F("income"),
             )
-        ).order_by("category__name")
-
-        budget_items_combined = list(
-            zip(
-                budgetitems.values("category__name"),
-                budgetitems.values("amount_total"),
-                budgetitems.values("spent"),
-                budgetitems.values("diff"),
-                budgetitems_ytd.values("amount_total_ytd"),
-                budgetitems_ytd.values("diff_ytd"),
-                budgetitems_ytd.values("spent"),
-            )
+            .order_by("category__name")
         )
+        
+        # Add calculated fields in Python
+        budgetitems_ytd_list = []
+        for item in budgetitems_ytd:
+            category_id = item['category']
+            spent = purchases_ytd_by_category.get(category_id, 0) or 0
+            income = incomes_ytd_by_category.get(category_id, 0) or 0
+            
+            item.update({
+                'spent': spent,
+                'income': income,
+                'diff_ytd': item['amount_total_ytd'] - spent + income,
+                'remaining_current_year_ytd': item['amount_total_ytd'] - spent + income,
+            })
+            budgetitems_ytd_list.append(item)
+            
+        budgetitems_ytd = budgetitems_ytd_list
+
+        # Create dictionaries for fast lookup by category name
+        budgetitems_dict = {item["category__name"]: item for item in budgetitems}
+        budgetitems_ytd_dict = {item["category__name"]: item for item in budgetitems_ytd}
+        
+        # Build combined data ensuring matching categories
+        budget_items_combined = []
+        for category_name in budgetitems_dict.keys():
+            budget_item = budgetitems_dict[category_name]
+            ytd_item = budgetitems_ytd_dict.get(category_name, {
+                "amount_total_ytd": 0, "diff_ytd": 0, "spent": 0
+            })
+            
+            budget_items_combined.append((
+                {"category__name": category_name},
+                {"amount_total": budget_item["amount_total"]},
+                {"spent": budget_item["spent"]},
+                {"diff": budget_item["diff"]},
+                {"amount_total_ytd": ytd_item.get("amount_total_ytd", 0)},
+                {"diff_ytd": ytd_item.get("diff_ytd", 0)},
+                {"spent": ytd_item.get("spent", 0)},
+            ))
 
         savings_items = (
             BudgetItem.objects.filter(
@@ -228,50 +241,32 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 monthly_budget__date__year=self.object.date.year,
                 savings=True,
             )
-            .values("category__name")
+            .values("category", "category__name")
             .annotate(
-                income=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            incomes.filter(category=OuterRef("category"))
-                            .values("category")
-                            .annotate(total=Sum("amount"))
-                            .values("total")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                ),
-                saved=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            purchases.filter(category=OuterRef("category"))
-                            .values("category")
-                            .annotate(total=Sum("amount"))
-                            .values("total")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                )
-                + F("income"),
-                rollover=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            Rollover.objects.filter(
-                                user=self.request.user,
-                                yearly_budget__date__year=self.object.date.year - 1,
-                                category=OuterRef("category"),
-                            ).values("amount")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                ),
                 amount_total=Sum("amount", distinct=False),
-                diff=F("amount_total") - F("saved") + F("income"),
             )
-        ).order_by("category__name")
+            .order_by("category__name")
+        )
+        
+        # Add calculated fields in Python
+        savings_items_list = []
+        for item in savings_items:
+            category_id = item['category']
+            purchases_amount = purchases_by_category.get(category_id, 0) or 0
+            income = incomes_by_category.get(category_id, 0) or 0
+            rollover = rollovers_by_category.get(category_id, 0) or 0
+            saved = purchases_amount + income
+            
+            item.update({
+                'income': income,
+                'purchases_amount': purchases_amount,
+                'saved': saved,
+                'rollover': rollover,
+                'diff': item['amount_total'] - saved + income,
+            })
+            savings_items_list.append(item)
+            
+        savings_items = savings_items_list
 
         savings_items_ytd = (
             BudgetItem.objects.filter(
@@ -280,69 +275,62 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 monthly_budget__date__month__lte=ytd_month,
                 savings=True,
             )
-            .values("category__name")
+            .values("category", "category__name")
             .annotate(
-                income=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            incomes.filter(category=OuterRef("category"))
-                            .filter(date__month__lte=ytd_month)
-                            .values("category")
-                            .annotate(total=Sum("amount"))
-                            .values("total")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                ),
-                saved=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            purchases.filter(category=OuterRef("category"))
-                            .filter(date__month__lte=ytd_month)
-                            .values("category")
-                            .annotate(total=Sum("amount"))
-                            .values("total")
-                        ),
-                        Value(0),
-                    ),
-                    output_field=DecimalField(),
-                )
-                + F("income"),
                 amount_total_ytd=Sum("amount", distinct=False),
-                diff_ytd=F("amount_total_ytd") - F("saved") + F("income"),
             )
-        ).order_by("category__name")
-
-        savings_items_combined = list(
-            zip(
-                savings_items.values("category__name"),
-                savings_items.values("amount_total"),
-                savings_items.values("saved"),
-                savings_items.values("diff"),
-                savings_items_ytd.values("amount_total_ytd"),
-                savings_items_ytd.values("diff_ytd"),
-                savings_items_ytd.values("saved"),
-            )
+            .order_by("category__name")
         )
+        
+        # Add calculated fields in Python
+        savings_items_ytd_list = []
+        for item in savings_items_ytd:
+            category_id = item['category']
+            purchases_amount = purchases_ytd_by_category.get(category_id, 0) or 0
+            income = incomes_ytd_by_category.get(category_id, 0) or 0
+            saved = purchases_amount + income
+            
+            item.update({
+                'income': income,
+                'purchases_amount': purchases_amount,
+                'saved': saved,
+                'diff_ytd': item['amount_total_ytd'] - saved + income,
+            })
+            savings_items_ytd_list.append(item)
+            
+        savings_items_ytd = savings_items_ytd_list
 
-        total_spending_spent = 0
-        total_spending_remaining = 0
-        total_spending_budgeted = 0
-        total_spending_remaining_current_year = 0
-        for item in budgetitems:
-            total_spending_spent += item["spent"]
-            total_spending_remaining += item["diff"]
-            total_spending_budgeted += item["amount_total"]
-            total_spending_remaining_current_year += item["remaining_current_year"]
+        # Create dictionaries for fast lookup by category name
+        savings_items_dict = {item["category__name"]: item for item in savings_items}
+        savings_items_ytd_dict = {item["category__name"]: item for item in savings_items_ytd}
+        
+        # Build combined data ensuring matching categories
+        savings_items_combined = []
+        for category_name in savings_items_dict.keys():
+            savings_item = savings_items_dict[category_name]
+            ytd_item = savings_items_ytd_dict.get(category_name, {
+                "amount_total_ytd": 0, "diff_ytd": 0, "saved": 0
+            })
+            
+            savings_items_combined.append((
+                {"category__name": category_name},
+                {"amount_total": savings_item["amount_total"]},
+                {"saved": savings_item["saved"]},
+                {"diff": savings_item["diff"]},
+                {"amount_total_ytd": ytd_item.get("amount_total_ytd", 0)},
+                {"diff_ytd": ytd_item.get("diff_ytd", 0)},
+                {"saved": ytd_item.get("saved", 0)},
+            ))
 
-        total_saved = 0
-        total_savings_budgeted = 0
-        total_savings_remaining = 0
-        for item in savings_items:
-            total_saved += item["saved"]
-            total_savings_remaining += item["diff"]
-            total_savings_budgeted += item["amount_total"]
+        # Python-based aggregation (faster than complex DB queries)
+        total_spending_spent = sum(item["spent"] for item in budgetitems)
+        total_spending_remaining = sum(item["diff"] for item in budgetitems)
+        total_spending_budgeted = sum(item["amount_total"] for item in budgetitems)
+        total_spending_remaining_current_year = sum(item["remaining_current_year"] for item in budgetitems)
+
+        total_saved = sum(item["saved"] for item in savings_items)
+        total_savings_remaining = sum(item["diff"] for item in savings_items)
+        total_savings_budgeted = sum(item["amount_total"] for item in savings_items)
 
         total_budgeted = total_spending_budgeted + total_savings_budgeted
 
@@ -354,21 +342,14 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             total_spending_remaining_current_year + total_savings_remaining
         )
 
-        total_spending_spent_ytd = 0
-        total_spending_remaining_ytd = 0
-        total_spending_budgeted_ytd = 0
-        for item in budgetitems_ytd:
-            total_spending_spent_ytd += item["spent"]
-            total_spending_remaining_ytd += item["diff_ytd"]
-            total_spending_budgeted_ytd += item["amount_total_ytd"]
+        # YTD Python-based aggregation
+        total_spending_spent_ytd = sum(item["spent"] for item in budgetitems_ytd)
+        total_spending_remaining_ytd = sum(item["diff_ytd"] for item in budgetitems_ytd)
+        total_spending_budgeted_ytd = sum(item["amount_total_ytd"] for item in budgetitems_ytd)
 
-        total_saved_ytd = 0
-        total_savings_budgeted_ytd = 0
-        total_savings_remaining_ytd = 0
-        for item in savings_items_ytd:
-            total_saved_ytd += item["saved"]
-            total_savings_remaining_ytd += item["diff_ytd"]
-            total_savings_budgeted_ytd += item["amount_total_ytd"]
+        total_saved_ytd = sum(item["saved"] for item in savings_items_ytd)
+        total_savings_remaining_ytd = sum(item["diff_ytd"] for item in savings_items_ytd)
+        total_savings_budgeted_ytd = sum(item["amount_total_ytd"] for item in savings_items_ytd)
 
         total_budgeted_ytd = total_spending_budgeted_ytd + total_savings_budgeted_ytd
 
@@ -438,33 +419,29 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             total_income_budgeted_ytd["amount"] - total_budgeted_ytd
         )
 
-        free_income = (
-            budgetitems.filter(rollover=0).aggregate(
-                amount=ExpressionWrapper(
-                    Coalesce(Sum("remaining_current_year"), Value(0)),
-                    output_field=DecimalField(),
-                )
-            )["amount"]
-            + savings_items.filter(rollover=0).aggregate(
-                amount=ExpressionWrapper(
-                    Coalesce(Sum("diff"), Value(0)), output_field=DecimalField()
-                )
-            )["amount"]
+        # Free income calculation with Python filtering
+        free_income_spending = sum(
+            item["remaining_current_year"]
+            for item in budgetitems
+            if item["rollover"] == 0
         )
+        free_income_savings = sum(
+            item["diff"]
+            for item in savings_items
+            if item["rollover"] == 0
+        )
+        free_income = free_income_spending + free_income_savings
 
         rollovers = (
             Rollover.objects.filter(user=self.request.user, yearly_budget=self.object)
             .annotate(
-                savings=ExpressionWrapper(
-                    Coalesce(
-                        Subquery(
-                            budgetitems.filter(category=OuterRef("category")).values(
-                                "savings"
-                            )
-                        ),
-                        Value(True),
-                    ),
-                    output_field=BooleanField(),
+                savings=Exists(
+                    BudgetItem.objects.filter(
+                        user=self.request.user,
+                        category=OuterRef('category'),
+                        monthly_budget__date__year=self.object.date.year,
+                        savings=True
+                    )
                 )
             )
             .prefetch_related("category")
