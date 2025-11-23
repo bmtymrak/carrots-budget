@@ -1,0 +1,34 @@
+[
+    {
+        "model": "accounts.customuser",
+        "pk": 2,
+        "fields": {
+            "password": "pbkdf2_sha256$260000$...",
+            "last_login": null,
+            "is_superuser": false,
+            "username": "fixture_user",
+            "first_name": "",
+            "last_name": "",
+            "email": "fixture@example.com",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2023-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "purchases.category",
+        "pk": 100,
+        "fields": {
+            "user": 2,
+            "name": "Fixture Category 1"
+        }
+    },
+    {
+        "model": "purchases.category",
+        "pk": 101,
+        "fields": {
+            "user": 2,
+            "name": "Fixture Category 2"
+        }
+    }
+]

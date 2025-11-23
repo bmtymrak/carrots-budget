@@ -1,0 +1,332 @@
+from decimal import Decimal
+import datetime
+import factory
+from django.test import TestCase
+from django.urls import reverse
+from django.contrib.auth import get_user_model
+from budgets.models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
+from purchases.models import Purchase, Income
+from budgets.tests.factories import (
+    YearlyBudgetFactory,
+    MonthlyBudgetFactory,
+    BudgetItemFactory,
+    RolloverFactory,
+)
+from purchases.tests.factories import (
+    CategoryFactory,
+    PurchaseFactory,
+    IncomeFactory,
+)
+
+User = get_user_model()
+
+class TestYearlyBudgetDetailViewComprehensive(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            email="test@example.com", username="testuser", password="password123"
+        )
+        cls.year = datetime.date.today().year
+        cls.yearly_budget = YearlyBudgetFactory(user=cls.user, date=datetime.date(cls.year, 1, 1))
+
+        # Create 12 monthly budgets
+        cls.monthly_budgets = []
+        for month in range(1, 13):
+            cls.monthly_budgets.append(
+                MonthlyBudgetFactory(
+                    user=cls.user,
+                    yearly_budget=cls.yearly_budget,
+                    date=datetime.date(cls.year, month, 1)
+                )
+            )
+
+        # Categories
+        cls.cat_food = CategoryFactory(user=cls.user, name="Food")
+        cls.cat_vacation = CategoryFactory(user=cls.user, name="Vacation")
+
+    def setUp(self):
+        self.client.login(email="test@example.com", password="password123")
+
+    def test_basic_context_structure(self):
+        """Verify that the view returns 200 and has the expected context keys."""
+        response = self.client.get(reverse("yearly_detail", kwargs={"year": self.year}))
+        self.assertEqual(response.status_code, 200)
+        
+        expected_keys = [
+            "budget_items_combined",
+            "savings_items_combined",
+            "total_budgeted",
+            "total_spent_saved",
+            "total_remaining",
+            "months",
+        ]
+        for key in expected_keys:
+            self.assertIn(key, response.context)
+
+    def test_data_calculation_standard_scenario(self):
+        """
+        Verify calculations for a standard scenario with spending, savings, income, and rollover.
+        """
+        # Setup Budget Items
+        # Food: $500/month * 12 = $6000
+        for mb in self.monthly_budgets:
+            BudgetItemFactory(
+                user=self.user,
+                category=self.cat_food,
+                monthly_budget=mb,
+                amount=Decimal("500.00"),
+                savings=False
+            )
+        
+        # Vacation: $200/month * 12 = $2400 (Savings)
+        for mb in self.monthly_budgets:
+            BudgetItemFactory(
+                user=self.user,
+                category=self.cat_vacation,
+                monthly_budget=mb,
+                amount=Decimal("200.00"),
+                savings=True
+            )
+
+        # Setup Transactions
+        # Purchase in Jan for Food: $100
+        PurchaseFactory(
+            user=self.user,
+            category=self.cat_food,
+            date=datetime.date(self.year, 1, 15),
+            amount=Decimal("100.00")
+        )
+
+        # Purchase in Jan for Vacation: $50 (Counts as 'saved' in this app logic)
+        PurchaseFactory(
+            user=self.user,
+            category=self.cat_vacation,
+            date=datetime.date(self.year, 1, 15),
+            amount=Decimal("50.00")
+        )
+
+        # Rollover from previous year for Food: $50
+        RolloverFactory(
+            user=self.user,
+            yearly_budget=self.yearly_budget, # This links it to the current year's budget as a "rollover source" effectively? 
+            # Wait, looking at view: 
+            # rollovers_by_category = ... filter(yearly_budget__date__year=self.object.date.year - 1)
+            # So the rollover object needs to be associated with the PREVIOUS year's budget.
+            category=self.cat_food,
+            amount=Decimal("50.00")
+        )
+        # We need a previous year budget for the rollover to be picked up correctly by the query
+        prev_year_budget = YearlyBudgetFactory(user=self.user, date=datetime.date(self.year - 1, 1, 1))
+        # Update the rollover we just created to point to prev year
+        rollover = Rollover.objects.get(user=self.user, category=self.cat_food)
+        rollover.yearly_budget = prev_year_budget
+        rollover.save()
+
+        # Execute
+        response = self.client.get(reverse("yearly_detail", kwargs={"year": self.year}))
+        context = response.context
+
+        # Assertions for Food (Spending)
+        # Find the food item in combined list
+        food_item = next(item for item in context["budget_items_combined"] if item[0]["category__name"] == "Food")
+        # Structure is a tuple of dicts: (name, amount_total, spent, diff, ...)
+        # Index 1: amount_total
+        self.assertEqual(food_item[1]["amount_total"], Decimal("6000.00"))
+        # Index 2: spent
+        self.assertEqual(food_item[2]["spent"], Decimal("100.00"))
+        # Index 3: diff (remaining) -> amount_total - spent + income + rollover
+        # 6000 - 100 + 0 + 50 = 5950
+        self.assertEqual(food_item[3]["diff"], Decimal("5950.00"))
+
+        # Assertions for Vacation (Savings)
+        vacation_item = next(item for item in context["savings_items_combined"] if item[0]["category__name"] == "Vacation")
+        # Index 1: amount_total
+        self.assertEqual(vacation_item[1]["amount_total"], Decimal("2400.00"))
+        # Index 2: saved (purchases + income) -> 50 + 0 = 50
+        self.assertEqual(vacation_item[2]["saved"], Decimal("50.00"))
+        # Index 3: diff (remaining) -> amount_total - saved + income
+        # 2400 - 50 + 0 = 2350
+        self.assertEqual(vacation_item[3]["diff"], Decimal("2350.00"))
+
+    def test_ytd_logic(self):
+        """Verify YTD calculations when 'ytd' param is provided."""
+        # Setup: $100 budget per month for Food
+        for mb in self.monthly_budgets:
+            BudgetItemFactory(
+                user=self.user,
+                category=self.cat_food,
+                monthly_budget=mb,
+                amount=Decimal("100.00"),
+                savings=False
+            )
+        
+        # Purchase in June: $50
+        PurchaseFactory(
+            user=self.user,
+            category=self.cat_food,
+            date=datetime.date(self.year, 6, 15),
+            amount=Decimal("50.00")
+        )
+        
+        # Purchase in July: $50 (Should NOT be in YTD if we ask for June)
+        PurchaseFactory(
+            user=self.user,
+            category=self.cat_food,
+            date=datetime.date(self.year, 7, 15),
+            amount=Decimal("50.00")
+        )
+
+        # Request YTD for June (month 6)
+        response = self.client.get(reverse("yearly_detail", kwargs={"year": self.year}) + "?ytd=6")
+        context = response.context
+        
+        food_item = next(item for item in context["budget_items_combined"] if item[0]["category__name"] == "Food")
+        
+        # YTD Budget: 6 months * 100 = 600
+        # Index 4: amount_total_ytd
+        self.assertEqual(food_item[4]["amount_total_ytd"], Decimal("600.00"))
+        
+        # YTD Spent: Only June purchase = 50
+        # Index 6: spent (This seems to be the YTD spent in the tuple structure? Let's verify view logic)
+        # View line 235: {"spent": ytd_item.get("spent", 0)}
+        self.assertEqual(food_item[6]["spent"], Decimal("50.00"))
+        
+        # YTD Diff: 600 - 50 = 550
+        # Index 5: diff_ytd
+        self.assertEqual(food_item[5]["diff_ytd"], Decimal("550.00"))
+
+    def test_empty_state(self):
+        """Verify view handles a year with no data gracefully."""
+        empty_year = self.year - 5
+        YearlyBudgetFactory(user=self.user, date=datetime.date(empty_year, 1, 1))
+        
+        response = self.client.get(reverse("yearly_detail", kwargs={"year": empty_year}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["budget_items_combined"]), 0)
+        self.assertEqual(response.context["total_budgeted"], 0)
+
+    def test_uncategorized_purchases(self):
+        """Verify uncategorized purchases are handled."""
+        PurchaseFactory(
+            user=self.user,
+            category=None,
+            date=datetime.date(self.year, 1, 15),
+            amount=Decimal("99.99")
+        )
+        
+        response = self.client.get(reverse("yearly_detail", kwargs={"year": self.year}))
+        self.assertEqual(response.status_code, 200)
+        
+    def test_heavy_data_load(self):
+        """
+        Demonstrate how to seed a lot of data:
+        - 5 Categories
+        - Budget items for all 12 months for each category
+        - 3 Purchases per month for each category
+        """
+        # 1. Create 5 Categories
+        categories = CategoryFactory.create_batch(5, user=self.user)
+
+        # 2. Setup Budget Items and Purchases
+        # We'll use deterministic values to make assertions easy
+        # Budget: $1000/month
+        # Purchases: $10, $20, $30 per month (Total $60/month)
+        
+        expected_total_budgeted = Decimal("0.00")
+        expected_total_spent = Decimal("0.00")
+
+        for i, category in enumerate(categories):
+            # Create Budget Items for all 12 months
+            for mb in self.monthly_budgets:
+                BudgetItemFactory(
+                    user=self.user,
+                    category=category,
+                    monthly_budget=mb,
+                    amount=Decimal(str(1000.00 + mb.date.month + i)),
+                    savings=False
+                )
+                expected_total_budgeted += Decimal(str(1000.00 + mb.date.month + i))
+
+                # Create 3 purchases for this month
+                p1_amount = Decimal(str(10.00 + mb.date.month + i))
+                p2_amount = Decimal(str(20.00 + mb.date.month + i))
+                p3_amount = Decimal(str(30.00 + mb.date.month + i))
+
+                PurchaseFactory.create_batch(
+                    3,
+                    user=self.user,
+                    category=category,
+                    date=mb.date + datetime.timedelta(days=1), # Set date to 2nd of month
+                    amount=factory.Iterator([p1_amount, p2_amount, p3_amount])
+                )
+                expected_total_spent += (p1_amount + p2_amount + p3_amount)
+
+        # Execute
+        response = self.client.get(reverse("yearly_detail", kwargs={"year": self.year}))
+        context = response.context
+
+        # Assertions
+        # Check Grand Totals
+        self.assertEqual(context["total_budgeted"], expected_total_budgeted)
+        self.assertEqual(context["total_spent_saved"], expected_total_spent)
+        
+        # Check individual category data in the combined list
+        # We expect 5 categories + the 2 from setUpTestData = 7 total
+        # (Actually setUpTestData creates 'Food' and 'Vacation', so 7 total)
+        # Let's just check one of our new categories
+        test_cat = categories[0]
+        cat_item = next(item for item in context["budget_items_combined"] if item[0]["category__name"] == test_cat.name)
+        
+        # Budgeted: Sum of (1000.00 + month) for months 1-12  
+        expected_cat_budgeted = Decimal("0.00")
+        expected_cat_spent = Decimal("0.00")
+        for month in range(1, 13):
+            # We are verifying categories[0], so don't need to add category index (like we did above)
+            expected_cat_budgeted += Decimal(str(1000.00 + month))
+            
+            p1 = Decimal(str(10.00 + month))
+            p2 = Decimal(str(20.00 + month))
+            p3 = Decimal(str(30.00 + month))
+            expected_cat_spent += (p1 + p2 + p3)
+
+        print(expected_cat_budgeted)
+        print(cat_item[1]["amount_total"])
+        self.assertEqual(cat_item[1]["amount_total"], expected_cat_budgeted)
+        # Spent
+        self.assertEqual(cat_item[2]["spent"], expected_cat_spent)
+
+    def test_using_fixtures(self):
+        """
+        Demonstrate how to use fixtures to load data.
+        Note: We need to specify 'fixtures' in the class or use 'call_command' to load them.
+        For this specific test method, we'll use call_command to avoid affecting other tests
+        if we were to set it on the class level (though class level is more common).
+        """
+        from django.core.management import call_command
+        from purchases.models import Category
+        
+        # Load the fixture
+        call_command('loaddata', 'test_data.json', verbosity=0)
+        
+        # Verify data is loaded
+        fixture_user = User.objects.get(email="fixture@example.com")
+        self.assertEqual(fixture_user.username, "fixture_user")
+        
+        categories = Category.objects.filter(user=fixture_user)
+        self.assertEqual(categories.count(), 2)
+        self.assertTrue(categories.filter(name="Fixture Category 1").exists())
+        
+        # We can now use this data in tests
+        # For example, create a budget for this fixture user
+        yb = YearlyBudgetFactory(user=fixture_user, date=datetime.date(self.year, 1, 1))
+        
+        # Login as the fixture user
+        # Note: The password hash in the fixture is a dummy, so we might need to set a usable password
+        fixture_user.set_password("newpassword123")
+        fixture_user.save()
+        
+        self.client.login(email="fixture@example.com", password="newpassword123")
+        response = self.client.get(reverse("yearly_detail", kwargs={"year": self.year}))
+        self.assertEqual(response.status_code, 200)
+
+
