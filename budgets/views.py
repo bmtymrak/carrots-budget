@@ -117,17 +117,21 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             date__year=self.object.date.year,
         )
 
-        purchases_by_category = dict(
-            purchases.values('category').annotate(
-                total=Sum('amount')
-            ).values_list('category', 'total')
-        )
+        purchases_data = {
+            item['category']: {'total': item['total'], 'total_ytd': item['total_ytd']}
+            for item in purchases.values('category').annotate(
+                total=Sum('amount'),
+                total_ytd=Sum('amount', filter=Q(date__month__lte=ytd_month))
+            )
+        }
         
-        incomes_by_category = dict(
-            incomes.values('category').annotate(
-                total=Sum('amount')
-            ).values_list('category', 'total')
-        )
+        incomes_data = {
+            item['category']: {'total': item['total'], 'total_ytd': item['total_ytd']}
+            for item in incomes.values('category').annotate(
+                total=Sum('amount'),
+                total_ytd=Sum('amount', filter=Q(date__month__lte=ytd_month))
+            )
+        }
         
         rollovers_by_category = dict(
             Rollover.objects.filter(
@@ -144,25 +148,43 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
             .values("category", "category__name")
             .annotate(
-                amount_total=Sum("amount", distinct=False),
+                amount_total=Sum("amount"),
+                amount_total_ytd=Sum("amount", filter=Q(monthly_budget__date__month__lte=ytd_month)),
             )
             .order_by("category__name")
         )
         
         # Add calculated fields in Python (much faster than complex DB joins)
         budgetitems_list = []
+        budgetitems_ytd_list = []
+        
         total_spending_spent = 0
         total_spending_remaining = 0
         total_spending_budgeted = 0
         total_spending_remaining_current_year = 0
         free_income_spending = 0
+        
+        total_spending_spent_ytd = 0
+        total_spending_remaining_ytd = 0
+        total_spending_budgeted_ytd = 0
 
         for item in budgetitems:
             category_id = item['category']
-            spent = purchases_by_category.get(category_id, 0) or 0
-            income = incomes_by_category.get(category_id, 0) or 0
+            
+            # Get purchase/income data
+            purchase_data = purchases_data.get(category_id, {'total': 0, 'total_ytd': 0})
+            income_data = incomes_data.get(category_id, {'total': 0, 'total_ytd': 0})
+            
+            spent = purchase_data['total'] or 0
+            income = income_data['total'] or 0
             rollover = rollovers_by_category.get(category_id, 0) or 0
             
+            # YTD Data
+            spent_ytd = purchase_data['total_ytd'] or 0
+            income_ytd = income_data['total_ytd'] or 0
+            amount_total_ytd = item['amount_total_ytd'] or 0
+            
+            # Calculate fields for main list
             item.update({
                 'spent': spent,
                 'income': income,
@@ -172,65 +194,32 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             })
             budgetitems_list.append(item)
 
+            # Calculate fields for YTD list (create separate dict)
+            ytd_item = {
+                'category': category_id,
+                'category__name': item['category__name'],
+                'amount_total_ytd': amount_total_ytd,
+                'spent': spent_ytd,
+                'income': income_ytd,
+                'diff_ytd': amount_total_ytd - spent_ytd + income_ytd,
+                'remaining_current_year_ytd': amount_total_ytd - spent_ytd + income_ytd,
+            }
+            budgetitems_ytd_list.append(ytd_item)
+
+            # Update totals
             total_spending_spent += spent
             total_spending_remaining += item['diff']
             total_spending_budgeted += item['amount_total']
             total_spending_remaining_current_year += item['remaining_current_year']
             if rollover == 0:
                 free_income_spending += item['remaining_current_year']
+                
+            # Update YTD totals
+            total_spending_spent_ytd += spent_ytd
+            total_spending_remaining_ytd += ytd_item['diff_ytd']
+            total_spending_budgeted_ytd += amount_total_ytd
             
         budgetitems = budgetitems_list
-
-        # YTD purchases and incomes
-        purchases_ytd_by_category = dict(
-            purchases.filter(date__month__lte=ytd_month).values('category').annotate(
-                total=Sum('amount')
-            ).values_list('category', 'total')
-        )
-        
-        incomes_ytd_by_category = dict(
-            incomes.filter(date__month__lte=ytd_month).values('category').annotate(
-                total=Sum('amount')
-            ).values_list('category', 'total')
-        )
-
-        budgetitems_ytd = (
-            BudgetItem.objects.filter(user=self.request.user)
-            .filter(
-                monthly_budget__date__year=self.object.date.year,
-                monthly_budget__date__month__lte=ytd_month,
-                savings=False,
-            )
-            .values("category", "category__name")
-            .annotate(
-                amount_total_ytd=Sum("amount", distinct=False),
-            )
-            .order_by("category__name")
-        )
-        
-        # Add calculated fields in Python
-        budgetitems_ytd_list = []
-        total_spending_spent_ytd = 0
-        total_spending_remaining_ytd = 0
-        total_spending_budgeted_ytd = 0
-
-        for item in budgetitems_ytd:
-            category_id = item['category']
-            spent = purchases_ytd_by_category.get(category_id, 0) or 0
-            income = incomes_ytd_by_category.get(category_id, 0) or 0
-            
-            item.update({
-                'spent': spent,
-                'income': income,
-                'diff_ytd': item['amount_total_ytd'] - spent + income,
-                'remaining_current_year_ytd': item['amount_total_ytd'] - spent + income,
-            })
-            budgetitems_ytd_list.append(item)
-
-            total_spending_spent_ytd += spent
-            total_spending_remaining_ytd += item['diff_ytd']
-            total_spending_budgeted_ytd += item['amount_total_ytd']
-            
         budgetitems_ytd = budgetitems_ytd_list
 
         # Create dictionaries for fast lookup by category name
@@ -263,25 +252,48 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             )
             .values("category", "category__name")
             .annotate(
-                amount_total=Sum("amount", distinct=False),
+                amount_total=Sum("amount"),
+                amount_total_ytd=Sum("amount", filter=Q(monthly_budget__date__month__lte=ytd_month)),
             )
             .order_by("category__name")
         )
         
         # Add calculated fields in Python
         savings_items_list = []
+        savings_items_ytd_list = []
+        
         total_saved = 0
         total_savings_remaining = 0
         total_savings_budgeted = 0
         free_income_savings = 0
+        
+        total_saved_ytd = 0
+        total_savings_remaining_ytd = 0
+        total_savings_budgeted_ytd = 0
+        
+        # Track savings categories for rollover optimization
+        savings_category_ids = set()
 
         for item in savings_items:
             category_id = item['category']
-            purchases_amount = purchases_by_category.get(category_id, 0) or 0
-            income = incomes_by_category.get(category_id, 0) or 0
+            savings_category_ids.add(category_id)
+            
+            # Get purchase/income data
+            p_data = purchases_data.get(category_id, {'total': 0, 'total_ytd': 0})
+            i_data = incomes_data.get(category_id, {'total': 0, 'total_ytd': 0})
+            
+            purchases_amount = p_data['total'] or 0
+            income = i_data['total'] or 0
             rollover = rollovers_by_category.get(category_id, 0) or 0
             saved = purchases_amount + income
             
+            # YTD Data
+            purchases_amount_ytd = p_data['total_ytd'] or 0
+            income_ytd = i_data['total_ytd'] or 0
+            saved_ytd = purchases_amount_ytd + income_ytd
+            amount_total_ytd = item['amount_total_ytd'] or 0
+            
+            # Calculate fields for main list
             item.update({
                 'income': income,
                 'purchases_amount': purchases_amount,
@@ -291,52 +303,31 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             })
             savings_items_list.append(item)
 
+            # Calculate fields for YTD list
+            ytd_item = {
+                'category': category_id,
+                'category__name': item['category__name'],
+                'amount_total_ytd': amount_total_ytd,
+                'income': income_ytd,
+                'purchases_amount': purchases_amount_ytd,
+                'saved': saved_ytd,
+                'diff_ytd': amount_total_ytd - saved_ytd + income_ytd,
+            }
+            savings_items_ytd_list.append(ytd_item)
+
+            # Update totals
             total_saved += saved
             total_savings_remaining += item['diff']
             total_savings_budgeted += item['amount_total']
             if rollover == 0:
                 free_income_savings += item['diff']
+                
+            # Update YTD totals
+            total_saved_ytd += saved_ytd
+            total_savings_remaining_ytd += ytd_item['diff_ytd']
+            total_savings_budgeted_ytd += amount_total_ytd
             
         savings_items = savings_items_list
-
-        savings_items_ytd = (
-            BudgetItem.objects.filter(
-                user=self.request.user,
-                monthly_budget__date__year=self.object.date.year,
-                monthly_budget__date__month__lte=ytd_month,
-                savings=True,
-            )
-            .values("category", "category__name")
-            .annotate(
-                amount_total_ytd=Sum("amount", distinct=False),
-            )
-            .order_by("category__name")
-        )
-        
-        # Add calculated fields in Python
-        savings_items_ytd_list = []
-        total_saved_ytd = 0
-        total_savings_remaining_ytd = 0
-        total_savings_budgeted_ytd = 0
-
-        for item in savings_items_ytd:
-            category_id = item['category']
-            purchases_amount = purchases_ytd_by_category.get(category_id, 0) or 0
-            income = incomes_ytd_by_category.get(category_id, 0) or 0
-            saved = purchases_amount + income
-            
-            item.update({
-                'income': income,
-                'purchases_amount': purchases_amount,
-                'saved': saved,
-                'diff_ytd': item['amount_total_ytd'] - saved + income,
-            })
-            savings_items_ytd_list.append(item)
-
-            total_saved_ytd += saved
-            total_savings_remaining_ytd += item['diff_ytd']
-            total_savings_budgeted_ytd += item['amount_total_ytd']
-            
         savings_items_ytd = savings_items_ytd_list
 
         # Create dictionaries for fast lookup by category name
@@ -435,21 +426,18 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
         rollovers = (
             Rollover.objects.filter(user=self.request.user, yearly_budget=self.object)
-            .annotate(
-                savings=Exists(
-                    BudgetItem.objects.filter(
-                        user=self.request.user,
-                        category=OuterRef('category'),
-                        monthly_budget__date__year=self.object.date.year,
-                        savings=True
-                    )
-                )
-            )
             .prefetch_related("category")
+            .order_by("category__name")
         )
 
-        rollovers_spending = rollovers.filter(savings=False).order_by("category__name")
-        rollovers_savings = rollovers.filter(savings=True).order_by("category__name")
+        rollovers_spending = []
+        rollovers_savings = []
+        
+        for rollover in rollovers:
+            if rollover.category.id in savings_category_ids:
+                rollovers_savings.append(rollover)
+            else:
+                rollovers_spending.append(rollover)
 
         kwargs.update(
             {
