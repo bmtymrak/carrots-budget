@@ -117,7 +117,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             date__year=self.object.date.year,
         )
 
-        # Optimized approach: Use separate targeted aggregations instead of complex JOINs
         purchases_by_category = dict(
             purchases.values('category').annotate(
                 total=Sum('amount')
@@ -362,9 +361,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 {"saved": ytd_item.get("saved", 0)},
             ))
 
-        # Python-based aggregation (faster than complex DB queries)
-        # Totals are now calculated in the loops above
-
         total_budgeted = total_spending_budgeted + total_savings_budgeted
 
         total_spent_saved = total_spending_spent + total_saved
@@ -374,9 +370,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         total_remaining_current_year = (
             total_spending_remaining_current_year + total_savings_remaining
         )
-
-        # YTD Python-based aggregation
-        # Totals are now calculated in the loops above
 
         total_budgeted_ytd = total_spending_budgeted_ytd + total_savings_budgeted_ytd
 
@@ -393,47 +386,39 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             .select_related("category")
         )
 
-        incomes_ytd = Income.objects.filter(
-            user=self.request.user,
-            date__year=self.object.date.year,
-            date__month__lte=ytd_month,
-        ).order_by("date")
-
-        total_income = incomes.aggregate(
-            amount=ExpressionWrapper(
+        income_aggregates = incomes.aggregate(
+            total_income=ExpressionWrapper(
                 Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
-            )
+            ),
+            total_income_ytd=ExpressionWrapper(
+                Coalesce(Sum("amount", filter=Q(date__month__lte=ytd_month)), Value(0)), 
+                output_field=DecimalField()
+            ),
+            total_income_budgeted=ExpressionWrapper(
+                Coalesce(Sum("amount", filter=Q(category=None)), Value(0)), 
+                output_field=DecimalField()
+            ),
+            total_income_budgeted_ytd=ExpressionWrapper(
+                Coalesce(Sum("amount", filter=Q(category=None, date__month__lte=ytd_month)), Value(0)), 
+                output_field=DecimalField()
+            ),
+            total_income_category=ExpressionWrapper(
+                Coalesce(Sum("amount", filter=~Q(category=None)), Value(0)), 
+                output_field=DecimalField()
+            ),
+            total_income_category_ytd=ExpressionWrapper(
+                Coalesce(Sum("amount", filter=Q(~Q(category=None), date__month__lte=ytd_month)), Value(0)), 
+                output_field=DecimalField()
+            ),
         )
 
-        total_income_ytd = incomes_ytd.aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
-            )
-        )
+        total_income = {"amount": income_aggregates["total_income"]}
+        total_income_ytd = {"amount": income_aggregates["total_income_ytd"]}
+        total_income_budgeted = {"amount": income_aggregates["total_income_budgeted"]}
+        total_income_budgeted_ytd = {"amount": income_aggregates["total_income_budgeted_ytd"]}
+        total_income_category = {"amount": income_aggregates["total_income_category"]}
+        total_income_category_ytd = {"amount": income_aggregates["total_income_category_ytd"]}
 
-        total_income_budgeted = incomes.filter(category=None).aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
-            )
-        )
-
-        total_income_budgeted_ytd = incomes_ytd.filter(category=None).aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
-            )
-        )
-
-        total_income_category = incomes.filter(~Q(category=None)).aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
-            )
-        )
-
-        total_income_category_ytd = incomes_ytd.filter(~Q(category=None)).aggregate(
-            amount=ExpressionWrapper(
-                Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
-            )
-        )
 
         total_income_spent_diff = total_income["amount"] - total_spent_saved
         budgeted_income_spent_diff = total_income_budgeted["amount"] - total_spent_saved
@@ -446,7 +431,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             total_income_budgeted_ytd["amount"] - total_budgeted_ytd
         )
 
-        # Free income calculation with Python filtering
         free_income = free_income_spending + free_income_savings
 
         rollovers = (
