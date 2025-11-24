@@ -152,6 +152,12 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         
         # Add calculated fields in Python (much faster than complex DB joins)
         budgetitems_list = []
+        total_spending_spent = 0
+        total_spending_remaining = 0
+        total_spending_budgeted = 0
+        total_spending_remaining_current_year = 0
+        free_income_spending = 0
+
         for item in budgetitems:
             category_id = item['category']
             spent = purchases_by_category.get(category_id, 0) or 0
@@ -166,6 +172,13 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 'remaining_current_year': item['amount_total'] - spent + income,
             })
             budgetitems_list.append(item)
+
+            total_spending_spent += spent
+            total_spending_remaining += item['diff']
+            total_spending_budgeted += item['amount_total']
+            total_spending_remaining_current_year += item['remaining_current_year']
+            if rollover == 0:
+                free_income_spending += item['remaining_current_year']
             
         budgetitems = budgetitems_list
 
@@ -198,6 +211,10 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         
         # Add calculated fields in Python
         budgetitems_ytd_list = []
+        total_spending_spent_ytd = 0
+        total_spending_remaining_ytd = 0
+        total_spending_budgeted_ytd = 0
+
         for item in budgetitems_ytd:
             category_id = item['category']
             spent = purchases_ytd_by_category.get(category_id, 0) or 0
@@ -210,6 +227,10 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 'remaining_current_year_ytd': item['amount_total_ytd'] - spent + income,
             })
             budgetitems_ytd_list.append(item)
+
+            total_spending_spent_ytd += spent
+            total_spending_remaining_ytd += item['diff_ytd']
+            total_spending_budgeted_ytd += item['amount_total_ytd']
             
         budgetitems_ytd = budgetitems_ytd_list
 
@@ -250,6 +271,11 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         
         # Add calculated fields in Python
         savings_items_list = []
+        total_saved = 0
+        total_savings_remaining = 0
+        total_savings_budgeted = 0
+        free_income_savings = 0
+
         for item in savings_items:
             category_id = item['category']
             purchases_amount = purchases_by_category.get(category_id, 0) or 0
@@ -265,6 +291,12 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 'diff': item['amount_total'] - saved + income,
             })
             savings_items_list.append(item)
+
+            total_saved += saved
+            total_savings_remaining += item['diff']
+            total_savings_budgeted += item['amount_total']
+            if rollover == 0:
+                free_income_savings += item['diff']
             
         savings_items = savings_items_list
 
@@ -284,6 +316,10 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         
         # Add calculated fields in Python
         savings_items_ytd_list = []
+        total_saved_ytd = 0
+        total_savings_remaining_ytd = 0
+        total_savings_budgeted_ytd = 0
+
         for item in savings_items_ytd:
             category_id = item['category']
             purchases_amount = purchases_ytd_by_category.get(category_id, 0) or 0
@@ -297,6 +333,10 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
                 'diff_ytd': item['amount_total_ytd'] - saved + income,
             })
             savings_items_ytd_list.append(item)
+
+            total_saved_ytd += saved
+            total_savings_remaining_ytd += item['diff_ytd']
+            total_savings_budgeted_ytd += item['amount_total_ytd']
             
         savings_items_ytd = savings_items_ytd_list
 
@@ -323,14 +363,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
             ))
 
         # Python-based aggregation (faster than complex DB queries)
-        total_spending_spent = sum(item["spent"] for item in budgetitems)
-        total_spending_remaining = sum(item["diff"] for item in budgetitems)
-        total_spending_budgeted = sum(item["amount_total"] for item in budgetitems)
-        total_spending_remaining_current_year = sum(item["remaining_current_year"] for item in budgetitems)
-
-        total_saved = sum(item["saved"] for item in savings_items)
-        total_savings_remaining = sum(item["diff"] for item in savings_items)
-        total_savings_budgeted = sum(item["amount_total"] for item in savings_items)
+        # Totals are now calculated in the loops above
 
         total_budgeted = total_spending_budgeted + total_savings_budgeted
 
@@ -343,13 +376,7 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         )
 
         # YTD Python-based aggregation
-        total_spending_spent_ytd = sum(item["spent"] for item in budgetitems_ytd)
-        total_spending_remaining_ytd = sum(item["diff_ytd"] for item in budgetitems_ytd)
-        total_spending_budgeted_ytd = sum(item["amount_total_ytd"] for item in budgetitems_ytd)
-
-        total_saved_ytd = sum(item["saved"] for item in savings_items_ytd)
-        total_savings_remaining_ytd = sum(item["diff_ytd"] for item in savings_items_ytd)
-        total_savings_budgeted_ytd = sum(item["amount_total_ytd"] for item in savings_items_ytd)
+        # Totals are now calculated in the loops above
 
         total_budgeted_ytd = total_spending_budgeted_ytd + total_savings_budgeted_ytd
 
@@ -420,16 +447,6 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         )
 
         # Free income calculation with Python filtering
-        free_income_spending = sum(
-            item["remaining_current_year"]
-            for item in budgetitems
-            if item["rollover"] == 0
-        )
-        free_income_savings = sum(
-            item["diff"]
-            for item in savings_items
-            if item["rollover"] == 0
-        )
         free_income = free_income_spending + free_income_savings
 
         rollovers = (
