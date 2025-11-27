@@ -357,15 +357,15 @@ class BudgetService:
                 "amount_total_ytd": 0, "diff_ytd": 0, "spent": 0
             })
             
-            budget_items_combined.append((
-                {"category__name": category_name},
-                {"amount_total": budget_item["amount_total"]},
-                {"spent": budget_item["spent"]},
-                {"diff": budget_item["diff"]},
-                {"amount_total_ytd": ytd_item.get("amount_total_ytd", 0)},
-                {"diff_ytd": ytd_item.get("diff_ytd", 0)},
-                {"spent": ytd_item.get("spent", 0)},
-            ))
+            budget_items_combined.append({
+                "category__name": category_name,
+                "amount_total": budget_item["amount_total"],
+                "spent": budget_item["spent"],
+                "diff": budget_item["diff"],
+                "amount_total_ytd": ytd_item.get("amount_total_ytd", 0),
+                "diff_ytd": ytd_item.get("diff_ytd", 0),
+                "spent_ytd": ytd_item.get("spent", 0),
+            })
 
         return {
             "budget_items_combined": budget_items_combined,
@@ -466,15 +466,15 @@ class BudgetService:
                 "amount_total_ytd": 0, "diff_ytd": 0, "saved": 0
             })
             
-            savings_items_combined.append((
-                {"category__name": category_name},
-                {"amount_total": savings_item["amount_total"]},
-                {"saved": savings_item["saved"]},
-                {"diff": savings_item["diff"]},
-                {"amount_total_ytd": ytd_item.get("amount_total_ytd", 0)},
-                {"diff_ytd": ytd_item.get("diff_ytd", 0)},
-                {"saved": ytd_item.get("saved", 0)},
-            ))
+            savings_items_combined.append({
+                "category__name": category_name,
+                "amount_total": savings_item["amount_total"],
+                "saved": savings_item["saved"],
+                "diff": savings_item["diff"],
+                "amount_total_ytd": ytd_item.get("amount_total_ytd", 0),
+                "diff_ytd": ytd_item.get("diff_ytd", 0),
+                "saved_ytd": ytd_item.get("saved", 0),
+            })
 
         return {
             "savings_items_combined": savings_items_combined,
