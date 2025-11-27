@@ -135,16 +135,16 @@
                     {% comment %}
                     <!-- <div data-tooltip="{{budget_item.category__name}}"><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div> -->
                     {% endcomment %}
-                    <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.0.category__name %}'>{{budget_item.0.category__name}}</a></div>
-                    <div>${{budget_item.4.amount_total_ytd|floatformat:"-2"}}</div>
-                    <div>${{budget_item.6.spent|floatformat:"-2"}}</div>
-                    <div>${{budget_item.5.diff_ytd|floatformat:"-2"}}</div>
-                    <div>${{budget_item.1.amount_total|floatformat:"-2"}}</div>
-                    <div>${{budget_item.2.spent|floatformat:"-2"}}</div>
-                    <div>${{budget_item.3.diff|floatformat:"-2"}}</div>
+                    <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div>
+                    <div>${{budget_item.amount_total_ytd|floatformat:"-2"}}</div>
+                    <div>${{budget_item.spent_ytd|floatformat:"-2"}}</div>
+                    <div>${{budget_item.diff_ytd|floatformat:"-2"}}</div>
+                    <div>${{budget_item.amount_total|floatformat:"-2"}}</div>
+                    <div>${{budget_item.spent|floatformat:"-2"}}</div>
+                    <div>${{budget_item.diff|floatformat:"-2"}}</div>
                     <div>
-                        <button class="button-blank" hx-get='{% url "budgetitem_bulk_edit_htmx" category=budget_item.0.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                        <button class="button-blank" hx-get='{% url "budget_item_delete_htmx" category=budget_item.0.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
+                        <button class="button-blank" hx-get='{% url "budgetitem_bulk_edit_htmx" category=budget_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
+                        <button class="button-blank" hx-get='{% url "budget_item_delete_htmx" category=budget_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
                     </div>
                     {% endfor %}
                 </div>
@@ -189,16 +189,16 @@
                 <div class="budget-horizontal-grid-yearly">
                     {% for savings_item in savings_items_combined %}
                     <!-- <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div> -->
-                    <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=savings_item.0.category__name %}'>{{savings_item.0.category__name}}</a></div>
-                    <div>${{savings_item.4.amount_total_ytd|floatformat:"-2"}}</div>
-                    <div>${{savings_item.6.saved|floatformat:"-2"}}</div>
-                    <div>${{savings_item.5.diff_ytd|floatformat:"-2"}}</div>
-                    <div>${{savings_item.1.amount_total|floatformat:"-2"}}</div>
-                    <div>${{savings_item.2.saved|floatformat:"-2"}}</div>
-                    <div>{{savings_item.3.diff|floatformat:"-2"}}</div>
+                    <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=savings_item.category__name %}'>{{savings_item.category__name}}</a></div>
+                    <div>${{savings_item.amount_total_ytd|floatformat:"-2"}}</div>
+                    <div>${{savings_item.saved_ytd|floatformat:"-2"}}</div>
+                    <div>${{savings_item.diff_ytd|floatformat:"-2"}}</div>
+                    <div>${{savings_item.amount_total|floatformat:"-2"}}</div>
+                    <div>${{savings_item.saved|floatformat:"-2"}}</div>
+                    <div>{{savings_item.diff|floatformat:"-2"}}</div>
                     <div>
-                        <button class="button-blank" hx-get='{% url "budgetitem_bulk_edit_htmx" category=savings_item.0.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                        <button class="button-blank" hx-get='{% url "budget_item_delete_htmx" category=savings_item.0.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
+                        <button class="button-blank" hx-get='{% url "budgetitem_bulk_edit_htmx" category=savings_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
+                        <button class="button-blank" hx-get='{% url "budget_item_delete_htmx" category=savings_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
                     </div>
                     {% endfor %}
                 </div>
@@ -333,7 +333,7 @@
         if (key==="Enter" || event.type==='blur'){
             event.preventDefault();
             const targ= event.currentTarget.value;
-            fetch('{% url "rollover-update" %}',{
+            fetch('{% url "rollover_update" %}',{
                 method: 'POST',
                 credentials: 'same-origin',
                 headers:{
