@@ -5,11 +5,161 @@ from decimal import Decimal
 from django.db.models import Sum, Q, Value, DecimalField, F, ExpressionWrapper
 from django.db.models.functions import Coalesce
 
-from budgets.models import BudgetItem, Rollover, YearlyBudget
+from budgets.models import BudgetItem, Rollover, YearlyBudget, MonthlyBudget
 from purchases.models import Purchase, Income
 
 
 class BudgetService:
+    def get_monthly_budget_context(self, user, year: int, month: int) -> dict:
+        monthly_budget = MonthlyBudget.objects.get(
+            date__year=year,
+            date__month=month,
+            user=user,
+        )
+
+        category_purchases = Purchase.objects.filter(
+            date__year=year,
+            date__month=month,
+            user=user,
+        ).values("category").annotate(total=Sum("amount"))
+
+        category_incomes = Income.objects.filter(
+            date__year=year,
+            date__month=month,
+            user=user,
+        ).values("category").annotate(total=Sum("amount"))
+
+        purchases_data = {
+            item['category']: item['total']
+            for item in category_purchases
+        }
+
+        incomes_data = {
+            item['category']: item['total']
+            for item in category_incomes
+        }
+
+        budget_items = BudgetItem.objects.filter(
+            user=user,
+            monthly_budget=monthly_budget,
+            savings=False
+        ).select_related('category').order_by("category__name")
+
+        savings_items = BudgetItem.objects.filter(
+            user=user,
+            monthly_budget=monthly_budget,
+            savings=True
+        ).select_related('category').order_by("category__name")
+
+        # Process Spending Items
+        budget_items_list = []
+        total_spending_budgeted = 0
+        total_spending_spent = 0
+        total_spending_remaining = 0
+
+        for item in budget_items:
+            category_id = item.category.id
+            spent = purchases_data.get(category_id, 0) or 0
+            income = incomes_data.get(category_id, 0) or 0
+            diff = item.amount - spent + income
+
+            item.spent = spent
+            item.income = income
+            item.diff = diff
+            
+            budget_items_list.append(item)
+
+            total_spending_budgeted += item.amount
+            total_spending_spent += spent
+            total_spending_remaining += diff
+
+        # Process Savings Items
+        savings_items_list = []
+        total_savings_budgeted = 0
+        total_saved = 0
+        total_savings_remaining = 0
+
+        for item in savings_items:
+            category_id = item.category.id
+            spent = purchases_data.get(category_id, 0) or 0
+            income = incomes_data.get(category_id, 0) or 0
+            
+            # For savings, "saved" amounts come from purchases (transfers out) and direct income
+            saved = spent + income
+            diff = item.amount - saved + income 
+            
+            item.saved = saved
+            item.income = income
+            item.diff = diff
+            
+            savings_items_list.append(item)
+
+            total_savings_budgeted += item.amount
+            total_saved += saved
+            total_savings_remaining += diff
+
+        # Uncategorized Purchases
+        uncategorized_amount = Purchase.objects.filter(
+            user=user,
+            category__name=None,
+            date__month=month,
+            date__year=year,
+        ).aggregate(amount=Sum("amount"))["amount"] or 0
+
+        uncategorized_purchases = {
+            "amount": uncategorized_amount,
+            "remaining": (0 - uncategorized_amount),
+            "budgeted": 0,
+        }
+
+        # Totals Adjustment
+        total_spending_spent += uncategorized_amount
+        total_spending_remaining -= uncategorized_amount
+
+        total_budgeted = total_spending_budgeted + total_savings_budgeted
+        total_spent_saved = total_spending_spent + total_saved
+        total_remaining = total_spending_remaining + total_savings_remaining
+
+        # Income Processing
+        incomes_query = Income.objects.filter(
+            user=user,
+            date__month=month,
+            date__year=year,
+        ).order_by("date", "source").prefetch_related("category")
+        
+        total_income_val = incomes_query.filter(category=None).aggregate(amount=Sum("amount"))["amount"] or 0
+        free_income = total_income_val - total_spent_saved
+        total_income = {"amount": total_income_val}
+
+        purchases_list = Purchase.objects.filter(
+            user=user,
+            date__year=year,
+            date__month=month,
+        ).order_by("date", "source").prefetch_related("category")
+
+        return {
+            "budget_items": budget_items_list,
+            "savings_items": savings_items_list,
+            "purchases": purchases_list,
+            "incomes": incomes_query,
+            "total_budgeted": total_budgeted,
+            "total_spent": total_spending_spent,
+            "total_spent_saved": total_spent_saved,
+            "total_spending_budgeted": { "amount": total_spending_budgeted },
+            "total_spending_spent": { "amount": total_spending_spent },
+            "total_spending_remaining": { "amount": total_spending_remaining },
+            "total_remaining": total_remaining,
+            "total_saved": { "amount": total_saved },
+            "total_savings_budgeted": { "amount": total_savings_budgeted },
+            "total_savings_remaining": { "amount": total_savings_remaining },
+            "total_income": total_income,
+            "free_income": free_income,
+            "uncategorized_purchases": uncategorized_purchases,
+            "months": [
+                (calendar.month_name[m], m) for m in range(1, 13)
+            ],
+        }
+
     def get_yearly_budget_context(self, user, year: int, ytd_month: int) -> dict:
         """
         Orchestrates the gathering of all budget data for the YearlyBudgetDetailView.
