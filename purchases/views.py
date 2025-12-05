@@ -86,7 +86,7 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Category
     fields = ["name", "rollover"]
     template_name = "purchases/category_create.html"
-    success_url = reverse_lazy("monthly_budget_list")
+    success_url = reverse_lazy("yearly_list")
 
     def get_context_data(self, **kwargs):
         kwargs = super().get_context_data(**kwargs)

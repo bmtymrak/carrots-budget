@@ -333,7 +333,7 @@
         if (key==="Enter" || event.type==='blur'){
             event.preventDefault();
             const targ= event.currentTarget.value;
-            fetch('{% url "rollover-update" %}',{
+            fetch('{% url "rollover_update" %}',{
                 method: 'POST',
                 credentials: 'same-origin',
                 headers:{
