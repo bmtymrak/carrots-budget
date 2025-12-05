@@ -1,7 +1,6 @@
 from django.urls import path
 
 from .views import (
-    YearlyBudgetCreateView,
     MonthlyBudgetCreateView,
     MonthlyBudgetDetailView,
     BudgetItemCreateView,
@@ -77,7 +76,6 @@ urlpatterns = [
         BudgetItemBulkEditView.as_view(),
         name="budgetitem_bulkedit",
     ),
-    # path("yearly-create", YearlyBudgetCreateView.as_view(), name="yearly_create"),
     path("yearly-create", budget_create, name="yearly_create"),
     path("<int:year>", YearlyBudgetDetailView.as_view(), name="yearly_detail"),
     path("rollover-update", rollover_update_view, name="rollover_update"),

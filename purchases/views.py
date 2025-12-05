@@ -42,10 +42,6 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         return qs.filter(user=self.request.user).prefetch_related("category")
 
 
-class PurchaseDetailView(LoginRequiredMixin, DetailView):
-    model = Purchase
-
-
 class PurchaseEditView(LoginRequiredMixin, UpdateView):
     model = Purchase
     form_class = PurchaseForm
@@ -84,31 +80,6 @@ class PurchaseDeleteView(LoginRequiredMixin, DeleteView):
 
         else:
             return reverse_lazy("purchase_list")
-
-
-class PurchaseAddView(LoginRequiredMixin, TemplateView):
-    template_name = "purchases/purchase_add.html"
-
-    def get(self, *args, **kwargs):
-        formset = PurchaseFormSet(
-            queryset=Purchase.objects.none(), form_kwargs={"user": self.request.user}
-        )
-        return self.render_to_response({"purchase_formset": formset})
-
-    def post(self, *args, **kwargs):
-        formset = PurchaseFormSet(
-            form_kwargs={"user": self.request.user}, data=self.request.POST
-        )
-
-        if formset.is_valid():
-            instances = formset.save(commit=False)
-            for instance in instances:
-                instance.user = self.request.user
-                instance.save()
-            return redirect(reverse_lazy("purchase_list"))
-
-        else:
-            return self.render_to_response({"purchase_formset": formset})
 
 
 class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):

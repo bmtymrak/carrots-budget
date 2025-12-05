@@ -51,28 +51,6 @@ class HttpResponseHtmxRedirect(HttpResponseRedirect):
         self["HX-Redirect"] = self["Location"]
 
 
-class YearlyBudgetCreateView(LoginRequiredMixin, CreateView):
-    model = YearlyBudget
-    fields = ["date"]
-    template_name = "budgets/yearly_budget_create.html"
-
-    def form_valid(self, form):
-        form.instance.user = self.request.user
-        self.object = form.save()
-
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_success_url(self):
-        url = reverse_lazy(
-            "yearly_detail",
-            kwargs={
-                "year": self.object.date.year,
-            },
-        )
-
-        return url
-
-
 class YearlyBudgetListView(LoginRequiredMixin, ListView):
     model = YearlyBudget
     context_object_name = "yearly_budgets"

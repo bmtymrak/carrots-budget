@@ -3,7 +3,6 @@ from django.urls import path
 
 from .views import (
     PurchaseListView,
-    PurchaseAddView,
     PurchaseDeleteView,
     PurchaseEditView,
     CategoryCreateView,
@@ -19,7 +18,6 @@ from .views import (
 )
 
 urlpatterns = [
-    # path("add/", PurchaseAddView.as_view(), name="purchase_add"),
     path("add/", purchase_create, name="purchase_create"),
     path("category-create/", CategoryCreateView.as_view(), name="category_create"),
     path("<int:pk>/delete/", PurchaseDeleteView.as_view(), name="purchase_delete"),
