@@ -3,14 +3,11 @@ from django.urls import path
 from .views import (
     MonthlyBudgetCreateView,
     MonthlyBudgetDetailView,
-    BudgetItemCreateView,
-    BudgetItemEditView,
     BudgetItemDetailView,
     YearlyBudgetListView,
     YearlyBudgetDetailView,
     BudgetItemDeleteView,
     YearlyBudgetItemDetailView,
-    BudgetItemBulkEditView,
     rollover_update_view,
     budgetitem_bulk_edit,
     budgetitem_edit,
@@ -30,16 +27,6 @@ urlpatterns = [
         "<int:year>/budgetitem-create-htmx",
         budget_item_create,
         name="budgetitem_create_htmx",
-    ),
-    path(
-        "<int:year>/budgetitem-create",
-        BudgetItemCreateView.as_view(),
-        name="budgetitem_create",
-    ),
-    path(
-        "<int:year>/<int:month>/<str:category>/edit",
-        BudgetItemEditView.as_view(),
-        name="budgetitem_edit",
     ),
     path(
         "<int:year>/<int:month>/<str:category>/edit/htmx",
@@ -70,11 +57,6 @@ urlpatterns = [
         "<int:year>/<str:category>/edit/htmx",
         budgetitem_bulk_edit,
         name="budgetitem_bulk_edit_htmx",
-    ),
-    path(
-        "<int:year>/<str:category>/edit",
-        BudgetItemBulkEditView.as_view(),
-        name="budgetitem_bulkedit",
     ),
     path("yearly-create", budget_create, name="yearly_create"),
     path("<int:year>", YearlyBudgetDetailView.as_view(), name="yearly_detail"),

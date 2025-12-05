@@ -1,4 +1,5 @@
 import datetime
+from urllib.parse import quote
 
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
@@ -94,7 +95,7 @@ class TestYearlyBudgetCreateView(TestCase):
             reverse("yearly_create"), {"date": datetime.date.today()}
         )
 
-        self.assertRedirects(response, f"/budgets/{datetime.date.today().year}", 200)
+        self.assertRedirects(response, f"/budgets/", 200)
 
 
 class TestYearlyBudgetListView(TestCase):
@@ -205,67 +206,6 @@ class TestMonthlyBudgetDetailView(TestCase):
         self.assertTrue("purchase_formset" in response.context)
 
 
-class TestBudgetItemCreateView(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user1 = User.objects.create_user(
-            email="testuser1@test.com", username="testuser1", password="testpass123"
-        )
-        cls.user2 = User.objects.create_user(
-            email="testuser2@test.com", username="testuser2", password="testpass123"
-        )
-
-        cls.yearly_budget_user1 = YearlyBudget.objects.create(
-            user=cls.user1, date=datetime.date.today()
-        )
-
-        cls.yearly_budget_user2 = YearlyBudget.objects.create(
-            user=cls.user2, date=datetime.datetime.now()
-        )
-
-        MonthlyBudget.objects.create(
-            user=cls.user2,
-            yearly_budget=cls.yearly_budget_user2,
-            date=datetime.datetime.now().date(),
-        )
-
-        cls.category = Category.objects.create(user=cls.user1, name="Test category")
-
-    def test_redirect_if_not_logged_in(self):
-        response = self.client.get(
-            reverse("budgetitem_create", args=[datetime.datetime.now().year])
-        )
-
-        self.assertRedirects(
-            response,
-            f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}/budgetitem-create",
-        )
-
-    def test_budget_item_create_uses_correct_template(self):
-        self.client.login(email="testuser1@test.com", password="testpass123")
-
-        response = self.client.get(
-            reverse("budgetitem_create", args=[datetime.datetime.now().year])
-        )
-
-        self.assertEqual(200, response.status_code)
-        self.assertTemplateUsed(response, "budgets/budgetitem_create.html")
-
-    def test_correct_budget_items_created(self):
-        self.client.login(email="testuser1@test.com", password="testpass123")
-
-        data = {"category": self.category.pk, "amount": 1.99}
-        response = self.client.post(
-            reverse("budgetitem_create", args=[datetime.datetime.now().year]), data
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(BudgetItem.objects.all().count(), 12)
-        self.assertTrue(
-            all([item.category == self.category for item in BudgetItem.objects.all()])
-        )
-        self.assertEqual(Rollover.objects.filter(user=self.user1).count(), 1)
-        self.assertEqual(Rollover.objects.all()[0].category, self.category)
 
 
 class TestBudgetItemDetailView(TestCase):
@@ -356,8 +296,7 @@ class TestBudgetItemDetailView(TestCase):
         )
 
     def test_redirect_if_not_logged_in(self):
-        response = self.client.get(
-            reverse(
+        url = reverse(
                 "budget_item_detail",
                 args=[
                     datetime.datetime.now().year,
@@ -365,12 +304,10 @@ class TestBudgetItemDetailView(TestCase):
                     self.category_user1.name,
                 ],
             )
-        )
+        response = self.client.get(url)
 
-        self.assertRedirects(
-            response,
-            f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}/{datetime.datetime.now().month}/{self.category_user1.name}",
-        )
+        expected_url = f"/accounts/login/?next={quote(url)}"
+        self.assertRedirects(response, expected_url)
 
     def test_budget_item_create_uses_correct_template(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
@@ -492,21 +429,18 @@ class TestBudgetItemDeleteView(TestCase):
         )
 
     def test_redirect_if_not_logged_in(self):
-        response = self.client.get(
-            reverse(
-                "budget_item_delete",
-                args=[
-                    datetime.datetime.now().year,
-                    datetime.datetime.now().month,
-                    self.category_user1.name,
-                ],
-            )
+        url = reverse(
+            "budget_item_delete",
+            args=[
+                datetime.datetime.now().year,
+                datetime.datetime.now().month,
+                self.category_user1.name,
+            ],
         )
+        response = self.client.get(url)
 
-        self.assertRedirects(
-            response,
-            f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}/{datetime.datetime.now().month}/{self.category_user1.name}",
-        )
+        expected_url = f"/accounts/login/?next={quote(url)}"
+        self.assertRedirects(response, expected_url)
 
     def test_budget_item_delete_uses_correct_template(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
@@ -690,69 +624,7 @@ class BudgetItemViewTests(TestCase):
         )
         self.category = CategoryFactory(user=self.user)
 
-    def test_budget_item_create_view(self):
-        response = self.client.post(
-            reverse('budgetitem_create', kwargs={'year': self.year}),
-            {
-                'category': self.category.id,
-                'amount': '500.00',
-                'savings': False,
-                'notes': 'Test budget item'
-            }
-        )
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(
-            BudgetItem.objects.filter(
-                user=self.user,
-                category=self.category,
-                yearly_budget=self.yearly_budget
-            ).exists()
-        )
 
-    def test_budget_item_create_with_new_category(self):
-        response = self.client.post(
-            reverse('budgetitem_create', kwargs={'year': self.year}),
-            {
-                'new_category': 'New Test Category',
-                'amount': '500.00',
-                'savings': False,
-                'notes': 'Test budget item'
-            }
-        )
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(
-            BudgetItem.objects.filter(
-                user=self.user,
-                category__name='New Test Category',
-                yearly_budget=self.yearly_budget
-            ).exists()
-        )
-
-    def test_budget_item_edit_view(self):
-        budget_item = BudgetItemFactory(
-            user=self.user,
-            category=self.category,
-            monthly_budget=self.monthly_budget,
-            yearly_budget=self.yearly_budget,
-            amount=Decimal('500.00')
-        )
-        
-        response = self.client.post(
-            reverse('budgetitem_edit', kwargs={
-                'year': self.year,
-                'month': self.month,
-                'category': self.category.name
-            }),
-            {
-                'category': self.category.id,
-                'amount': '600.00',
-                'savings': False,
-                'notes': 'Updated budget item'
-            }
-        )
-        self.assertEqual(response.status_code, 302)
-        budget_item.refresh_from_db()
-        self.assertEqual(budget_item.amount, Decimal('600.00'))
 
     def test_budget_item_delete_view(self):
         budget_item = BudgetItemFactory(
@@ -775,47 +647,6 @@ class BudgetItemViewTests(TestCase):
             Decimal('0.00')
         )
 
-    def test_budget_item_bulk_edit_view(self):
-        budget_items = [
-            BudgetItemFactory(
-                user=self.user,
-                category=self.category,
-                monthly_budget=MonthlyBudgetFactory(
-                    user=self.user,
-                    yearly_budget=self.yearly_budget,
-                    date=datetime.date(self.year, month, 1)
-                ),
-                yearly_budget=self.yearly_budget,
-                amount=Decimal('500.00')
-            )
-            for month in range(1, 13)
-        ]
-        
-        formset_data = {
-            'form-TOTAL_FORMS': '12',
-            'form-INITIAL_FORMS': '12',
-            'form-MIN_NUM_FORMS': '0',
-            'form-MAX_NUM_FORMS': '1000',
-        }
-        
-        for i, item in enumerate(budget_items):
-            formset_data.update({
-                f'form-{i}-id': item.id,
-                f'form-{i}-amount': '600.00',
-            })
-        
-        response = self.client.post(
-            reverse('budgetitem_bulkedit', kwargs={
-                'year': self.year,
-                'category': self.category.name
-            }),
-            formset_data
-        )
-        
-        self.assertEqual(response.status_code, 302)
-        for item in budget_items:
-            item.refresh_from_db()
-            self.assertEqual(item.amount, Decimal('600.00'))
 
 
 class RolloverViewTests(TestCase):

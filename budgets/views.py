@@ -200,87 +200,8 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
         return url
 
 
-class BudgetItemCreateView(LoginRequiredMixin, CreateView):
-    model = BudgetItem
-    form_class = BudgetItemForm
-    template_name = "budgets/budgetitem_create.html"
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
-
-    def form_valid(self, form):
-        if form.cleaned_data["new_category"]:
-            category, _ = Category.objects.get_or_create(
-                name=form.cleaned_data["new_category"], user=self.request.user
-            )
-
-            form.instance.category = category
-
-        BudgetItem.create_items_and_rollovers(
-            self.request.user, self.kwargs["year"], form
-        )
-
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_success_url(self):
-        if self.request.POST.get("next"):
-            return self.request.POST.get("next")
-
-        else:
-            url = reverse_lazy(
-                "yearly_detail",
-                kwargs={"year": self.kwargs["year"]},
-            )
-            return url
 
 
-class BudgetItemEditView(LoginRequiredMixin, AddUserMixin, UpdateView):
-    model = BudgetItem
-    form_class = BudgetItemForm
-    template_name = "budgets/budgetitem_edit.html"
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
-
-    def get_object(self):
-        obj = BudgetItem.objects.get(
-            user=self.request.user,
-            monthly_budget__date__year=self.kwargs["year"],
-            monthly_budget__date__month=self.kwargs["month"],
-            category__name=self.kwargs["category"],
-        )
-
-        return obj
-
-    def form_valid(self, form):
-
-        if form.cleaned_data["new_category"]:
-            category, _ = Category.objects.get_or_create(
-                name=form.cleaned_data["new_category"], user=self.request.user
-            )
-
-            form.instance.category = category
-            form.instance.monthly_budget = MonthlyBudget.objects.get(
-                user=self.request.user,
-                date__year=self.kwargs["year"],
-                date__month=self.kwargs["month"],
-            )
-
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        url = reverse_lazy(
-            "monthly_detail",
-            kwargs={
-                "year": self.kwargs["year"],
-                "month": self.kwargs["month"],
-            },
-        )
-        return url
 
 
 class BudgetItemDetailView(LoginRequiredMixin, DetailView):
@@ -363,34 +284,6 @@ class BudgetItemDeleteView(LoginRequiredMixin, DeleteView):
             return reverse_lazy("yearly_list")
 
 
-class BudgetItemBulkEditView(LoginRequiredMixin, TemplateView):
-    template_name = "budgets/budgetitem_bulk_edit.html"
-
-    def get(self, *args, **kwargs):
-        formset = BudgetItemFormset(
-            queryset=BudgetItem.objects.filter(
-                user=self.request.user,
-                yearly_budget=YearlyBudget.objects.get(
-                    user=self.request.user, date__year=self.kwargs["year"]
-                ),
-                category__name=self.kwargs["category"],
-            )
-        )
-
-        kwargs = self.get_context_data(**kwargs)
-        kwargs.update({"budgetitem_formset": formset})
-        return self.render_to_response(kwargs)
-
-    def post(self, *args, **kwargs):
-        formset = BudgetItemFormset(data=self.request.POST)
-
-        if formset.is_valid():
-            instances = formset.save(commit=False)
-            for instance in instances:
-                instance.save()
-            return redirect(
-                reverse_lazy("yearly_detail", kwargs={"year": self.kwargs["year"]})
-            )
 
 
 class YearlyBudgetItemDetailView(LoginRequiredMixin, TemplateView):
@@ -450,7 +343,7 @@ def budget_create(request):
     form = YearlyBudgetForm()
 
     if request.method == "POST":
-        next = request.POST.get("next")
+        next = request.POST.get("next", reverse("yearly_list"))
         form = YearlyBudgetForm(data=request.POST)
         form.instance.user = request.user
 

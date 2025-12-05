@@ -42,44 +42,8 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         return qs.filter(user=self.request.user).prefetch_related("category")
 
 
-class PurchaseEditView(LoginRequiredMixin, UpdateView):
-    model = Purchase
-    form_class = PurchaseForm
-    template_name = "purchases/purchase_edit.html"
-    success_url = reverse_lazy("purchase_list")
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["user"] = self.request.user
-        return kwargs
-
-    def get_object(self):
-        obj = Purchase.objects.get(user=self.request.user, id=self.kwargs.get("pk"))
-        return obj
-
-    def get_success_url(self):
-        if self.request.POST.get("next"):
-            return self.request.POST.get("next")
-
-        else:
-            return reverse_lazy("purchase_list")
 
 
-class PurchaseDeleteView(LoginRequiredMixin, DeleteView):
-    model = Purchase
-    context_object_name = "purchase"
-    template_name = "purchases/purchase_delete.html"
-
-    def get_object(self):
-        obj = self.model.objects.get(user=self.request.user, id=self.kwargs.get("pk"))
-        return obj
-
-    def get_success_url(self):
-        if self.request.POST.get("next"):
-            return self.request.POST.get("next")
-
-        else:
-            return reverse_lazy("purchase_list")
 
 
 class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
@@ -95,53 +59,10 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
         return kwargs
 
 
-class IncomeAddView(LoginRequiredMixin, AddUserMixin, CreateView):
-    model = Income
-    form_class = IncomeForm
-    template_name = "purchases/income_create.html"
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
-
-    def get_success_url(self):
-        if self.request.POST.get("next"):
-            return self.request.POST.get("next")
-
-        else:
-            return reverse_lazy("yearly_list")
 
 
-class IncomeEditView(LoginRequiredMixin, UpdateView):
-    model = Income
-    form_class = IncomeForm
-    template_name = "purchases/income_edit.html"
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user})
-        return kwargs
-
-    def get_success_url(self):
-        if self.request.POST.get("next"):
-            return self.request.POST.get("next")
-
-        else:
-            return reverse_lazy("purchase_list")
 
 
-class IncomeDeleteView(LoginRequiredMixin, DeleteView):
-    model = Income
-    context_object_name = "income"
-    template_name = "purchases/income_delete.html"
-
-    def get_object(self):
-        obj = self.model.objects.get(user=self.request.user, id=self.kwargs.get("pk"))
-        return obj
-
-    def get_success_url(self):
-        return self.request.POST.get("next")
 
 
 @login_required
