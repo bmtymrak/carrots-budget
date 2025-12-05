@@ -105,22 +105,14 @@ class TestYearlyBudgetDetailViewComprehensive(TestCase):
             amount=Decimal("50.00")
         )
 
+        prev_year_budget = YearlyBudgetFactory(user=self.user, date=datetime.date(self.year - 1, 1, 1))
         # Rollover from previous year for Food: $50
         RolloverFactory(
             user=self.user,
-            yearly_budget=self.yearly_budget, # This links it to the current year's budget as a "rollover source" effectively? 
-            # Wait, looking at view: 
-            # rollovers_by_category = ... filter(yearly_budget__date__year=self.object.date.year - 1)
-            # So the rollover object needs to be associated with the PREVIOUS year's budget.
+            yearly_budget=prev_year_budget,
             category=self.cat_food,
             amount=Decimal("50.00")
         )
-        # We need a previous year budget for the rollover to be picked up correctly by the query
-        prev_year_budget = YearlyBudgetFactory(user=self.user, date=datetime.date(self.year - 1, 1, 1))
-        # Update the rollover we just created to point to prev year
-        rollover = Rollover.objects.get(user=self.user, category=self.cat_food)
-        rollover.yearly_budget = prev_year_budget
-        rollover.save()
 
         # Execute
         response = self.client.get(reverse("yearly_detail", kwargs={"year": self.year}))
@@ -128,25 +120,22 @@ class TestYearlyBudgetDetailViewComprehensive(TestCase):
 
         # Assertions for Food (Spending)
         # Find the food item in combined list
-        food_item = next(item for item in context["budget_items_combined"] if item[0]["category__name"] == "Food")
-        # Structure is a tuple of dicts: (name, amount_total, spent, diff, ...)
-        # Index 1: amount_total
-        self.assertEqual(food_item[1]["amount_total"], Decimal("6000.00"))
-        # Index 2: spent
-        self.assertEqual(food_item[2]["spent"], Decimal("100.00"))
-        # Index 3: diff (remaining) -> amount_total - spent + income + rollover
+        food_item = next(item for item in context["budget_items_combined"] if item["category__name"] == "Food")
+        self.assertEqual(food_item["amount_total"], Decimal("6000.00"))
+        self.assertEqual(food_item["spent"], Decimal("100.00"))
+        # diff (remaining) -> amount_total - spent + income + rollover
         # 6000 - 100 + 0 + 50 = 5950
-        self.assertEqual(food_item[3]["diff"], Decimal("5950.00"))
+        self.assertEqual(food_item["diff"], Decimal("5950.00"))
 
         # Assertions for Vacation (Savings)
-        vacation_item = next(item for item in context["savings_items_combined"] if item[0]["category__name"] == "Vacation")
-        # Index 1: amount_total
-        self.assertEqual(vacation_item[1]["amount_total"], Decimal("2400.00"))
-        # Index 2: saved (purchases + income) -> 50 + 0 = 50
-        self.assertEqual(vacation_item[2]["saved"], Decimal("50.00"))
-        # Index 3: diff (remaining) -> amount_total - saved + income
+        vacation_item = next(item for item in context["savings_items_combined"] if item["category__name"] == "Vacation")
+
+        self.assertEqual(vacation_item["amount_total"], Decimal("2400.00"))
+        # saved (purchases + income) -> 50 + 0 = 50
+        self.assertEqual(vacation_item["saved"], Decimal("50.00"))
+        # diff (remaining) -> amount_total - saved + income
         # 2400 - 50 + 0 = 2350
-        self.assertEqual(vacation_item[3]["diff"], Decimal("2350.00"))
+        self.assertEqual(vacation_item["diff"], Decimal("2350.00"))
 
     def test_ytd_logic(self):
         """Verify YTD calculations when 'ytd' param is provided."""
@@ -180,20 +169,16 @@ class TestYearlyBudgetDetailViewComprehensive(TestCase):
         response = self.client.get(reverse("yearly_detail", kwargs={"year": self.year}) + "?ytd=6")
         context = response.context
         
-        food_item = next(item for item in context["budget_items_combined"] if item[0]["category__name"] == "Food")
+        food_item = next(item for item in context["budget_items_combined"] if item["category__name"] == "Food")
         
         # YTD Budget: 6 months * 100 = 600
-        # Index 4: amount_total_ytd
-        self.assertEqual(food_item[4]["amount_total_ytd"], Decimal("600.00"))
+        self.assertEqual(food_item["amount_total_ytd"], Decimal("600.00"))
         
         # YTD Spent: Only June purchase = 50
-        # Index 6: spent (This seems to be the YTD spent in the tuple structure? Let's verify view logic)
-        # View line 235: {"spent": ytd_item.get("spent", 0)}
-        self.assertEqual(food_item[6]["spent"], Decimal("50.00"))
+        self.assertEqual(food_item["spent_ytd"], Decimal("50.00"))
         
         # YTD Diff: 600 - 50 = 550
-        # Index 5: diff_ytd
-        self.assertEqual(food_item[5]["diff_ytd"], Decimal("550.00"))
+        self.assertEqual(food_item["diff_ytd"], Decimal("550.00"))
 
     def test_empty_state(self):
         """Verify view handles a year with no data gracefully."""
@@ -275,7 +260,7 @@ class TestYearlyBudgetDetailViewComprehensive(TestCase):
         # (Actually setUpTestData creates 'Food' and 'Vacation', so 7 total)
         # Let's just check one of our new categories
         test_cat = categories[0]
-        cat_item = next(item for item in context["budget_items_combined"] if item[0]["category__name"] == test_cat.name)
+        cat_item = next(item for item in context["budget_items_combined"] if item["category__name"] == test_cat.name)
         
         # Budgeted: Sum of (1000.00 + month) for months 1-12  
         expected_cat_budgeted = Decimal("0.00")
@@ -289,11 +274,8 @@ class TestYearlyBudgetDetailViewComprehensive(TestCase):
             p3 = Decimal(str(30.00 + month))
             expected_cat_spent += (p1 + p2 + p3)
 
-        print(expected_cat_budgeted)
-        print(cat_item[1]["amount_total"])
-        self.assertEqual(cat_item[1]["amount_total"], expected_cat_budgeted)
-        # Spent
-        self.assertEqual(cat_item[2]["spent"], expected_cat_spent)
+        self.assertEqual(cat_item["amount_total"], expected_cat_budgeted)
+        self.assertEqual(cat_item["spent"], expected_cat_spent)
 
     def test_using_fixtures(self):
         """
@@ -316,12 +298,9 @@ class TestYearlyBudgetDetailViewComprehensive(TestCase):
         self.assertEqual(categories.count(), 2)
         self.assertTrue(categories.filter(name="Fixture Category 1").exists())
         
-        # We can now use this data in tests
-        # For example, create a budget for this fixture user
         yb = YearlyBudgetFactory(user=fixture_user, date=datetime.date(self.year, 1, 1))
         
         # Login as the fixture user
-        # Note: The password hash in the fixture is a dummy, so we might need to set a usable password
         fixture_user.set_password("newpassword123")
         fixture_user.save()
         

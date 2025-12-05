@@ -534,7 +534,7 @@ class TestBudgetItemDeleteView(TestCase):
                 args=[
                     datetime.datetime.now().year,
                     datetime.datetime.now().month,
-                    self.category_user1,
+                    self.category_user1.name,
                 ],
             ),
             {"delete-all": True},
@@ -589,7 +589,7 @@ class YearlyBudgetViewTests(TestCase):
     def test_yearly_budget_create_view(self):
         next_year = self.year + 1
         response = self.client.post(
-            reverse('yearly_budget_create'),
+            reverse('yearly_create'),
             {'date': f'{next_year}-01-01'}
         )
         self.assertEqual(response.status_code, 302)
@@ -664,8 +664,8 @@ class MonthlyBudgetViewTests(TestCase):
             })
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '100.00')
-        self.assertContains(response, '500.00')
+        self.assertContains(response, '$100')
+        self.assertContains(response, '$500')
 
 
 class BudgetItemViewTests(TestCase):
@@ -762,15 +762,17 @@ class BudgetItemViewTests(TestCase):
             yearly_budget=self.yearly_budget
         )
         
-        response = self.client.delete(
-            reverse('budgetitem_delete', kwargs={
+        response = self.client.post(
+            reverse('budget_item_delete', kwargs={
                 'year': self.year,
+                'month': self.month,
                 'category': self.category.name
             }) + f'?next={reverse("yearly_list")}'
         )
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(
-            BudgetItem.objects.filter(id=budget_item.id).exists()
+        self.assertEqual(
+            BudgetItem.objects.get(id=budget_item.id).amount,
+            Decimal('0.00')
         )
 
     def test_budget_item_bulk_edit_view(self):
@@ -803,7 +805,7 @@ class BudgetItemViewTests(TestCase):
             })
         
         response = self.client.post(
-            reverse('budgetitem_bulk_edit', kwargs={
+            reverse('budgetitem_bulkedit', kwargs={
                 'year': self.year,
                 'category': self.category.name
             }),
