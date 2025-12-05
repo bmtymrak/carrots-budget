@@ -6,11 +6,11 @@ import time
 from django.db.models.fields import DecimalField, BooleanField
 from django.db import connection
 from django.http.response import HttpResponseRedirect
-from django.http import JsonResponse
+from django.http import JsonResponse, QueryDict
 from django.views.generic.edit import DeleteView
 from purchases.forms import PurchaseForm, PurchaseFormSetReceipt
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     ListView,
     CreateView,
@@ -556,7 +556,7 @@ class BudgetItemDeleteView(LoginRequiredMixin, DeleteView):
 
         return obj
 
-    def delete(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
 
         if self.request.POST.get("delete-all", False):
             self.model.objects.filter(
@@ -577,7 +577,8 @@ class BudgetItemDeleteView(LoginRequiredMixin, DeleteView):
         else:
             self.object = self.get_object()
             self.object.amount = 0
-            return HttpResponseRedirect(success_url)
+            self.object.save()
+            return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
         if self.request.POST.get("next"):
@@ -683,7 +684,7 @@ def budget_create(request):
             return HttpResponseHtmxRedirect(next)
 
     if request.method == "GET":
-        next = request.GET["next"]
+        next = request.GET.get("next", "")
 
     return render(
         request, "budgets/yearly_budget_create_htmx.html", {"form": form, "next": next}

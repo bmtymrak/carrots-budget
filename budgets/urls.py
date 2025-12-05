@@ -80,6 +80,6 @@ urlpatterns = [
     # path("yearly-create", YearlyBudgetCreateView.as_view(), name="yearly_create"),
     path("yearly-create", budget_create, name="yearly_create"),
     path("<int:year>", YearlyBudgetDetailView.as_view(), name="yearly_detail"),
-    path("rollover-update", rollover_update_view, name="rollover-update"),
+    path("rollover-update", rollover_update_view, name="rollover_update"),
     path("", YearlyBudgetListView.as_view(), name="yearly_list"),
 ]
