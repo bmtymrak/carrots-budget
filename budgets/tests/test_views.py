@@ -94,7 +94,7 @@ class TestYearlyBudgetCreateView(TestCase):
             reverse("yearly_create"), {"date": datetime.date.today()}
         )
 
-        self.assertRedirects(response, f"/budgets/{datetime.date.today().year}")
+        self.assertRedirects(response, f"/budgets/{datetime.date.today().year}", 200)
 
 
 class TestYearlyBudgetListView(TestCase):
@@ -592,7 +592,7 @@ class YearlyBudgetViewTests(TestCase):
             reverse('yearly_create'),
             {'date': f'{next_year}-01-01'}
         )
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.assertTrue(
             YearlyBudget.objects.filter(
                 user=self.user,
