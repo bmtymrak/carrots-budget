@@ -119,6 +119,7 @@ class BudgetItem(models.Model):
     def create_items_and_rollovers(cls, user, year, form):
 
         monthly_budgets = list(MonthlyBudget.objects.filter(date__year=year, user=user))
+        yearly_budget = YearlyBudget.objects.get(user=user, date__year=year)
 
         for monthly_budget in monthly_budgets:
             cls.objects.create(
@@ -126,14 +127,14 @@ class BudgetItem(models.Model):
                 category=form.instance.category,
                 amount=form.instance.amount,
                 monthly_budget=monthly_budget,
-                yearly_budget=YearlyBudget.objects.get(user=user, date__year=year),
+                yearly_budget=yearly_budget,
                 savings=form.instance.savings,
             )
 
         Rollover.objects.create(
             user=user,
             category=form.instance.category,
-            yearly_budget=YearlyBudget.objects.get(user=user, date__year=year),
+            yearly_budget=yearly_budget,
         )
 
     class Meta:
