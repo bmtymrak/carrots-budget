@@ -15,14 +15,7 @@ import datetime
 
 from .models import Purchase, Category, Income
 from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm
-
-
-class HttpResponseHtmxRedirect(HttpResponseRedirect):
-    status_code = 200
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self["HX-Redirect"] = self["Location"]
+from django_htmx.http import HttpResponseClientRedirect
 
 
 class AddUserMixin:
@@ -41,11 +34,6 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         qs = super().get_queryset()
         return qs.filter(user=self.request.user).prefetch_related("category")
 
-
-
-
-
-
 class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Category
     fields = ["name", "rollover"]
@@ -59,12 +47,6 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
         return kwargs
 
 
-
-
-
-
-
-
 @login_required
 def purchase_delete_htmx(request, pk):
 
@@ -74,7 +56,7 @@ def purchase_delete_htmx(request, pk):
 
     if request.method == "DELETE":
         purchase.delete()
-        return HttpResponseHtmxRedirect(next)
+        return HttpResponseClientRedirect(next)
 
     return render(
         request,
@@ -92,7 +74,7 @@ def income_delete_htmx(request, pk):
 
     if request.method == "DELETE":
         income.delete()
-        return HttpResponseHtmxRedirect(next)
+        return HttpResponseClientRedirect(next)
 
     return render(
         request,
@@ -134,7 +116,7 @@ def purchase_create(request):
                 instance.source = source
                 instance.location = location
                 instance.save()
-            return HttpResponseHtmxRedirect(next)
+            return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
         next = request.GET["next"]
@@ -173,7 +155,7 @@ def purchase_edit(request, pk):
         form = PurchaseForm(instance=purchase, data=request.POST, user=request.user)
         if form.is_valid():
             form.save()
-            return HttpResponseHtmxRedirect(next)
+            return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
         next = request.GET["next"]
@@ -196,7 +178,7 @@ def income_edit(request, pk):
         form = IncomeForm(instance=income, data=request.POST, user=request.user)
         if form.is_valid():
             form.save()
-            return HttpResponseHtmxRedirect(next)
+            return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
         next = request.GET["next"]
@@ -220,7 +202,7 @@ def income_create(request):
 
         if form.is_valid():
             form.save()
-            return HttpResponseHtmxRedirect(next)
+            return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
         next = request.GET["next"]

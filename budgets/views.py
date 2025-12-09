@@ -36,19 +36,13 @@ from budgets.models import MonthlyBudget, YearlyBudget, BudgetItem, Rollover
 from purchases.models import Category, Purchase, Income
 from budgets.forms import BudgetItemForm, BudgetItemFormset, YearlyBudgetForm
 from budgets.services import BudgetService
+from django_htmx.http import HttpResponseClientRedirect
+
 
 class AddUserMixin:
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
-
-
-class HttpResponseHtmxRedirect(HttpResponseRedirect):
-    status_code = 200
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self["HX-Redirect"] = self["Location"]
 
 
 class YearlyBudgetListView(LoginRequiredMixin, ListView):
@@ -349,7 +343,7 @@ def budget_create(request):
 
         if form.is_valid():
             form.save()
-            return HttpResponseHtmxRedirect(next)
+            return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
         next = request.GET.get("next", "")
@@ -378,7 +372,7 @@ def budgetitem_edit(request, year, month, category):
         )
         if form.is_valid():
             form.save()
-            return HttpResponseHtmxRedirect(next)
+            return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
         next = request.GET["next"]
@@ -409,7 +403,7 @@ def budgetitem_bulk_edit(request, year, category):
             instances = formset.save(commit=False)
             for instance in instances:
                 instance.save()
-            return HttpResponseHtmxRedirect(next)
+            return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
         next = request.GET["next"]
@@ -439,7 +433,7 @@ def budgetitem_delete(request, year, category):
             category__name=category,
             yearly_budget__date__year=year,
         ).delete()
-        return HttpResponseHtmxRedirect(next)
+        return HttpResponseClientRedirect(next)
 
     return render(
         request,
@@ -473,7 +467,7 @@ def budget_item_create(request, year):
 
             BudgetItem.create_items_and_rollovers(request.user, year, form)
 
-            return HttpResponseHtmxRedirect(next)
+            return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
         next = request.GET["next"]
