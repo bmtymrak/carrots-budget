@@ -1,5 +1,6 @@
-# Carrots Budgeting
-## A personal finance web app for budgeting and spending tracking built with Django
+<h1 style="text-align:center;"><img src="static/images/carrots_logo.svg" alt="Carrots Logo" width="50" style="vertical-align: middle;"/> <span style="vertical-align: middle;">Carrots Budgeting</span></h1>
+
+<h2 style="text-align: center; border-bottom: none;">A personal finance web app for budgeting and spending tracking built with Django</h2>
 
 Designed to replace a spreadsheet-based budgeting system, Carrots Budgeting streamlines the budgeting and spending tracking process to provide an up-to-date financial picture with the flexibility to match different budgeting strategies.
 
