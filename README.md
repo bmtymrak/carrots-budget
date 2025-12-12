@@ -10,9 +10,8 @@ Designed to replace a spreadsheet-based budgeting system, Carrots Budgeting stre
 - Ability to assign income to specific budgeting categories.
 - Create funds that rollover from year to year.
 
+
 ## Technologies
-- Django backend
-- HTML/CSS frontend with Django templating
-- Javascript for enhanced interactions with forms
+- Django/Python backend
+- Frontend with Django templates using HTMX and vanilla Javascript for interactivity
 - Authentication using django-allauth
-- PostgreSQL database
