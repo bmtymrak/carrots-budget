@@ -38,17 +38,38 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         # Filter by category
         category_id = self.request.GET.get("category")
         if category_id:
-            qs = qs.filter(category_id=category_id)
+            try:
+                category_id = int(category_id)
+                # Verify the category belongs to the current user
+                if Category.objects.filter(id=category_id, user=self.request.user).exists():
+                    qs = qs.filter(category_id=category_id)
+            except (ValueError, TypeError):
+                # Invalid category_id, ignore the filter
+                pass
         
         # Filter by year
         year = self.request.GET.get("year")
         if year:
-            qs = qs.filter(date__year=year)
+            try:
+                year = int(year)
+                # Validate year is reasonable (4 digits)
+                if 1900 <= year <= 9999:
+                    qs = qs.filter(date__year=year)
+            except (ValueError, TypeError):
+                # Invalid year, ignore the filter
+                pass
         
         # Filter by month (only if year is also specified)
         month = self.request.GET.get("month")
         if month and year:
-            qs = qs.filter(date__month=month)
+            try:
+                month = int(month)
+                # Validate month is between 1-12
+                if 1 <= month <= 12:
+                    qs = qs.filter(date__month=month)
+            except (ValueError, TypeError):
+                # Invalid month, ignore the filter
+                pass
         
         return qs
     

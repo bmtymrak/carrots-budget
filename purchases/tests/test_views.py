@@ -140,6 +140,43 @@ class PurchaseViewTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['purchases']), 1)
+    
+    def test_purchase_list_invalid_category_filter(self):
+        """Test that invalid category IDs are handled gracefully"""
+        PurchaseFactory(user=self.user, category=self.category)
+        
+        # Test with non-integer category
+        response = self.client.get(reverse('purchase_list'), {'category': 'invalid'})
+        self.assertEqual(response.status_code, 200)
+        
+        # Test with non-existent category ID
+        response = self.client.get(reverse('purchase_list'), {'category': '99999'})
+        self.assertEqual(response.status_code, 200)
+    
+    def test_purchase_list_invalid_year_filter(self):
+        """Test that invalid year values are handled gracefully"""
+        PurchaseFactory(user=self.user, category=self.category)
+        
+        # Test with non-integer year
+        response = self.client.get(reverse('purchase_list'), {'year': 'invalid'})
+        self.assertEqual(response.status_code, 200)
+        
+        # Test with out-of-range year
+        response = self.client.get(reverse('purchase_list'), {'year': '12345'})
+        self.assertEqual(response.status_code, 200)
+    
+    def test_purchase_list_invalid_month_filter(self):
+        """Test that invalid month values are handled gracefully"""
+        PurchaseFactory(user=self.user, category=self.category)
+        
+        # Test with non-integer month
+        response = self.client.get(reverse('purchase_list'), {'year': '2024', 'month': 'invalid'})
+        self.assertEqual(response.status_code, 200)
+        
+        # Test with out-of-range month
+        response = self.client.get(reverse('purchase_list'), {'year': '2024', 'month': '13'})
+        self.assertEqual(response.status_code, 200)
+
 
 
     def test_purchase_create_view(self):
