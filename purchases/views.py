@@ -28,11 +28,42 @@ class PurchaseListView(LoginRequiredMixin, ListView):
     model = Purchase
     context_object_name = "purchases"
     template_name = "purchase_list.html"
-    ordering = "date"
+    ordering = "-date"
+    paginate_by = 200
 
     def get_queryset(self):
         qs = super().get_queryset()
-        return qs.filter(user=self.request.user).prefetch_related("category")
+        qs = qs.filter(user=self.request.user).prefetch_related("category")
+        
+        # Filter by category
+        category_id = self.request.GET.get("category")
+        if category_id:
+            qs = qs.filter(category_id=category_id)
+        
+        # Filter by year
+        year = self.request.GET.get("year")
+        if year:
+            qs = qs.filter(date__year=year)
+        
+        # Filter by month (only if year is also specified)
+        month = self.request.GET.get("month")
+        if month and year:
+            qs = qs.filter(date__month=month)
+        
+        return qs
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Get all categories for the filter dropdown
+        context['categories'] = Category.objects.filter(user=self.request.user).order_by('name')
+        # Pass current filter values to template
+        context['selected_category'] = self.request.GET.get("category", "")
+        context['selected_year'] = self.request.GET.get("year", "")
+        context['selected_month'] = self.request.GET.get("month", "")
+        # Get distinct years from purchases for year dropdown
+        years = Purchase.objects.filter(user=self.request.user).dates('date', 'year', order='DESC')
+        context['years'] = [date.year for date in years]
+        return context
 
 class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Category
