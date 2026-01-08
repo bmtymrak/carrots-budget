@@ -257,3 +257,24 @@ class CategoryViewTests(TestCase):
         category.refresh_from_db()
         self.assertEqual(category.name, original_name)
         self.assertTrue(category.rollover)
+
+    def test_category_edit_duplicate_name(self):
+        # Create two categories
+        category1 = CategoryFactory(user=self.user, name='Category One')
+        category2 = CategoryFactory(user=self.user, name='Category Two')
+        
+        # Try to rename category2 to the same name as category1
+        response = self.client.post(
+            reverse('category_edit_htmx', kwargs={'pk': category2.pk}),
+            {
+                'name': 'Category One',  # Duplicate name
+                'next': '/'
+            }
+        )
+        # Should return 200 but with error message
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A category with this name already exists')
+        
+        category2.refresh_from_db()
+        # Name should not have changed
+        self.assertEqual(category2.name, 'Category Two')
