@@ -220,3 +220,20 @@ class CategoryViewTests(TestCase):
                     'next': '/'
                 }
             )
+
+    def test_category_edit_empty_name(self):
+        category = CategoryFactory(user=self.user, name='Original Name', rollover=False)
+        original_name = category.name
+        
+        response = self.client.post(
+            reverse('category_edit_htmx', kwargs={'pk': category.pk}),
+            {
+                'name': '',  # Empty name
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        category.refresh_from_db()
+        # Name should not change when empty string is submitted
+        self.assertEqual(category.name, original_name)

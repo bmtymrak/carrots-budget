@@ -53,16 +53,17 @@ def category_edit(request, pk):
 
     if request.method == "POST":
         next = request.POST.get("next")
-        new_name = request.POST.get("name")
+        new_name = request.POST.get("name", "").strip()
         rollover = request.POST.get("rollover") == "on"
         
-        category.name = new_name
-        category.rollover = rollover
-        category.save()
+        if new_name:  # Only update if name is provided and not empty
+            category.name = new_name
+            category.rollover = rollover
+            category.save()
         return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
-        next = request.GET["next"]
+        next = request.GET.get("next", "/")
 
     return render(
         request,
