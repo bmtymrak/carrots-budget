@@ -48,6 +48,30 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 
 
 @login_required
+def category_edit(request, pk):
+    category = Category.objects.get(user=request.user, pk=pk)
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        new_name = request.POST.get("name")
+        rollover = request.POST.get("rollover") == "on"
+        
+        category.name = new_name
+        category.rollover = rollover
+        category.save()
+        return HttpResponseClientRedirect(next)
+
+    if request.method == "GET":
+        next = request.GET["next"]
+
+    return render(
+        request,
+        "purchases/category_edit_htmx.html",
+        {"category": category, "next": next},
+    )
+
+
+@login_required
 def purchase_delete_htmx(request, pk):
 
     purchase = Purchase.objects.get(user=request.user, pk=pk)

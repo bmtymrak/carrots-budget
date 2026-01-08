@@ -175,3 +175,48 @@ class CategoryViewTests(TestCase):
                 name='Test Category'
             ).exists()
         )
+
+    def test_category_edit_view(self):
+        category = CategoryFactory(user=self.user, name='Original Name', rollover=False)
+        
+        response = self.client.post(
+            reverse('category_edit_htmx', kwargs={'pk': category.pk}),
+            {
+                'name': 'Updated Name',
+                'rollover': 'on',
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        category.refresh_from_db()
+        self.assertEqual(category.name, 'Updated Name')
+        self.assertTrue(category.rollover)
+
+    def test_category_edit_view_get(self):
+        category = CategoryFactory(user=self.user, name='Test Category')
+        
+        response = self.client.get(
+            reverse('category_edit_htmx', kwargs={'pk': category.pk}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Test Category')
+
+    def test_category_edit_only_own_category(self):
+        other_user = get_user_model().objects.create_user(
+            username='otheruser',
+            email='other@example.com',
+            password='otherpass123'
+        )
+        category = CategoryFactory(user=other_user, name='Other Category')
+        
+        # Attempt to edit another user's category should fail
+        with self.assertRaises(Category.DoesNotExist):
+            response = self.client.post(
+                reverse('category_edit_htmx', kwargs={'pk': category.pk}),
+                {
+                    'name': 'Hacked Name',
+                    'next': '/'
+                }
+            )
