@@ -4,6 +4,7 @@ import unittest
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.http import Http404
 from decimal import Decimal
 
 from purchases.models import Category, Purchase, Income
@@ -211,15 +212,15 @@ class CategoryViewTests(TestCase):
         )
         category = CategoryFactory(user=other_user, name='Other Category')
         
-        # Attempt to edit another user's category should fail
-        with self.assertRaises(Category.DoesNotExist):
-            response = self.client.post(
-                reverse('category_edit_htmx', kwargs={'pk': category.pk}),
-                {
-                    'name': 'Hacked Name',
-                    'next': '/'
-                }
-            )
+        # Attempt to edit another user's category should return 404
+        response = self.client.post(
+            reverse('category_edit_htmx', kwargs={'pk': category.pk}),
+            {
+                'name': 'Hacked Name',
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 404)
 
     def test_category_edit_empty_name(self):
         category = CategoryFactory(user=self.user, name='Original Name', rollover=False)
@@ -237,3 +238,22 @@ class CategoryViewTests(TestCase):
         category.refresh_from_db()
         # Name should not change when empty string is submitted
         self.assertEqual(category.name, original_name)
+
+    def test_category_edit_rollover_only(self):
+        category = CategoryFactory(user=self.user, name='Test Category', rollover=False)
+        original_name = category.name
+        
+        # Change only rollover, keep the same name
+        response = self.client.post(
+            reverse('category_edit_htmx', kwargs={'pk': category.pk}),
+            {
+                'name': original_name,
+                'rollover': 'on',
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        category.refresh_from_db()
+        self.assertEqual(category.name, original_name)
+        self.assertTrue(category.rollover)

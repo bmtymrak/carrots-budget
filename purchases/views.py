@@ -1,4 +1,4 @@
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     ListView,
@@ -49,17 +49,18 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 
 @login_required
 def category_edit(request, pk):
-    category = Category.objects.get(user=request.user, pk=pk)
+    category = get_object_or_404(Category, user=request.user, pk=pk)
 
     if request.method == "POST":
         next = request.POST.get("next")
         new_name = request.POST.get("name", "").strip()
         rollover = request.POST.get("rollover") == "on"
         
-        if new_name:  # Only update if name is provided and not empty
+        # Always update rollover, only update name if it's not empty
+        category.rollover = rollover
+        if new_name:
             category.name = new_name
-            category.rollover = rollover
-            category.save()
+        category.save()
         return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
