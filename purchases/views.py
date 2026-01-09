@@ -18,6 +18,27 @@ from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, Income
 from django_htmx.http import HttpResponseClientRedirect
 
 
+def parse_date_for_form_kwargs(user, date_str):
+    """Helper function to parse date and create form kwargs"""
+    if date_str:
+        try:
+            parsed_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            return {"user": user, "date": parsed_date}
+        except ValueError:
+            return {"user": user}
+    return {"user": user}
+
+
+def apply_common_fields_to_purchases(instances):
+    """Helper function to apply source and location from first purchase to all"""
+    if instances:
+        source = instances[0].source
+        location = instances[0].location
+        for instance in instances:
+            instance.source = source
+            instance.location = location
+
+
 class AddUserMixin:
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -96,12 +117,7 @@ def purchase_create(request):
                 formset_data[key] = formset_date
 
         # Parse the date to pass to forms
-        try:
-            parsed_date = datetime.datetime.strptime(formset_date, "%Y-%m-%d").date()
-            form_kwargs = {"user": request.user, "date": parsed_date}
-        except ValueError:
-
-            form_kwargs = {"user": request.user}
+        form_kwargs = parse_date_for_form_kwargs(request.user, formset_date)
 
         purchase_formset = PurchaseFormSetReceipt(
             form_kwargs=form_kwargs, data=formset_data
@@ -109,16 +125,15 @@ def purchase_create(request):
 
         if purchase_formset.is_valid():
             instances = purchase_formset.save(commit=False)
-            source = instances[0].source
-            location = instances[0].location
+            
+            # Apply common fields from first purchase to all
+            apply_common_fields_to_purchases(instances)
             
             # Create a receipt for this group of purchases
             receipt = Receipt.objects.create(user=request.user)
             
             for instance in instances:
                 instance.user = request.user
-                instance.source = source
-                instance.location = location
                 instance.receipt = receipt
                 instance.save()
             return HttpResponseClientRedirect(next)
@@ -128,15 +143,7 @@ def purchase_create(request):
         
         # Check if a date is provided as a query parameter
         date_param = request.GET.get("date")
-        if date_param:
-            try:
-                parsed_date = datetime.datetime.strptime(date_param, "%Y-%m-%d").date()
-                form_kwargs = {"user": request.user, "date": parsed_date}
-            except ValueError:
-                # If date parsing fails, just pass the user
-                form_kwargs = {"user": request.user}
-        else:
-            form_kwargs = {"user": request.user}
+        form_kwargs = parse_date_for_form_kwargs(request.user, date_param)
             
         purchase_formset = PurchaseFormSetReceipt(
             queryset=Purchase.objects.none(), form_kwargs=form_kwargs
@@ -170,14 +177,7 @@ def purchase_edit(request, pk):
         formset_date = formset_data.get("form-0-date")
         
         # Parse the date to pass to forms
-        if formset_date:
-            try:
-                parsed_date = datetime.datetime.strptime(formset_date, "%Y-%m-%d").date()
-                form_kwargs = {"user": request.user, "date": parsed_date}
-            except ValueError:
-                form_kwargs = {"user": request.user}
-        else:
-            form_kwargs = {"user": request.user}
+        form_kwargs = parse_date_for_form_kwargs(request.user, formset_date)
         
         purchase_formset = PurchaseFormSet(
             form_kwargs=form_kwargs, data=formset_data, queryset=purchases_queryset
@@ -186,13 +186,9 @@ def purchase_edit(request, pk):
         if purchase_formset.is_valid():
             instances = purchase_formset.save(commit=False)
             # Apply source and location from first form to all purchases
-            if instances:
-                source = instances[0].source
-                location = instances[0].location
-                for instance in instances:
-                    instance.source = source
-                    instance.location = location
-                    instance.save()
+            apply_common_fields_to_purchases(instances)
+            for instance in instances:
+                instance.save()
             return HttpResponseClientRedirect(next)
     
     if request.method == "GET":
@@ -200,10 +196,8 @@ def purchase_edit(request, pk):
         
         # Get date from the first purchase to filter categories
         first_purchase = purchases_queryset.first()
-        if first_purchase and first_purchase.date:
-            form_kwargs = {"user": request.user, "date": first_purchase.date}
-        else:
-            form_kwargs = {"user": request.user}
+        date_str = first_purchase.date.strftime("%Y-%m-%d") if first_purchase and first_purchase.date else None
+        form_kwargs = parse_date_for_form_kwargs(request.user, date_str)
         
         purchase_formset = PurchaseFormSet(
             form_kwargs=form_kwargs, queryset=purchases_queryset

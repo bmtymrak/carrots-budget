@@ -1,6 +1,6 @@
 
 
-<form id="purchase-edit-form-container" hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' method="POST">
+<form id="purchase-edit-form-container" hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="form-grid" method="POST">
     {% csrf_token %}
     {{purchase_formset.management_form}}
     {% for form in purchase_formset %}
