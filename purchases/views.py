@@ -52,9 +52,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         if year:
             try:
                 year = int(year)
-                # Validate year is reasonable (4 digits)
-                if 1900 <= year <= 9999:
-                    qs = qs.filter(date__year=year)
+                qs = qs.filter(date__year=year)
             except (ValueError, TypeError):
                 # Invalid year, ignore the filter
                 pass

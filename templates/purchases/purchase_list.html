@@ -8,7 +8,7 @@
 {% endblock header %}
 
 {% block body %}
-<div class="filter-controls" style="margin-bottom: 20px;">
+<div class="filter-controls">
     <form method="get" id="filter-form">
         <label for="category">Category:</label>
         <select name="category" id="category" onchange="document.getElementById('filter-form').submit()">
@@ -43,9 +43,9 @@
             <option value="12" {% if selected_month == "12" %}selected{% endif %}>December</option>
         </select>
         
-        <button type="submit" style="display:none;">Filter</button>
+        <button type="submit" class="hidden-submit">Filter</button>
         {% if selected_category or selected_year or selected_month %}
-        <a href="{% url 'purchase_list' %}" style="margin-left: 10px;">Clear Filters</a>
+        <a href="{% url 'purchase_list' %}" class="clear-filters-link">Clear Filters</a>
         {% endif %}
     </form>
 </div>
@@ -78,7 +78,7 @@
 </div>
 
 {% if is_paginated %}
-<div class="pagination" style="margin-top: 20px;">
+<div class="pagination">
     <span class="page-info">
         Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} purchases
     </span>
