@@ -197,6 +197,7 @@ python manage.py test budgets.tests.test_models.TestYearlyBudget.test_monthly_bu
 Key dependencies and their purposes:
 
 - `django-allauth`: User authentication and account management
+- `django-environ`: Environment variable management and configuration
 - `django-htmx`: HTMX integration for Django
 - `django-extensions`: Additional Django management commands
 - `django-debug-toolbar`: Development debugging
