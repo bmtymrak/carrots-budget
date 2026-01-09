@@ -1,7 +1,22 @@
 
 
-<form hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="form-grid" method="POST">
-    {{form}}
+<form id="purchase-edit-form-container" hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' method="POST">
+    {% csrf_token %}
+    {{purchase_formset.management_form}}
+    {% for form in purchase_formset %}
+    <div class="purchase-form">
+        {% for hidden in form.hidden_fields %}
+        {{hidden}}
+        {% endfor %}
+        {% for field in form.visible_fields %}
+        <div>
+        {{field.errors}}
+        {{field.label_tag}}
+        {{field}}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
     <input type="hidden" name="next" value="{{next}}">
     <button type="submit">Save</button>
 </form>

@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 import datetime
 
-from .models import Purchase, Category, Income
+from .models import Purchase, Category, Income, Receipt
 from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm
 from django_htmx.http import HttpResponseClientRedirect
 
@@ -111,10 +111,15 @@ def purchase_create(request):
             instances = purchase_formset.save(commit=False)
             source = instances[0].source
             location = instances[0].location
+            
+            # Create a receipt for this group of purchases
+            receipt = Receipt.objects.create(user=request.user)
+            
             for instance in instances:
                 instance.user = request.user
                 instance.source = source
                 instance.location = location
+                instance.receipt = receipt
                 instance.save()
             return HttpResponseClientRedirect(next)
 
@@ -147,23 +152,67 @@ def purchase_create(request):
 @login_required
 def purchase_edit(request, pk):
     purchase = Purchase.objects.get(user=request.user, pk=pk)
-
-    form = PurchaseForm(instance=purchase, user=request.user)
+    
+    # Get all purchases from the same receipt if it exists
+    if purchase.receipt:
+        purchases_queryset = Purchase.objects.filter(
+            receipt=purchase.receipt, user=request.user
+        ).order_by('id')
+    else:
+        # If no receipt, just edit the single purchase
+        purchases_queryset = Purchase.objects.filter(pk=pk)
 
     if request.method == "POST":
         next = request.POST.get("next")
-        form = PurchaseForm(instance=purchase, data=request.POST, user=request.user)
-        if form.is_valid():
-            form.save()
+        formset_data = request.POST.copy()
+        
+        # Get the date from the first form to apply to all
+        formset_date = formset_data.get("form-0-date")
+        
+        # Parse the date to pass to forms
+        if formset_date:
+            try:
+                parsed_date = datetime.datetime.strptime(formset_date, "%Y-%m-%d").date()
+                form_kwargs = {"user": request.user, "date": parsed_date}
+            except ValueError:
+                form_kwargs = {"user": request.user}
+        else:
+            form_kwargs = {"user": request.user}
+        
+        purchase_formset = PurchaseFormSet(
+            form_kwargs=form_kwargs, data=formset_data, queryset=purchases_queryset
+        )
+        
+        if purchase_formset.is_valid():
+            instances = purchase_formset.save(commit=False)
+            # Apply source and location from first form to all purchases
+            if instances:
+                source = instances[0].source
+                location = instances[0].location
+                for instance in instances:
+                    instance.source = source
+                    instance.location = location
+                    instance.save()
             return HttpResponseClientRedirect(next)
-
+    
     if request.method == "GET":
         next = request.GET["next"]
+        
+        # Get date from the first purchase to filter categories
+        first_purchase = purchases_queryset.first()
+        if first_purchase and first_purchase.date:
+            form_kwargs = {"user": request.user, "date": first_purchase.date}
+        else:
+            form_kwargs = {"user": request.user}
+        
+        purchase_formset = PurchaseFormSet(
+            form_kwargs=form_kwargs, queryset=purchases_queryset
+        )
 
     return render(
         request,
         "purchases/purchase_edit_htmx.html",
-        {"form": form, "purchase": purchase, "next": next},
+        {"purchase_formset": purchase_formset, "purchase": purchase, "next": next},
     )
 
 
