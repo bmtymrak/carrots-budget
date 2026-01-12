@@ -45,7 +45,7 @@ class BudgetService:
                 user=user,
                 yearly_budget__date__year=year,
                 savings=True
-            ).values_list('category_id', flat=True).distinct()
+            ).values_list('category_id', flat=True)
         )
         
         # Get total spent (purchases in non-savings categories)
@@ -60,22 +60,26 @@ class BudgetService:
         )['total']
         
         # Get total saved (purchases in savings categories)
-        total_saved = Purchase.objects.filter(
-            user=user,
-            date__year=year,
-            category_id__in=savings_category_ids if savings_category_ids else [0]
-        ).aggregate(
-            total=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
-        )['total']
-        
-        # Also add income from savings categories to total_saved
-        savings_income = Income.objects.filter(
-            user=user,
-            date__year=year,
-            category_id__in=savings_category_ids if savings_category_ids else [0]
-        ).aggregate(
-            total=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
-        )['total']
+        if savings_category_ids:
+            total_saved = Purchase.objects.filter(
+                user=user,
+                date__year=year,
+                category_id__in=savings_category_ids
+            ).aggregate(
+                total=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
+            )['total']
+            
+            # Also add income from savings categories to total_saved
+            savings_income = Income.objects.filter(
+                user=user,
+                date__year=year,
+                category_id__in=savings_category_ids
+            ).aggregate(
+                total=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
+            )['total']
+        else:
+            total_saved = Decimal('0')
+            savings_income = Decimal('0')
         
         total_saved = total_saved + savings_income
         total_spent_saved = total_spent + total_saved
