@@ -1,5 +1,6 @@
 {% extends "_base.html" %}
 {% load static %}
+{% load budget_extras %}
 
 {% block header %}
     <h1 class="page-title">{{yearly_budget.date.year}}</h1>
@@ -241,6 +242,77 @@
   
 </div>
 
+<!-- Monthly Spending Table Section -->
+<div class="card-base">
+    <div class="card-header">
+        <h2>Monthly Spending</h2>
+        <div class="card-header-action">
+            <button class="button-create" id="toggle-monthly-spending" onclick="toggleMonthlySpending()">Show Monthly Breakdown</button>
+        </div>
+    </div>
+    <div id="monthly-spending-table" style="display: none;">
+        <h3>Spending Categories</h3>
+        <div style="overflow-x: auto;">
+            <table class="monthly-spending-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        {% for month in months %}
+                        <th>{{ month.0|slice:":3" }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category_data in monthly_spending_data.spending %}
+                    <tr>
+                        <td><strong>{{ category_data.category_name }}</strong></td>
+                        {% for month in months %}
+                        <td>
+                            {% if month.1 in category_data.months %}
+                                ${{ category_data.months|get_item:month.1|get_item:'spent'|default:0|floatformat:"-2" }}
+                            {% else %}
+                                $0.00
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <h3 style="margin-top: 2rem;">Savings Categories</h3>
+        <div style="overflow-x: auto;">
+            <table class="monthly-spending-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        {% for month in months %}
+                        <th>{{ month.0|slice:":3" }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category_data in monthly_spending_data.savings %}
+                    <tr>
+                        <td><strong>{{ category_data.category_name }}</strong></td>
+                        {% for month in months %}
+                        <td>
+                            {% if month.1 in category_data.months %}
+                                ${{ category_data.months|get_item:month.1|get_item:'spent'|default:0|floatformat:"-2" }}
+                            {% else %}
+                                $0.00
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div class="card-base">
     <div class="card-header">
         <h2>Income</h2>
@@ -360,6 +432,19 @@
         monthYtdSelect.selectedIndex = `${monthYtd- 1}`
         monthYtdSelect.onchange = function(){
             window.location=`{{request.path}}?ytd=${this.value}`
+    }
+
+    // Toggle monthly spending table
+    function toggleMonthlySpending() {
+        const table = document.getElementById('monthly-spending-table');
+        const button = document.getElementById('toggle-monthly-spending');
+        if (table.style.display === 'none') {
+            table.style.display = 'block';
+            button.textContent = 'Hide Monthly Breakdown';
+        } else {
+            table.style.display = 'none';
+            button.textContent = 'Show Monthly Breakdown';
+        }
     }
 
 </script>
