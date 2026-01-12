@@ -10,6 +10,84 @@ from purchases.models import Purchase, Income
 
 
 class BudgetService:
+    def get_yearly_budget_summary(self, user, year: int) -> dict:
+        """
+        Calculate summary metrics for a yearly budget to display in the list view.
+        
+        Returns:
+            dict with keys:
+                - total_budgeted: Sum of all budget items (spending + savings)
+                - total_income: Sum of all income not assigned to categories
+                - total_spent: Sum of all purchases in spending categories
+                - total_saved: Sum of all purchases in savings categories
+                - total_spent_saved: Sum of total_spent + total_saved
+        """
+        # Get total budgeted (all budget items for the year)
+        total_budgeted = BudgetItem.objects.filter(
+            user=user,
+            yearly_budget__date__year=year
+        ).aggregate(
+            total=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
+        )['total']
+        
+        # Get total income (only income not assigned to categories)
+        total_income = Income.objects.filter(
+            user=user,
+            date__year=year,
+            category=None
+        ).aggregate(
+            total=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
+        )['total']
+        
+        # Get spending and savings category IDs
+        savings_category_ids = set(
+            BudgetItem.objects.filter(
+                user=user,
+                yearly_budget__date__year=year,
+                savings=True
+            ).values_list('category_id', flat=True).distinct()
+        )
+        
+        # Get total spent (purchases in non-savings categories)
+        total_spent = Purchase.objects.filter(
+            user=user,
+            date__year=year,
+            category__isnull=False
+        ).exclude(
+            category_id__in=savings_category_ids
+        ).aggregate(
+            total=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
+        )['total']
+        
+        # Get total saved (purchases in savings categories)
+        total_saved = Purchase.objects.filter(
+            user=user,
+            date__year=year,
+            category_id__in=savings_category_ids if savings_category_ids else [0]
+        ).aggregate(
+            total=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
+        )['total']
+        
+        # Also add income from savings categories to total_saved
+        savings_income = Income.objects.filter(
+            user=user,
+            date__year=year,
+            category_id__in=savings_category_ids if savings_category_ids else [0]
+        ).aggregate(
+            total=Coalesce(Sum('amount'), Value(0), output_field=DecimalField())
+        )['total']
+        
+        total_saved = total_saved + savings_income
+        total_spent_saved = total_spent + total_saved
+        
+        return {
+            'total_budgeted': total_budgeted,
+            'total_income': total_income,
+            'total_spent': total_spent,
+            'total_saved': total_saved,
+            'total_spent_saved': total_spent_saved,
+        }
+
     def get_monthly_budget_context(self, user, year: int, month: int) -> dict:
         monthly_budget = MonthlyBudget.objects.get(
             date__year=year,
