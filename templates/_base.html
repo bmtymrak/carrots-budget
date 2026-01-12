@@ -81,12 +81,15 @@
     function updateFocusableElements() {
         // Get all focusable elements within the modal
         focusableElements = modal.querySelectorAll(
-            'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            'a[href]:not([disabled]), area[href]:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]:not([disabled])'
         );
         
         if (focusableElements.length > 0) {
             firstFocusableElement = focusableElements[0];
             lastFocusableElement = focusableElements[focusableElements.length - 1];
+        } else {
+            firstFocusableElement = null;
+            lastFocusableElement = null;
         }
     }
 
