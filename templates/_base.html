@@ -64,6 +64,7 @@
 <script>
     const modal = document.querySelector("#modal")
     const overlay = document.querySelector(".overlay")
+    const FOCUSABLE_ELEMENTS_SELECTOR = 'a[href]:not([disabled]), area[href]:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]:not([disabled])';
     let focusableElements = [];
     let firstFocusableElement = null;
     let lastFocusableElement = null;
@@ -80,9 +81,7 @@
 
     function updateFocusableElements() {
         // Get all focusable elements within the modal
-        focusableElements = modal.querySelectorAll(
-            'a[href]:not([disabled]), area[href]:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]:not([disabled])'
-        );
+        focusableElements = modal.querySelectorAll(FOCUSABLE_ELEMENTS_SELECTOR);
         
         if (focusableElements.length > 0) {
             firstFocusableElement = focusableElements[0];
@@ -109,13 +108,17 @@
                 // Shift + Tab
                 if (document.activeElement === firstFocusableElement) {
                     event.preventDefault();
-                    lastFocusableElement.focus();
+                    if (lastFocusableElement) {
+                        lastFocusableElement.focus();
+                    }
                 }
             } else {
                 // Tab
                 if (document.activeElement === lastFocusableElement) {
                     event.preventDefault();
-                    firstFocusableElement.focus();
+                    if (firstFocusableElement) {
+                        firstFocusableElement.focus();
+                    }
                 }
             }
         }
