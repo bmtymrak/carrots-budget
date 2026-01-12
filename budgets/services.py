@@ -578,23 +578,6 @@ class BudgetService:
                 purchases_by_month[category_name] = {}
             purchases_by_month[category_name][month] = purchase['total']
         
-        # Get all incomes for the year grouped by category and month
-        incomes_by_month = {}
-        incomes = Income.objects.filter(
-            user=user,
-            date__year=year,
-        ).values('category', 'category__name', 'date__month').annotate(
-            total=Sum('amount')
-        )
-        
-        for income in incomes:
-            category_name = income['category__name']
-            if category_name:  # Only include categorized income
-                month = income['date__month']
-                if category_name not in incomes_by_month:
-                    incomes_by_month[category_name] = {}
-                incomes_by_month[category_name][month] = income['total']
-        
         # Organize budget items by category and month
         spending_categories = {}
         savings_categories = {}
@@ -615,12 +598,10 @@ class BudgetService:
             
             # Get spending/saving for this month
             spent = purchases_by_month.get(category_name, {}).get(month, 0)
-            income = incomes_by_month.get(category_name, {}).get(month, 0)
             
             target_dict[category_name]['months'][month] = {
                 'budgeted': amount,
                 'spent': spent,
-                'income': income,
             }
         
         # Convert to sorted lists for template
