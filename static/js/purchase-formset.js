@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function calculateTotal(e) {
         e.preventDefault();
-        let amounts = document.querySelectorAll("[id$='-amount'");
+        let amounts = document.querySelectorAll("[id$='-amount']");
         let totalAmount;
 
         if (amounts.length === 1) {
@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Amounts = ${[...amounts]}`);
             totalAmount = [...amounts].reduce((prev, curr) => {
                 console.log(`Curr.value = ${parseFloat(curr.value)}`);
+                let currValue;
                 if (isNaN(parseFloat(curr.value))) {
                     currValue = 0;
                 }
