@@ -64,6 +64,9 @@
 <script>
     const modal = document.querySelector("#modal")
     const overlay = document.querySelector(".overlay")
+    let focusableElements = [];
+    let firstFocusableElement = null;
+    let lastFocusableElement = null;
 
     function showModal(){
         modal.classList.remove("hidden")
@@ -75,13 +78,56 @@
         overlay.classList.add("hidden")
     }
 
+    function updateFocusableElements() {
+        // Get all focusable elements within the modal
+        focusableElements = modal.querySelectorAll(
+            'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        
+        if (focusableElements.length > 0) {
+            firstFocusableElement = focusableElements[0];
+            lastFocusableElement = focusableElements[focusableElements.length - 1];
+        }
+    }
+
+    function trapFocus(event) {
+        // Only trap focus if modal is visible
+        if (modal.classList.contains('hidden')) {
+            return;
+        }
+
+        if (event.key === 'Tab') {
+            if (focusableElements.length === 0) {
+                event.preventDefault();
+                return;
+            }
+
+            if (event.shiftKey) {
+                // Shift + Tab
+                if (document.activeElement === firstFocusableElement) {
+                    event.preventDefault();
+                    lastFocusableElement.focus();
+                }
+            } else {
+                // Tab
+                if (document.activeElement === lastFocusableElement) {
+                    event.preventDefault();
+                    firstFocusableElement.focus();
+                }
+            }
+        }
+    }
+
     htmx.on("htmx:afterSwap", (e) => {
         if (e.detail.target.id == "modal-content") {
           showModal()
-          const dateInput = document.querySelector("#id_form-0-date")
-
-          if (dateInput){
-            dateInput.focus()
+          
+          // Update focusable elements after content is loaded
+          updateFocusableElements();
+          
+          // Focus the first focusable element
+          if (firstFocusableElement) {
+            firstFocusableElement.focus()
           }
         }
       })
@@ -97,6 +143,8 @@
     window.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
           closeModal();
+        } else {
+          trapFocus(event);
         }
       });
 
