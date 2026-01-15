@@ -98,18 +98,28 @@ class YearlyBudgetFormTest(TestCase):
         self.assertEqual(yearly_budget.date.year, 2024)
 
     def test_yearly_budget_form_year_range(self):
-        """Test that the form validates year range"""
-        # Test minimum year
-        form = YearlyBudgetForm(data={"year": 1999})
-        form.instance.user = self.user1
-        self.assertFalse(form.is_valid())
+        """Test that the form includes appropriate year choices"""
+        form = YearlyBudgetForm()
+        # Get the year choices
+        year_choices = [int(choice[0]) for choice in form.fields['year'].choices]
         
-        # Test maximum year
-        form = YearlyBudgetForm(data={"year": 2101})
-        form.instance.user = self.user1
-        self.assertFalse(form.is_valid())
+        # Current year should be in choices
+        current_year = datetime.date.today().year
+        self.assertIn(current_year, year_choices)
+        
+        # Should include future years (at least current + 5)
+        self.assertIn(current_year + 5, year_choices)
+        
+        # Should include past years (at least back to 2000)
+        self.assertIn(2000, year_choices)
         
         # Test valid year
         form = YearlyBudgetForm(data={"year": 2025})
         form.instance.user = self.user1
         self.assertTrue(form.is_valid())
+
+    def test_yearly_budget_form_defaults_to_current_year(self):
+        """Test that the form defaults to the current year"""
+        form = YearlyBudgetForm()
+        current_year = datetime.date.today().year
+        self.assertEqual(form.fields['year'].initial, current_year)

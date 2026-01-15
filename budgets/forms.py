@@ -1,4 +1,4 @@
-from django.forms import ModelForm, CharField, IntegerField, modelformset_factory
+from django.forms import ModelForm, CharField, ChoiceField, modelformset_factory
 from django.core.exceptions import ValidationError
 import datetime
 
@@ -7,18 +7,25 @@ from purchases.models import Category
 
 
 class YearlyBudgetForm(ModelForm):
-    year = IntegerField(
-        min_value=2000,
-        max_value=2100,
-        help_text="Enter the year for the budget (e.g., 2024)"
+    year = ChoiceField(
+        choices=[],
+        help_text="Enter the year for the budget"
     )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        current_year = datetime.date.today().year
+        # Generate year choices from 2000 to current_year + 10
+        year_choices = [(year, str(year)) for year in range(current_year + 10, 1999, -1)]
+        self.fields['year'].choices = year_choices
+        self.fields['year'].initial = current_year
     
     class Meta:
         model = YearlyBudget
         fields = []
     
     def clean_year(self):
-        year = self.cleaned_data['year']
+        year = int(self.cleaned_data['year'])
         # Check if a yearly budget already exists for this year and user
         if hasattr(self, 'instance') and self.instance.user:
             if YearlyBudget.objects.filter(user=self.instance.user, date__year=year).exists():
