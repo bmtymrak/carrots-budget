@@ -34,7 +34,7 @@ class YearlyBudgetForm(ModelForm):
     
     def save(self, commit=True):
         # Convert year to a date (using January 1st of that year)
-        year = self.cleaned_data['year']
+        year = int(self.cleaned_data['year'])
         self.instance.date = datetime.date(year, 1, 1)
         return super().save(commit=commit)
 
