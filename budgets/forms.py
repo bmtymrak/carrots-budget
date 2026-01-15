@@ -14,7 +14,7 @@ FUTURE_YEARS_OFFSET = 10
 class YearlyBudgetForm(ModelForm):
     year = ChoiceField(
         choices=[],
-        help_text="Enter the year for the budget"
+        label="Budget Year"
     )
     
     def __init__(self, *args, **kwargs):
