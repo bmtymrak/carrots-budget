@@ -48,14 +48,14 @@ uv sync
 ### Running the Development Server
 
 ```bash
-python manage.py runserver
+uv run python manage.py runserver
 ```
 
 ### Database Migrations
 
 ```bash
-python manage.py makemigrations
-python manage.py migrate
+uv run python manage.py makemigrations
+uv run python manage.py migrate
 ```
 
 ## Testing
@@ -64,20 +64,20 @@ python manage.py migrate
 
 Run all tests:
 ```bash
-python manage.py test
+uv run python manage.py test
 ```
 
 Run tests for a specific app:
 ```bash
-python manage.py test budgets
-python manage.py test purchases
-python manage.py test accounts
+uv run python manage.py test budgets
+uv run python manage.py test purchases
+uv run python manage.py test accounts
 ```
 
 Run a specific test class or method:
 ```bash
-python manage.py test budgets.tests.test_models.TestYearlyBudget
-python manage.py test budgets.tests.test_models.TestYearlyBudget.test_monthly_budgets_created
+uv run python manage.py test budgets.tests.test_models.TestYearlyBudget
+uv run python manage.py test budgets.tests.test_models.TestYearlyBudget.test_monthly_budgets_created
 ```
 
 ### Testing Conventions
@@ -164,7 +164,7 @@ python manage.py test budgets.tests.test_models.TestYearlyBudget.test_monthly_bu
 1. Define the model in the appropriate app's `models.py`
 2. Include `user` ForeignKey for multi-user support
 3. Add `__str__()` method and Meta class
-4. Create and run migrations: `python manage.py makemigrations && python manage.py migrate`
+4. Create and run migrations: `uv run python manage.py makemigrations && uv run python manage.py migrate`
 5. Register in admin.py if needed
 6. Add tests in `tests/test_models.py`
 
