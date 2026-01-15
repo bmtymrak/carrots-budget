@@ -6,6 +6,11 @@ from .models import MonthlyBudget, YearlyBudget, BudgetItem
 from purchases.models import Category
 
 
+# Constants for year selection range
+MIN_YEAR = 2000
+FUTURE_YEARS_OFFSET = 10
+
+
 class YearlyBudgetForm(ModelForm):
     year = ChoiceField(
         choices=[],
@@ -15,8 +20,8 @@ class YearlyBudgetForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         current_year = datetime.date.today().year
-        # Generate year choices from 2000 to current_year + 10
-        year_choices = [(year, str(year)) for year in range(current_year + 10, 1999, -1)]
+        # Generate year choices from MIN_YEAR to current_year + FUTURE_YEARS_OFFSET
+        year_choices = [(year, str(year)) for year in range(current_year + FUTURE_YEARS_OFFSET, MIN_YEAR - 1, -1)]
         self.fields['year'].choices = year_choices
         self.fields['year'].initial = current_year
     
