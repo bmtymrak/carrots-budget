@@ -20,7 +20,7 @@ class YearlyBudgetForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         current_year = datetime.date.today().year
-        # Generate year choices from MIN_YEAR to current_year + FUTURE_YEARS_OFFSET
+        # Generate year choices in descending order (most recent first)
         year_choices = [(year, str(year)) for year in range(current_year + FUTURE_YEARS_OFFSET, MIN_YEAR - 1, -1)]
         self.fields['year'].choices = year_choices
         self.fields['year'].initial = current_year
