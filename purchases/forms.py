@@ -97,7 +97,8 @@ class RecurringPurchaseForm(ModelForm):
         # Add placeholders and styling
         self.fields["name"].widget.attrs.update(placeholder="Name")
         self.fields["amount"].widget.attrs.update(placeholder="Amount")
-        self.fields["merchant"].widget.attrs.update(placeholder="Merchant")
+        self.fields["source"].widget.attrs.update(placeholder="Source")
+        self.fields["location"].widget.attrs.update(placeholder="Location")
         self.fields["notes"].widget.attrs.update(placeholder="Notes", rows="2")
 
     class Meta:
@@ -106,7 +107,8 @@ class RecurringPurchaseForm(ModelForm):
             "name",
             "amount",
             "category",
-            "merchant",
+            "source",
+            "location",
             "notes",
             "is_active",
         ]

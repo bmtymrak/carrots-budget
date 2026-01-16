@@ -30,7 +30,8 @@ class RecurringPurchaseModelTests(TestCase):
             name="Netflix Subscription",
             amount=Decimal("15.99"),
             category=self.category,
-            merchant="Netflix",
+            source="Netflix",
+            location="Online",
             notes="Monthly streaming",
             is_active=True,
         )
@@ -72,7 +73,8 @@ class RecurringPurchaseFormTests(TestCase):
             "name": "Gym Membership",
             "amount": "50.00",
             "category": self.category.id,
-            "merchant": "LA Fitness",
+            "source": "LA Fitness",
+            "location": "Main Street",
             "notes": "Monthly membership",
             "is_active": True,
         }
@@ -121,7 +123,8 @@ class RecurringPurchaseViewTests(TestCase):
                 "name": "New Subscription",
                 "amount": "25.00",
                 "category": self.category.id,
-                "merchant": "Test Merchant",
+                "source": "Test Source",
+                "location": "Test Location",
                 "notes": "Test notes",
                 "is_active": True,
                 "next": "/",
@@ -155,7 +158,8 @@ class RecurringPurchaseViewTests(TestCase):
                 "name": "Updated Name",
                 "amount": "30.00",
                 "category": self.category.id,
-                "merchant": "Updated Merchant",
+                "source": "Updated Source",
+                "location": "Updated Location",
                 "notes": "Updated notes",
                 "is_active": False,
                 "next": "/",
@@ -247,7 +251,8 @@ class RecurringPurchaseAddToMonthTests(TestCase):
             name="Subscription 1",
             amount=Decimal("10.00"),
             category=self.category,
-            merchant="Merchant 1",
+            source="Source 1",
+            location="Location 1",
             is_active=True
         )
         rp2 = RecurringPurchaseFactory(
@@ -255,7 +260,8 @@ class RecurringPurchaseAddToMonthTests(TestCase):
             name="Subscription 2",
             amount=Decimal("20.00"),
             category=self.category,
-            merchant="Merchant 2",
+            source="Source 2",
+            location="Location 2",
             is_active=True
         )
         
@@ -265,11 +271,13 @@ class RecurringPurchaseAddToMonthTests(TestCase):
                 "monthly_budget_id": self.monthly_budget.id,
                 f"recurring_purchase_{rp1.id}": "1",
                 f"amount_{rp1.id}": "10.00",
-                f"merchant_{rp1.id}": "Merchant 1",
+                f"source_{rp1.id}": "Source 1",
+                f"location_{rp1.id}": "Location 1",
                 f"notes_{rp1.id}": "",
                 f"recurring_purchase_{rp2.id}": "1",
                 f"amount_{rp2.id}": "20.00",
-                f"merchant_{rp2.id}": "Merchant 2",
+                f"source_{rp2.id}": "Source 2",
+                f"location_{rp2.id}": "Location 2",
                 f"notes_{rp2.id}": "",
                 "next": "/",
             }
@@ -284,17 +292,19 @@ class RecurringPurchaseAddToMonthTests(TestCase):
         # Verify purchase details
         p1 = Purchase.objects.get(item="Subscription 1")
         self.assertEqual(p1.amount, Decimal("10.00"))
-        self.assertEqual(p1.source, "Merchant 1")
+        self.assertEqual(p1.source, "Source 1")
+        self.assertEqual(p1.location, "Location 1")
         self.assertEqual(p1.category, self.category)
         self.assertEqual(p1.date, datetime.date(2024, 3, 1))
 
     def test_add_to_month_with_custom_values(self):
-        """Test that custom amounts/merchants override defaults."""
+        """Test that custom amounts/source/location override defaults."""
         rp = RecurringPurchaseFactory(
             user=self.user,
             name="Subscription",
             amount=Decimal("10.00"),
-            merchant="Original Merchant",
+            source="Original Source",
+            location="Original Location",
             category=self.category,
             is_active=True
         )
@@ -305,7 +315,8 @@ class RecurringPurchaseAddToMonthTests(TestCase):
                 "monthly_budget_id": self.monthly_budget.id,
                 f"recurring_purchase_{rp.id}": "1",
                 f"amount_{rp.id}": "15.00",  # Custom amount
-                f"merchant_{rp.id}": "Custom Merchant",  # Custom merchant
+                f"source_{rp.id}": "Custom Source",  # Custom source
+                f"location_{rp.id}": "Custom Location",  # Custom location
                 f"notes_{rp.id}": "Custom notes",
                 "next": "/",
             }
@@ -316,7 +327,8 @@ class RecurringPurchaseAddToMonthTests(TestCase):
         # Check that purchase was created with custom values
         p = Purchase.objects.get(item="Subscription")
         self.assertEqual(p.amount, Decimal("15.00"))
-        self.assertEqual(p.source, "Custom Merchant")
+        self.assertEqual(p.source, "Custom Source")
+        self.assertEqual(p.location, "Custom Location")
         self.assertEqual(p.notes, "Custom notes")
 
     def test_add_to_month_respects_selection(self):
@@ -330,7 +342,8 @@ class RecurringPurchaseAddToMonthTests(TestCase):
                 "monthly_budget_id": self.monthly_budget.id,
                 f"recurring_purchase_{rp1.id}": "1",  # Only rp1 is checked
                 f"amount_{rp1.id}": str(rp1.amount),
-                f"merchant_{rp1.id}": rp1.merchant,
+                f"source_{rp1.id}": rp1.source,
+                f"location_{rp1.id}": rp1.location,
                 f"notes_{rp1.id}": rp1.notes,
                 # rp2 is not included (checkbox unchecked)
                 "next": "/",
@@ -343,6 +356,41 @@ class RecurringPurchaseAddToMonthTests(TestCase):
         self.assertEqual(Purchase.objects.filter(user=self.user).count(), 1)
         self.assertTrue(Purchase.objects.filter(item="Selected").exists())
         self.assertFalse(Purchase.objects.filter(item="Not Selected").exists())
+
+    def test_add_to_month_detects_duplicates(self):
+        """Test that duplicate detection works correctly."""
+        # Create a recurring purchase
+        rp = RecurringPurchaseFactory(
+            user=self.user,
+            name="Netflix",
+            amount=Decimal("15.99"),
+            category=self.category,
+            is_active=True
+        )
+        
+        # Add it to the month once
+        Purchase.objects.create(
+            user=self.user,
+            item="Netflix",
+            date=datetime.date(2024, 3, 1),
+            amount=Decimal("15.99"),
+            source="Netflix Inc",
+            category=self.category,
+        )
+        
+        # Try to get the add modal again - should show it as already added
+        response = self.client.get(
+            reverse("recurringpurchase_add_to_month"),
+            {
+                "monthly_budget_id": self.monthly_budget.id,
+                "next": "/"
+            }
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "All recurring purchases have already been added")
+        self.assertIn("all_added", response.context)
+        self.assertTrue(response.context["all_added"])
 
 
 class RecurringPurchaseAdminTests(TestCase):

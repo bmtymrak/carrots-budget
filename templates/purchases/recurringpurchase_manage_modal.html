@@ -20,7 +20,8 @@
                 <div class="card-table-heading">Name</div>
                 <div class="card-table-heading">Amount</div>
                 <div class="card-table-heading">Category</div>
-                <div class="card-table-heading">Merchant</div>
+                <div class="card-table-heading">Source</div>
+                <div class="card-table-heading">Location</div>
                 <div class="card-table-heading">Active</div>
                 <div></div>
             </div>
@@ -29,7 +30,8 @@
                 <div>{{rp.name}}</div>
                 <div>${{rp.amount|floatformat:"-2"}}</div>
                 <div>{{rp.category}}</div>
-                <div>{{rp.merchant}}</div>
+                <div>{{rp.source}}</div>
+                <div>{{rp.location}}</div>
                 <div>{% if rp.is_active %}Yes{% else %}No{% endif %}</div>
                 <div>
                     <div class="edit-links-container">
@@ -48,7 +50,7 @@
 <style>
 .recurring-horizontal-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1.5fr 1.5fr 0.7fr 0.5fr;
+    grid-template-columns: 2fr 1fr 1.5fr 1.5fr 1.5fr 0.7fr 0.5fr;
     gap: 10px;
     align-items: center;
 }

@@ -310,6 +310,26 @@ def recurringpurchase_add_to_month(request):
             is_active=True
         )
         
+        # Check which recurring purchases have already been added this month
+        # We'll check for purchases that match the name and were created on the first day of this month
+        first_day_of_month = monthly_budget.date.replace(day=1)
+        
+        # Get existing purchases for this month that match recurring purchase names
+        existing_purchase_names = set(
+            Purchase.objects.filter(
+                user=request.user,
+                date=first_day_of_month,
+                item__in=[rp.name for rp in recurring_purchases]
+            ).values_list('item', flat=True)
+        )
+        
+        # Mark which recurring purchases have already been added
+        for rp in recurring_purchases:
+            rp.already_added = rp.name in existing_purchase_names
+        
+        # Check if all active recurring purchases have been added
+        all_added = all(rp.already_added for rp in recurring_purchases) if recurring_purchases else False
+        
         return render(
             request,
             "purchases/recurringpurchase_add_modal.html",
@@ -317,6 +337,7 @@ def recurringpurchase_add_to_month(request):
                 "recurring_purchases": recurring_purchases,
                 "monthly_budget": monthly_budget,
                 "next": next,
+                "all_added": all_added,
             },
         )
     
@@ -330,7 +351,7 @@ def recurringpurchase_add_to_month(request):
         
         # Get selected recurring purchases from POST data
         # Format: recurring_purchase_<id> checkbox
-        # amount_<id>, merchant_<id>, notes_<id> for overrides
+        # amount_<id>, source_<id>, location_<id>, notes_<id> for overrides
         
         created_count = 0
         for key in request.POST:
@@ -340,7 +361,8 @@ def recurringpurchase_add_to_month(request):
                 
                 # Get overridden values or use defaults
                 amount = request.POST.get(f"amount_{rp_id}", recurring_purchase.amount)
-                merchant = request.POST.get(f"merchant_{rp_id}", recurring_purchase.merchant)
+                source = request.POST.get(f"source_{rp_id}", recurring_purchase.source)
+                location = request.POST.get(f"location_{rp_id}", recurring_purchase.location)
                 notes = request.POST.get(f"notes_{rp_id}", recurring_purchase.notes)
                 
                 # Create the purchase
@@ -349,7 +371,8 @@ def recurringpurchase_add_to_month(request):
                     item=recurring_purchase.name,
                     date=monthly_budget.date.replace(day=1),  # First day of month
                     amount=amount,
-                    source=merchant,
+                    source=source,
+                    location=location,
                     category=recurring_purchase.category,
                     notes=notes,
                     savings=False,

@@ -6,7 +6,8 @@
             <strong>{{recurring_purchase.name}}</strong><br>
             Amount: ${{recurring_purchase.amount|floatformat:"-2"}}<br>
             Category: {{recurring_purchase.category}}<br>
-            Merchant: {{recurring_purchase.merchant}}
+            Source: {{recurring_purchase.source}}<br>
+            Location: {{recurring_purchase.location}}
         </div>
     </div>
     <button hx-delete='{% url "recurringpurchase_delete" pk=recurring_purchase.id %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>

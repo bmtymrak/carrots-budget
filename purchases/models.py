@@ -129,7 +129,8 @@ class RecurringPurchase(models.Model):
         on_delete=models.PROTECT,
         related_name="recurring_purchases",
     )
-    merchant = models.CharField(max_length=250, blank=True)
+    source = models.CharField(max_length=250, blank=True)
+    location = models.CharField(max_length=250, blank=True)
     notes = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
