@@ -207,7 +207,8 @@ class RecurringPurchaseViewTests(TestCase):
                 'name': 'Netflix',
                 'amount': '15.99',
                 'category': self.category.id,
-                'merchant': 'Netflix Inc',
+                'source': 'Netflix Inc',
+                'location': 'Online',
                 'notes': 'Monthly subscription',
                 'is_active': True,
                 'next': '/'
@@ -245,7 +246,8 @@ class RecurringPurchaseViewTests(TestCase):
                 'name': 'New Name',
                 'amount': '20.00',
                 'category': self.category.id,
-                'merchant': 'New Merchant',
+                'source': 'New Source',
+                'location': 'New Location',
                 'notes': 'Updated notes',
                 'is_active': True,
                 'next': '/'
@@ -304,7 +306,8 @@ class RecurringPurchaseViewTests(TestCase):
             category=self.category,
             name='Netflix',
             amount=Decimal('15.99'),
-            merchant='Netflix Inc'
+            source='Netflix Inc',
+            location='Online'
         )
         
         response = self.client.post(
@@ -312,7 +315,9 @@ class RecurringPurchaseViewTests(TestCase):
             {
                 'selected_recurring': [str(recurring.pk)],
                 f'amount_{recurring.pk}': '15.99',
-                f'merchant_{recurring.pk}': 'Netflix Inc',
+                f'source_{recurring.pk}': 'Netflix Inc',
+                f'location_{recurring.pk}': 'Online',
+                f'category_{recurring.pk}': self.category.id,
                 f'notes_{recurring.pk}': 'Monthly sub',
                 'next': '/'
             }
@@ -343,7 +348,9 @@ class RecurringPurchaseViewTests(TestCase):
             {
                 'selected_recurring': [str(recurring.pk)],
                 f'amount_{recurring.pk}': '14.99',  # Different amount
-                f'merchant_{recurring.pk}': recurring.merchant,
+                f'source_{recurring.pk}': recurring.source,
+                f'location_{recurring.pk}': recurring.location,
+                f'category_{recurring.pk}': self.category.id,
                 f'notes_{recurring.pk}': recurring.notes,
                 'next': '/'
             }

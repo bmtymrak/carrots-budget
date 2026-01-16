@@ -293,29 +293,55 @@ def recurring_purchase_add_to_month(request, year, month):
     next_url = request.GET.get(
         "next", reverse("monthly_detail", kwargs={"year": year, "month": month})
     )
+    
+    # Get categories for the user to allow category editing
+    categories = Category.objects.filter(user=request.user)
+    
+    # Check which recurring purchases have already been added this month
+    # by looking for purchases with the same item name and date within this month
+    purchase_date = monthly_budget.date
+    existing_purchases = Purchase.objects.filter(
+        user=request.user,
+        date__year=year,
+        date__month=month
+    ).values_list("item", flat=True)
+    
+    # Track which recurring purchases are already added
+    already_added = set()
+    for recurring in recurring_purchases:
+        if recurring.name in existing_purchases:
+            already_added.add(recurring.id)
 
     if request.method == "POST":
         next_url = request.POST.get("next", next_url)
         selected_ids = request.POST.getlist("selected_recurring")
-        purchase_date = monthly_budget.date
 
         for recurring_id in selected_ids:
             try:
                 recurring = RecurringPurchase.objects.get(
                     pk=recurring_id, user=request.user
                 )
-                # Get the potentially modified amount and merchant from form
+                # Get the potentially modified values from form
                 amount = request.POST.get(f"amount_{recurring_id}", recurring.amount)
-                merchant = request.POST.get(f"merchant_{recurring_id}", recurring.merchant)
+                source = request.POST.get(f"source_{recurring_id}", recurring.source)
+                location = request.POST.get(f"location_{recurring_id}", recurring.location)
                 notes = request.POST.get(f"notes_{recurring_id}", recurring.notes)
+                category_id = request.POST.get(f"category_{recurring_id}", recurring.category_id)
+                
+                # Get the category object
+                try:
+                    category = Category.objects.get(pk=category_id, user=request.user)
+                except Category.DoesNotExist:
+                    category = recurring.category
 
                 Purchase.objects.create(
                     user=request.user,
                     item=recurring.name,
                     date=purchase_date,
                     amount=amount,
-                    location=merchant,
-                    category=recurring.category,
+                    source=source,
+                    location=location,
+                    category=category,
                     notes=notes,
                     savings=False,
                 )
@@ -330,6 +356,9 @@ def recurring_purchase_add_to_month(request, year, month):
         {
             "recurring_purchases": recurring_purchases,
             "monthly_budget": monthly_budget,
+            "categories": categories,
+            "already_added": already_added,
+            "all_already_added": len(already_added) == recurring_purchases.count() and recurring_purchases.exists(),
             "next": next_url,
         },
     )

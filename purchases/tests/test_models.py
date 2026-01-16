@@ -24,14 +24,16 @@ class RecurringPurchaseModelTests(TestCase):
             name="Netflix",
             amount=Decimal("15.99"),
             category=self.category,
-            merchant="Netflix Inc.",
+            source="Netflix Inc.",
+            location="Online",
             notes="Monthly subscription",
             is_active=True,
         )
         self.assertEqual(recurring.name, "Netflix")
         self.assertEqual(recurring.amount, Decimal("15.99"))
         self.assertEqual(recurring.category, self.category)
-        self.assertEqual(recurring.merchant, "Netflix Inc.")
+        self.assertEqual(recurring.source, "Netflix Inc.")
+        self.assertEqual(recurring.location, "Online")
         self.assertTrue(recurring.is_active)
 
     def test_recurring_purchase_str(self):
