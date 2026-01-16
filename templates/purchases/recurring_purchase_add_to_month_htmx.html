@@ -24,7 +24,7 @@
             </div>
             <div>{{recurring.name}}</div>
             <div>
-                <input type="number" name="amount_{{recurring.id}}" value="{{recurring.amount}}" step="0.01" style="width: 100px;">
+                <input type="number" name="amount_{{recurring.id}}" value="{{recurring.amount}}" step="0.01" min="0" style="width: 100px;">
             </div>
             <div>
                 <input type="text" name="merchant_{{recurring.id}}" value="{{recurring.merchant}}" style="width: 120px;">
