@@ -202,6 +202,35 @@ a {
     margin-bottom: 10px;
 }
 
+.recurring-purchase-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr .75fr 100px;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    column-gap: 10px;
+    row-gap: 5px;
+}
+
+.recurring-purchase-grid div {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.recurring-add-grid {
+    display: grid;
+    grid-template-columns: 50px 1.5fr 100px 120px 1fr 150px;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    column-gap: 10px;
+    row-gap: 5px;
+    align-items: center;
+}
+
+.recurring-add-grid div {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 .budget-monthly-single-col {
     margin-bottom: 10px;
 }

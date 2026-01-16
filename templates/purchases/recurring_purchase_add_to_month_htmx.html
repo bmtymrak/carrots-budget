@@ -1,0 +1,46 @@
+<h2>Add Recurring Purchases for {{monthly_budget.date|date:"F Y"}}</h2>
+
+<form hx-post='{% url "recurring_purchase_add_to_month" year=monthly_budget.date.year month=monthly_budget.date.month %}' method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{next}}">
+
+    {% if recurring_purchases %}
+    <div class="card-base">
+        <p>Select recurring purchases to add for this month. You can edit amounts before adding.</p>
+        
+        <div class="recurring-add-grid card-table-header">
+            <div class="card-table-heading">Select</div>
+            <div class="card-table-heading">Name</div>
+            <div class="card-table-heading">Amount</div>
+            <div class="card-table-heading">Merchant</div>
+            <div class="card-table-heading">Category</div>
+            <div class="card-table-heading">Notes</div>
+        </div>
+
+        {% for recurring in recurring_purchases %}
+        <div class="recurring-add-grid">
+            <div>
+                <input type="checkbox" name="selected_recurring" value="{{recurring.id}}" checked>
+            </div>
+            <div>{{recurring.name}}</div>
+            <div>
+                <input type="number" name="amount_{{recurring.id}}" value="{{recurring.amount}}" step="0.01" style="width: 100px;">
+            </div>
+            <div>
+                <input type="text" name="merchant_{{recurring.id}}" value="{{recurring.merchant}}" style="width: 120px;">
+            </div>
+            <div>{{recurring.category}}</div>
+            <div>
+                <input type="text" name="notes_{{recurring.id}}" value="{{recurring.notes}}" style="width: 150px;">
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <button type="submit" class="button-create" style="margin-top: 1rem;">Add Selected Purchases</button>
+    {% else %}
+    <div class="card-base">
+        <p>No active recurring purchases found. <a href='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' hx-get='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' hx-target="#modal-content">Create some recurring purchases first.</a></p>
+    </div>
+    {% endif %}
+</form>

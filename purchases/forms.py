@@ -1,6 +1,6 @@
 from django.forms import ModelForm, modelformset_factory
 
-from .models import Purchase, Category, Subcategory, Income
+from .models import Purchase, Category, Subcategory, Income, RecurringPurchase
 from budgets.models import BudgetItem, YearlyBudget
 
 
@@ -84,4 +84,28 @@ class IncomeForm(ModelForm):
             "payer",
             "category",
             "notes",
+        ]
+
+
+class RecurringPurchaseForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(user=self.user)
+        self.fields["category"].empty_label = "Category"
+        
+        self.fields["name"].widget.attrs.update(placeholder="Name", size="20")
+        self.fields["amount"].widget.attrs.update(placeholder="Amount")
+        self.fields["merchant"].widget.attrs.update(placeholder="Merchant", size="20")
+        self.fields["notes"].widget.attrs.update(placeholder="Notes", rows="2", cols="30")
+
+    class Meta:
+        model = RecurringPurchase
+        fields = [
+            "name",
+            "amount",
+            "category",
+            "merchant",
+            "notes",
+            "is_active",
         ]

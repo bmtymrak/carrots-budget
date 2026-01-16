@@ -1,0 +1,7 @@
+<h2>Edit Recurring Purchase: {{recurring_purchase.name}}</h2>
+<form hx-post='{% url "recurring_purchase_edit" pk=recurring_purchase.id %}' class="form-grid" method="POST">
+    {% csrf_token %}
+    {{form}}
+    <input type="hidden" name="next" value="{{next}}">
+    <button type="submit">Save</button>
+</form>
