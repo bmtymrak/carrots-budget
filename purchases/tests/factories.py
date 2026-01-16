@@ -4,7 +4,7 @@ from factory.django import DjangoModelFactory
 from factory import fuzzy
 import datetime
 
-from purchases.models import Category, Subcategory, Purchase, Income
+from purchases.models import Category, Subcategory, Purchase, Income, Receipt
 
 class UserFactory(DjangoModelFactory):
     class Meta:
@@ -32,6 +32,12 @@ class SubcategoryFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f'Subcategory {n}')
     user = factory.SubFactory(UserFactory)
 
+class ReceiptFactory(DjangoModelFactory):
+    class Meta:
+        model = Receipt
+
+    user = factory.SubFactory(UserFactory)
+
 class PurchaseFactory(DjangoModelFactory):
     class Meta:
         model = Purchase
@@ -44,6 +50,7 @@ class PurchaseFactory(DjangoModelFactory):
     location = factory.Faker('city')
     category = factory.SubFactory(CategoryFactory)
     subcategory = factory.SubFactory(SubcategoryFactory)
+    receipt = factory.SubFactory(ReceiptFactory)
     notes = factory.Faker('text', max_nb_chars=200)
     savings = False
 
