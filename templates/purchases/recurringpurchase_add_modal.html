@@ -1,0 +1,56 @@
+{% load static %}
+
+<div>
+    <h2>Add Recurring Purchases to {{monthly_budget.date|date:"F Y"}}</h2>
+    
+    <form hx-post='{% url "recurringpurchase_add_to_month" %}' method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{next}}">
+        <input type="hidden" name="monthly_budget_id" value="{{monthly_budget.id}}">
+        
+        {% if recurring_purchases %}
+            <div class="card-base">
+                <div class="recurring-add-grid card-table-header">
+                    <div class="card-table-heading">Select</div>
+                    <div class="card-table-heading">Name</div>
+                    <div class="card-table-heading">Amount</div>
+                    <div class="card-table-heading">Category</div>
+                    <div class="card-table-heading">Merchant</div>
+                    <div class="card-table-heading">Notes</div>
+                </div>
+                <div class="recurring-add-grid">
+                    {% for rp in recurring_purchases %}
+                    <div style="text-align: center;">
+                        <input type="checkbox" name="recurring_purchase_{{rp.id}}" value="1" checked>
+                    </div>
+                    <div>{{rp.name}}</div>
+                    <div>
+                        <input type="number" step="0.01" name="amount_{{rp.id}}" value="{{rp.amount}}" style="width: 80px;">
+                    </div>
+                    <div>{{rp.category}}</div>
+                    <div>
+                        <input type="text" name="merchant_{{rp.id}}" value="{{rp.merchant}}" style="width: 100%;">
+                    </div>
+                    <div>
+                        <input type="text" name="notes_{{rp.id}}" value="{{rp.notes}}" style="width: 100%;">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit" style="margin-top: 10px;">Add Selected Purchases</button>
+        {% else %}
+            <div class="card-base">
+                <p>No active recurring purchases found. <a href="#" hx-get='{% url "recurringpurchase_manage" %}?next={{next|urlencode}}' hx-target="#modal-content">Manage recurring purchases</a> to create some.</p>
+            </div>
+        {% endif %}
+    </form>
+</div>
+
+<style>
+.recurring-add-grid {
+    display: grid;
+    grid-template-columns: 0.5fr 2fr 1fr 1.5fr 1.5fr 2fr;
+    gap: 10px;
+    align-items: center;
+}
+</style>

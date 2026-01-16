@@ -1,0 +1,55 @@
+{% load static %}
+
+<div>
+    <h2>Manage Recurring Purchases</h2>
+    
+    <div class="card-base">
+        <h3>Add New Recurring Purchase</h3>
+        <form hx-post='{% url "recurringpurchase_manage" %}?next={{next}}' class="form-grid" method="POST">
+            {% csrf_token %}
+            {{form.as_p}}
+            <input type="hidden" name="next" value="{{next}}">
+            <button type="submit">Add</button>
+        </form>
+    </div>
+    
+    <div class="card-base" style="margin-top: 20px;">
+        <h3>Existing Recurring Purchases</h3>
+        {% if recurring_purchases %}
+            <div class="recurring-horizontal-grid card-table-header">
+                <div class="card-table-heading">Name</div>
+                <div class="card-table-heading">Amount</div>
+                <div class="card-table-heading">Category</div>
+                <div class="card-table-heading">Merchant</div>
+                <div class="card-table-heading">Active</div>
+                <div></div>
+            </div>
+            <div class="recurring-horizontal-grid">
+                {% for rp in recurring_purchases %}
+                <div>{{rp.name}}</div>
+                <div>${{rp.amount|floatformat:"-2"}}</div>
+                <div>{{rp.category}}</div>
+                <div>{{rp.merchant}}</div>
+                <div>{% if rp.is_active %}Yes{% else %}No{% endif %}</div>
+                <div>
+                    <div class="edit-links-container">
+                        <button class="button-blank" hx-get='{% url "recurringpurchase_edit" pk=rp.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
+                        <button class="button-blank" hx-get='{% url "recurringpurchase_delete" pk=rp.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No recurring purchases yet. Add one above to get started.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.recurring-horizontal-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr 1.5fr 0.7fr 0.5fr;
+    gap: 10px;
+    align-items: center;
+}
+</style>

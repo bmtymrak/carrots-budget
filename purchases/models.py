@@ -113,3 +113,33 @@ class Income(models.Model):
             models.Index(fields=['user', 'date'], name='idx_income_user_date'),
             models.Index(fields=['user', 'category', 'date'], name='idx_income_user_cat_date'),
         ]
+
+
+class RecurringPurchase(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="recurring_purchases",
+        null=False,
+    )
+    name = models.CharField(max_length=250)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.PROTECT,
+        related_name="recurring_purchases",
+    )
+    merchant = models.CharField(max_length=250, blank=True)
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.category.name})"
+
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["user", "is_active"], name="idx_recpurchase_user_active"),
+        ]

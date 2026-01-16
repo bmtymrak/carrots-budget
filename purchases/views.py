@@ -13,8 +13,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 import datetime
 
-from .models import Purchase, Category, Income
-from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm
+from .models import Purchase, Category, Income, RecurringPurchase
+from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm, RecurringPurchaseForm
 from django_htmx.http import HttpResponseClientRedirect
 
 
@@ -212,3 +212,148 @@ def income_create(request):
         "purchases/income_create_htmx.html",
         {"form": form, "next": next},
     )
+
+
+@login_required
+def recurringpurchase_manage(request):
+    """Display modal with form to create new recurring purchase and list of existing ones."""
+    
+    form = RecurringPurchaseForm(user=request.user)
+    recurring_purchases = RecurringPurchase.objects.filter(user=request.user)
+    
+    if request.method == "POST":
+        next = request.POST.get("next")
+        form = RecurringPurchaseForm(data=request.POST, user=request.user)
+        form.instance.user = request.user
+        
+        if form.is_valid():
+            form.save()
+            return HttpResponseClientRedirect(next)
+    
+    if request.method == "GET":
+        next = request.GET["next"]
+    
+    return render(
+        request,
+        "purchases/recurringpurchase_manage_modal.html",
+        {
+            "form": form,
+            "recurring_purchases": recurring_purchases,
+            "next": next,
+        },
+    )
+
+
+@login_required
+def recurringpurchase_edit(request, pk):
+    """Edit an existing recurring purchase."""
+    
+    recurring_purchase = RecurringPurchase.objects.get(user=request.user, pk=pk)
+    form = RecurringPurchaseForm(instance=recurring_purchase, user=request.user)
+    
+    if request.method == "POST":
+        next = request.POST.get("next")
+        form = RecurringPurchaseForm(instance=recurring_purchase, data=request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+            return HttpResponseClientRedirect(next)
+    
+    if request.method == "GET":
+        next = request.GET["next"]
+    
+    return render(
+        request,
+        "purchases/recurringpurchase_edit_modal.html",
+        {"form": form, "recurring_purchase": recurring_purchase, "next": next},
+    )
+
+
+@login_required
+def recurringpurchase_delete(request, pk):
+    """Delete a recurring purchase."""
+    
+    recurring_purchase = RecurringPurchase.objects.get(user=request.user, pk=pk)
+    
+    if request.method == "DELETE":
+        next = request.GET.get("next", "/")
+        recurring_purchase.delete()
+        return HttpResponseClientRedirect(next)
+    
+    if request.method == "GET":
+        next = request.GET["next"]
+    
+    return render(
+        request,
+        "purchases/recurringpurchase_delete_modal.html",
+        {"recurring_purchase": recurring_purchase, "next": next},
+    )
+
+
+@login_required
+def recurringpurchase_add_to_month(request):
+    """
+    Display a modal to select recurring purchases and add them to a monthly budget.
+    Creates Purchase objects for selected recurring purchases.
+    """
+    
+    if request.method == "GET":
+        next = request.GET["next"]
+        monthly_budget_id = request.GET.get("monthly_budget_id")
+        
+        # Get the monthly budget to determine the date
+        from budgets.models import MonthlyBudget
+        monthly_budget = MonthlyBudget.objects.get(pk=monthly_budget_id, user=request.user)
+        
+        # Get active recurring purchases for this user
+        recurring_purchases = RecurringPurchase.objects.filter(
+            user=request.user,
+            is_active=True
+        )
+        
+        return render(
+            request,
+            "purchases/recurringpurchase_add_modal.html",
+            {
+                "recurring_purchases": recurring_purchases,
+                "monthly_budget": monthly_budget,
+                "next": next,
+            },
+        )
+    
+    if request.method == "POST":
+        next = request.POST.get("next")
+        monthly_budget_id = request.POST.get("monthly_budget_id")
+        
+        # Get the monthly budget
+        from budgets.models import MonthlyBudget
+        monthly_budget = MonthlyBudget.objects.get(pk=monthly_budget_id, user=request.user)
+        
+        # Get selected recurring purchases from POST data
+        # Format: recurring_purchase_<id> checkbox
+        # amount_<id>, merchant_<id>, notes_<id> for overrides
+        
+        created_count = 0
+        for key in request.POST:
+            if key.startswith("recurring_purchase_"):
+                rp_id = key.split("_")[-1]
+                recurring_purchase = RecurringPurchase.objects.get(pk=rp_id, user=request.user)
+                
+                # Get overridden values or use defaults
+                amount = request.POST.get(f"amount_{rp_id}", recurring_purchase.amount)
+                merchant = request.POST.get(f"merchant_{rp_id}", recurring_purchase.merchant)
+                notes = request.POST.get(f"notes_{rp_id}", recurring_purchase.notes)
+                
+                # Create the purchase
+                Purchase.objects.create(
+                    user=request.user,
+                    item=recurring_purchase.name,
+                    date=monthly_budget.date.replace(day=1),  # First day of month
+                    amount=amount,
+                    source=merchant,
+                    category=recurring_purchase.category,
+                    notes=notes,
+                    savings=False,
+                )
+                created_count += 1
+        
+        return HttpResponseClientRedirect(next)
