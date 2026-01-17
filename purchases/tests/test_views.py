@@ -324,11 +324,42 @@ class RecurringPurchaseViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)  # HTMX redirect
         
-        # Check that a purchase was created
+        # Check that a purchase was created with the foreign key set
         purchase = Purchase.objects.get(user=self.user, item='Netflix')
         self.assertEqual(purchase.amount, Decimal('15.99'))
         self.assertEqual(purchase.category, self.category)
         self.assertEqual(purchase.date, datetime.date(2024, 1, 1))
+        self.assertEqual(purchase.recurring_purchase, recurring)
+
+    def test_recurring_purchase_already_added_detected_by_fk(self):
+        """Test that recurring purchases are detected as already added via FK."""
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            name='Netflix',
+            amount=Decimal('15.99')
+        )
+        
+        # Create an existing purchase with the recurring_purchase FK set
+        Purchase.objects.create(
+            user=self.user,
+            item='Netflix',
+            date=datetime.date(2024, 1, 15),
+            amount=Decimal('15.99'),
+            category=self.category,
+            recurring_purchase=recurring
+        )
+        
+        response = self.client.get(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(recurring.id, response.context['already_added'])
 
     def test_recurring_purchase_add_with_modified_amount(self):
         """Test that modified amounts are used when creating purchases."""

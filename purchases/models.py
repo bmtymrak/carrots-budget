@@ -70,6 +70,13 @@ class Purchase(models.Model):
         blank=True,
         related_name="purchases",
     )
+    recurring_purchase = models.ForeignKey(
+        "RecurringPurchase",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="purchases",
+    )
     notes = models.TextField(blank=True)
     savings = models.BooleanField(null=False, default=False)
     created_at = models.DateTimeField(auto_now_add=True)

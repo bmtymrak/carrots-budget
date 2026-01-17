@@ -298,19 +298,17 @@ def recurring_purchase_add_to_month(request, year, month):
     categories = Category.objects.filter(user=request.user)
     
     # Check which recurring purchases have already been added this month
-    # by looking for purchases with the same item name and date within this month
+    # by looking for purchases with a foreign key to a recurring purchase
     purchase_date = monthly_budget.date
-    existing_purchases = Purchase.objects.filter(
+    already_added_recurring_ids = Purchase.objects.filter(
         user=request.user,
         date__year=year,
-        date__month=month
-    ).values_list("item", flat=True)
+        date__month=month,
+        recurring_purchase__isnull=False
+    ).values_list("recurring_purchase_id", flat=True)
     
     # Track which recurring purchases are already added
-    already_added = set()
-    for recurring in recurring_purchases:
-        if recurring.name in existing_purchases:
-            already_added.add(recurring.id)
+    already_added = set(already_added_recurring_ids)
 
     if request.method == "POST":
         next_url = request.POST.get("next", next_url)
@@ -344,6 +342,7 @@ def recurring_purchase_add_to_month(request, year, month):
                     category=category,
                     notes=notes,
                     savings=False,
+                    recurring_purchase=recurring,
                 )
             except RecurringPurchase.DoesNotExist:
                 continue
