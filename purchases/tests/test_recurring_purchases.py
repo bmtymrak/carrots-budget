@@ -358,7 +358,7 @@ class RecurringPurchaseAddToMonthTests(TestCase):
         self.assertFalse(Purchase.objects.filter(item="Not Selected").exists())
 
     def test_add_to_month_detects_duplicates(self):
-        """Test that duplicate detection works correctly."""
+        """Test that duplicate detection works correctly using foreign key relationship."""
         # Create a recurring purchase
         rp = RecurringPurchaseFactory(
             user=self.user,
@@ -368,7 +368,7 @@ class RecurringPurchaseAddToMonthTests(TestCase):
             is_active=True
         )
         
-        # Add it to the month once
+        # Add it to the month once with the foreign key relationship
         Purchase.objects.create(
             user=self.user,
             item="Netflix",
@@ -376,6 +376,7 @@ class RecurringPurchaseAddToMonthTests(TestCase):
             amount=Decimal("15.99"),
             source="Netflix Inc",
             category=self.category,
+            recurring_purchase=rp,  # Link to the recurring purchase
         )
         
         # Try to get the add modal again - should show it as already added
@@ -391,6 +392,36 @@ class RecurringPurchaseAddToMonthTests(TestCase):
         self.assertContains(response, "All recurring purchases have already been added")
         self.assertIn("all_added", response.context)
         self.assertTrue(response.context["all_added"])
+
+    def test_add_to_month_creates_purchase_with_foreign_key(self):
+        """Test that created purchases have the foreign key set correctly."""
+        rp = RecurringPurchaseFactory(
+            user=self.user,
+            name="Subscription",
+            amount=Decimal("10.00"),
+            category=self.category,
+            is_active=True
+        )
+        
+        response = self.client.post(
+            reverse("recurringpurchase_add_to_month"),
+            {
+                "monthly_budget_id": self.monthly_budget.id,
+                f"recurring_purchase_{rp.id}": "1",
+                f"amount_{rp.id}": "10.00",
+                f"source_{rp.id}": rp.source,
+                f"location_{rp.id}": rp.location,
+                f"notes_{rp.id}": rp.notes,
+                "next": "/",
+            }
+        )
+        
+        self.assertEqual(response.status_code, 200)
+        
+        # Check that the purchase was created with the foreign key
+        purchase = Purchase.objects.get(item="Subscription")
+        self.assertEqual(purchase.recurring_purchase, rp)
+        self.assertEqual(purchase.recurring_purchase_id, rp.id)
 
 
 class RecurringPurchaseAdminTests(TestCase):

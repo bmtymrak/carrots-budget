@@ -311,21 +311,21 @@ def recurringpurchase_add_to_month(request):
         )
         
         # Check which recurring purchases have already been added this month
-        # We'll check for purchases that match the name and were created on the first day of this month
+        # Use the foreign key relationship to check for existing purchases
         first_day_of_month = monthly_budget.date.replace(day=1)
         
-        # Get existing purchases for this month that match recurring purchase names
-        existing_purchase_names = set(
+        # Get IDs of recurring purchases that already have purchases for this month
+        existing_recurring_purchase_ids = set(
             Purchase.objects.filter(
                 user=request.user,
                 date=first_day_of_month,
-                item__in=[rp.name for rp in recurring_purchases]
-            ).values_list('item', flat=True)
+                recurring_purchase__isnull=False
+            ).values_list('recurring_purchase_id', flat=True)
         )
         
         # Mark which recurring purchases have already been added
         for rp in recurring_purchases:
-            rp.already_added = rp.name in existing_purchase_names
+            rp.already_added = rp.id in existing_recurring_purchase_ids
         
         # Check if all active recurring purchases have been added
         all_added = all(rp.already_added for rp in recurring_purchases) if recurring_purchases else False
@@ -365,7 +365,7 @@ def recurringpurchase_add_to_month(request):
                 location = request.POST.get(f"location_{rp_id}", recurring_purchase.location)
                 notes = request.POST.get(f"notes_{rp_id}", recurring_purchase.notes)
                 
-                # Create the purchase
+                # Create the purchase with the foreign key relationship
                 Purchase.objects.create(
                     user=request.user,
                     item=recurring_purchase.name,
@@ -374,6 +374,7 @@ def recurringpurchase_add_to_month(request):
                     source=source,
                     location=location,
                     category=recurring_purchase.category,
+                    recurring_purchase=recurring_purchase,  # Link to the recurring purchase
                     notes=notes,
                     savings=False,
                 )
