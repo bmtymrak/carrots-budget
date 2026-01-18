@@ -8,6 +8,48 @@
 {% endblock header %}
 
 {% block body %}
+<div class="filter-controls">
+    <form method="get" id="filter-form">
+        <label for="category">Category:</label>
+        <select name="category" id="category" onchange="document.getElementById('filter-form').submit()">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}" {% if selected_category|stringformat:"s" == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+        </select>
+        
+        <label for="year">Year:</label>
+        <select name="year" id="year" onchange="document.getElementById('filter-form').submit()">
+            <option value="">All Years</option>
+            {% for year in years %}
+            <option value="{{ year }}" {% if selected_year|stringformat:"s" == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+        
+        <label for="month">Month:</label>
+        <select name="month" id="month" onchange="document.getElementById('filter-form').submit()">
+            <option value="">All Months</option>
+            <option value="1" {% if selected_month == "1" %}selected{% endif %}>January</option>
+            <option value="2" {% if selected_month == "2" %}selected{% endif %}>February</option>
+            <option value="3" {% if selected_month == "3" %}selected{% endif %}>March</option>
+            <option value="4" {% if selected_month == "4" %}selected{% endif %}>April</option>
+            <option value="5" {% if selected_month == "5" %}selected{% endif %}>May</option>
+            <option value="6" {% if selected_month == "6" %}selected{% endif %}>June</option>
+            <option value="7" {% if selected_month == "7" %}selected{% endif %}>July</option>
+            <option value="8" {% if selected_month == "8" %}selected{% endif %}>August</option>
+            <option value="9" {% if selected_month == "9" %}selected{% endif %}>September</option>
+            <option value="10" {% if selected_month == "10" %}selected{% endif %}>October</option>
+            <option value="11" {% if selected_month == "11" %}selected{% endif %}>November</option>
+            <option value="12" {% if selected_month == "12" %}selected{% endif %}>December</option>
+        </select>
+        
+        <button type="submit" class="hidden-submit">Filter</button>
+        {% if selected_category or selected_year or selected_month %}
+        <a href="{% url 'purchase_list' %}" class="clear-filters-link">Clear Filters</a>
+        {% endif %}
+    </form>
+</div>
+
 <div class="purchase-horizontal-grid purchase-horizontal-grid-categories card-table-header">
     <div>Date</div>
     <div>Item</div>
@@ -34,5 +76,26 @@
     </div>
     {% endfor %}
 </div>
+
+{% if is_paginated %}
+<div class="pagination">
+    <span class="page-info">
+        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} purchases
+    </span>
+    {% if page_obj.has_previous %}
+        <a href="?page=1{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">&laquo; first</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">previous</a>
+    {% endif %}
+    
+    <span class="current-page">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+    
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if selected_month %}&month={{ selected_month }}{% endif %}">last &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
 </div>
 {% endblock body %}
