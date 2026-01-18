@@ -1,8 +1,9 @@
+{% load static %}
 <h2>Manage Recurring Purchases</h2>
 
 <div class="card-base" style="margin-bottom: 1rem;">
     <h3>Add New Recurring Purchase</h3>
-    <form hx-post='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' class="form-grid" method="POST">
+    <form hx-post='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' hx-target="#modal-content" hx-swap="innerHTML" class="form-grid" method="POST">
         {% csrf_token %}
         {{form}}
         <input type="hidden" name="next" value="{{next}}">
@@ -31,8 +32,8 @@
         <div>{{recurring.location}}</div>
         <div>{% if recurring.is_active %}Yes{% else %}No{% endif %}</div>
         <div class="edit-links-container">
-            <button class="button-blank" hx-get='{% url "recurring_purchase_edit" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content">Edit</button>
-            <button class="button-blank" hx-get='{% url "recurring_purchase_delete" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content">Delete</button>
+            <button class="button-blank" hx-get='{% url "recurring_purchase_edit" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
+            <button class="button-blank" hx-get='{% url "recurring_purchase_delete" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
         </div>
     </div>
     {% endfor %}

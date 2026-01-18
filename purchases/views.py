@@ -228,11 +228,12 @@ def recurring_purchase_list(request):
 
         if form.is_valid():
             form.save()
-            return HttpResponseClientRedirect(next_url)
+            form = RecurringPurchaseForm(user=request.user)
+            recurring_purchases = RecurringPurchase.objects.filter(user=request.user)
 
     return render(
         request,
-        "purchases/recurring_purchase_list_htmx.html",
+        "purchases/recurring_purchase_list_modal.html",
         {
             "recurring_purchases": recurring_purchases,
             "form": form,
@@ -259,7 +260,7 @@ def recurring_purchase_edit(request, pk):
 
     return render(
         request,
-        "purchases/recurring_purchase_edit_htmx.html",
+        "purchases/recurring_purchase_edit_modal.html",
         {"form": form, "recurring_purchase": recurring_purchase, "next": next_url},
     )
 
@@ -276,7 +277,7 @@ def recurring_purchase_delete(request, pk):
 
     return render(
         request,
-        "purchases/recurring_purchase_delete_htmx.html",
+        "purchases/recurring_purchase_delete_modal.html",
         {"recurring_purchase": recurring_purchase, "next": next_url},
     )
 
@@ -323,6 +324,13 @@ def recurring_purchase_add_to_month(request, year, month):
                 location = request.POST.get(f"location_{recurring_id}", recurring.location)
                 notes = request.POST.get(f"notes_{recurring_id}", recurring.notes)
                 category_id = request.POST.get(f"category_{recurring_id}", recurring.category_id)
+                date_str = request.POST.get(f"date_{recurring_id}")
+                
+                if date_str:
+                    from datetime import datetime
+                    item_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                else:
+                    item_date = purchase_date
                 
                 try:
                     category = Category.objects.get(pk=category_id, user=request.user)
@@ -332,7 +340,7 @@ def recurring_purchase_add_to_month(request, year, month):
                 Purchase.objects.create(
                     user=request.user,
                     item=recurring.name,
-                    date=purchase_date,
+                    date=item_date,
                     amount=amount,
                     source=source,
                     location=location,
@@ -348,7 +356,7 @@ def recurring_purchase_add_to_month(request, year, month):
 
     return render(
         request,
-        "purchases/recurring_purchase_add_to_month_htmx.html",
+        "purchases/recurring_purchase_add_to_month_modal.html",
         {
             "recurring_purchases": recurring_purchases,
             "monthly_budget": monthly_budget,

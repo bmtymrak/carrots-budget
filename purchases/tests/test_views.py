@@ -197,7 +197,7 @@ class RecurringPurchaseViewTests(TestCase):
             {'next': '/'}
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'purchases/recurring_purchase_list_htmx.html')
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_list_modal.html')
 
     def test_recurring_purchase_create_via_list(self):
         """Test creating a recurring purchase via the list view."""
@@ -230,7 +230,7 @@ class RecurringPurchaseViewTests(TestCase):
             {'next': '/'}
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'purchases/recurring_purchase_edit_htmx.html')
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_edit_modal.html')
 
     def test_recurring_purchase_edit_view_post(self):
         """Test POST request to update a recurring purchase."""
@@ -266,7 +266,7 @@ class RecurringPurchaseViewTests(TestCase):
             {'next': '/'}
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'purchases/recurring_purchase_delete_htmx.html')
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_delete_modal.html')
 
     def test_recurring_purchase_delete_view_delete(self):
         """Test DELETE request to delete a recurring purchase."""
@@ -293,7 +293,7 @@ class RecurringPurchaseViewTests(TestCase):
             {'next': '/'}
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'purchases/recurring_purchase_add_to_month_htmx.html')
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_add_to_month_modal.html')
 
     def test_recurring_purchase_add_to_month_creates_purchases(self):
         """Test that submitting the form creates actual purchases."""

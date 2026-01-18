@@ -1,4 +1,4 @@
-<h2>Add Recurring Purchases for {{monthly_budget.date|date:"F Y"}}</h2>
+<h2 style="white-space: normal;">Add Recurring Purchases for {{monthly_budget.date|date:"F Y"}}</h2>
 
 <form hx-post='{% url "recurring_purchase_add_to_month" year=monthly_budget.date.year month=monthly_budget.date.month %}' method="POST">
     {% csrf_token %}
@@ -17,6 +17,7 @@
         <div class="recurring-add-grid-full card-table-header">
             <div class="card-table-heading">Select</div>
             <div class="card-table-heading">Name</div>
+            <div class="card-table-heading">Date</div>
             <div class="card-table-heading">Amount</div>
             <div class="card-table-heading">Source</div>
             <div class="card-table-heading">Location</div>
@@ -35,6 +36,9 @@
                 {% endif %}
             </div>
             <div>{{recurring.name}}</div>
+            <div>
+                <input type="date" name="date_{{recurring.id}}" value="{{monthly_budget.date|date:'Y-m-d'}}" style="width: 130px;" {% if recurring.id in already_added %}disabled{% endif %}>
+            </div>
             <div>
                 <input type="number" name="amount_{{recurring.id}}" value="{{recurring.amount}}" step="0.01" min="0" style="width: 80px;" {% if recurring.id in already_added %}disabled{% endif %}>
             </div>
