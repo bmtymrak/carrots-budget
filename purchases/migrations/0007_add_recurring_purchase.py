@@ -19,7 +19,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=250)),
                 ('amount', models.DecimalField(decimal_places=2, max_digits=12)),
-                ('merchant', models.CharField(blank=True, max_length=250)),
+                ('source', models.CharField(blank=True, max_length=250)),
+                ('location', models.CharField(blank=True, max_length=250)),
                 ('notes', models.TextField(blank=True)),
                 ('is_active', models.BooleanField(default=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
@@ -31,5 +32,10 @@ class Migration(migrations.Migration):
                 'ordering': ['name'],
                 'indexes': [models.Index(fields=['user', 'is_active'], name='idx_recurring_user_active')],
             },
+        ),
+        migrations.AddField(
+            model_name='purchase',
+            name='recurring_purchase',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='purchases', to='purchases.recurringpurchase'),
         ),
     ]

@@ -307,7 +307,6 @@ def recurring_purchase_add_to_month(request, year, month):
         recurring_purchase__isnull=False
     ).values_list("recurring_purchase_id", flat=True)
     
-    # Track which recurring purchases are already added
     already_added = set(already_added_recurring_ids)
 
     if request.method == "POST":
@@ -319,14 +318,12 @@ def recurring_purchase_add_to_month(request, year, month):
                 recurring = RecurringPurchase.objects.get(
                     pk=recurring_id, user=request.user
                 )
-                # Get the potentially modified values from form
                 amount = request.POST.get(f"amount_{recurring_id}", recurring.amount)
                 source = request.POST.get(f"source_{recurring_id}", recurring.source)
                 location = request.POST.get(f"location_{recurring_id}", recurring.location)
                 notes = request.POST.get(f"notes_{recurring_id}", recurring.notes)
                 category_id = request.POST.get(f"category_{recurring_id}", recurring.category_id)
                 
-                # Get the category object
                 try:
                     category = Category.objects.get(pk=category_id, user=request.user)
                 except Category.DoesNotExist:
