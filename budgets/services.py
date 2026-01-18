@@ -223,6 +223,9 @@ class BudgetService:
         income_context = self._process_income_totals(incomes, ytd_month, total_spent_saved, total_spent_saved_ytd, total_budgeted, total_budgeted_ytd)
         
         free_income = budget_items_context['free_income_spending'] + savings_items_context['free_income_savings']
+        
+        # Calculate monthly spending data for the table
+        monthly_spending_data = self._get_monthly_spending_data(user, year)
 
         rollovers = (
             Rollover.objects.filter(user=user, yearly_budget__date__year=year)
@@ -260,6 +263,7 @@ class BudgetService:
             "months": [
                 (calendar.month_name[month], month) for month in range(1, 13)
             ],
+            "monthly_spending_data": monthly_spending_data,
         }
         
         context.update(budget_items_context)
@@ -545,4 +549,66 @@ class BudgetService:
             "total_income_spent_diff": total_income_spent_diff,
             "budgeted_income_spent_diff": budgeted_income_spent_diff,
             "budgeted_income_spent_diff_ytd": budgeted_income_spent_diff_ytd,
+        }
+
+    def _get_monthly_spending_data(self, user, year: int) -> dict:
+        """
+        Calculate spending and budgeted amounts for each category for each month.
+        Returns a dictionary with spending and savings categories.
+        """
+        # Get all budget items for the year
+        budget_items = BudgetItem.objects.filter(
+            user=user,
+            yearly_budget__date__year=year,
+        ).select_related('category', 'monthly_budget')
+        
+        # Get all purchases for the year grouped by category and month
+        purchases_by_month = {}
+        purchases = Purchase.objects.filter(
+            user=user,
+            date__year=year,
+        ).values('category', 'category__name', 'date__month').annotate(
+            total=Sum('amount')
+        )
+        
+        for purchase in purchases:
+            category_name = purchase['category__name']
+            month = purchase['date__month']
+            if category_name not in purchases_by_month:
+                purchases_by_month[category_name] = {}
+            purchases_by_month[category_name][month] = purchase['total']
+        
+        # Organize budget items by category and month
+        spending_categories = {}
+        savings_categories = {}
+        
+        for budget_item in budget_items:
+            category_name = budget_item.category.name
+            month = budget_item.monthly_budget.date.month
+            amount = budget_item.amount or 0
+            
+            # Determine which dict to use
+            target_dict = savings_categories if budget_item.savings else spending_categories
+            
+            if category_name not in target_dict:
+                target_dict[category_name] = {
+                    'category_name': category_name,
+                    'months': {}
+                }
+            
+            # Get spending/saving for this month
+            spent = purchases_by_month.get(category_name, {}).get(month, 0)
+            
+            target_dict[category_name]['months'][month] = {
+                'budgeted': amount,
+                'spent': spent,
+            }
+        
+        # Convert to sorted lists for template
+        spending_list = sorted(spending_categories.values(), key=lambda x: x['category_name'])
+        savings_list = sorted(savings_categories.values(), key=lambda x: x['category_name'])
+        
+        return {
+            'spending': spending_list,
+            'savings': savings_list,
         }
