@@ -1,0 +1,14 @@
+<div>
+    <h2>Confirm Delete</h2>
+    <div class="card-base">
+        <p>Are you sure you want to delete this recurring purchase?</p>
+        <div style="margin: 10px 0;">
+            <strong>{{recurring_purchase.name}}</strong><br>
+            Amount: ${{recurring_purchase.amount|floatformat:"-2"}}<br>
+            Category: {{recurring_purchase.category}}<br>
+            Source: {{recurring_purchase.source}}<br>
+            Location: {{recurring_purchase.location}}
+        </div>
+    </div>
+    <button hx-delete='{% url "recurringpurchase_delete" pk=recurring_purchase.id %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
+</div>

@@ -26,6 +26,7 @@
         <button class="button-create" hx-get='{% url "purchase_create" %}?date={{monthly_budget.date|date:"Y-m-d"}}&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
         <button class="button-create" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
         <button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=monthly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
+        <button class="button-create" hx-get='{% url "recurringpurchase_add_to_month" %}?monthly_budget_id={{monthly_budget.id}}&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Recurring Purchases</button>
     </div>
 <div class="card-base">
     <h2>Summary</h2>
