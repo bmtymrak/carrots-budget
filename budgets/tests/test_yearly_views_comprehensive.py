@@ -309,3 +309,219 @@ class TestYearlyBudgetDetailViewComprehensive(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class TestYearlyBudgetListView(TestCase):
+    """Tests for the Yearly Budget List View with summary metrics."""
+    
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            email="test@example.com", username="testuser", password="password123"
+        )
+        cls.year = datetime.date.today().year
+        cls.yearly_budget = YearlyBudgetFactory(user=cls.user, date=datetime.date(cls.year, 1, 1))
+
+        # Create 12 monthly budgets
+        cls.monthly_budgets = []
+        for month in range(1, 13):
+            cls.monthly_budgets.append(
+                MonthlyBudgetFactory(
+                    user=cls.user,
+                    yearly_budget=cls.yearly_budget,
+                    date=datetime.date(cls.year, month, 1)
+                )
+            )
+
+        # Categories
+        cls.cat_food = CategoryFactory(user=cls.user, name="Food")
+        cls.cat_vacation = CategoryFactory(user=cls.user, name="Vacation")
+
+    def setUp(self):
+        self.client.login(email="test@example.com", password="password123")
+
+    def test_yearly_list_view_loads_successfully(self):
+        """Verify that the yearly budget list view returns 200."""
+        response = self.client.get(reverse("yearly_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("yearly_budgets", response.context)
+
+    def test_yearly_list_view_has_summary_metrics(self):
+        """Verify that each yearly budget in the list has summary metrics."""
+        # Create budget items and transactions
+        for mb in self.monthly_budgets:
+            BudgetItemFactory(
+                user=self.user,
+                category=self.cat_food,
+                monthly_budget=mb,
+                yearly_budget=self.yearly_budget,
+                amount=Decimal("500.00"),
+                savings=False
+            )
+            BudgetItemFactory(
+                user=self.user,
+                category=self.cat_vacation,
+                monthly_budget=mb,
+                yearly_budget=self.yearly_budget,
+                amount=Decimal("200.00"),
+                savings=True
+            )
+
+        # Create a purchase in spending category
+        PurchaseFactory(
+            user=self.user,
+            category=self.cat_food,
+            date=datetime.date(self.year, 1, 15),
+            amount=Decimal("100.00")
+        )
+
+        # Create a purchase in savings category
+        PurchaseFactory(
+            user=self.user,
+            category=self.cat_vacation,
+            date=datetime.date(self.year, 2, 15),
+            amount=Decimal("50.00")
+        )
+
+        # Create income (not assigned to category)
+        IncomeFactory(
+            user=self.user,
+            category=None,
+            date=datetime.date(self.year, 1, 15),
+            amount=Decimal("5000.00")
+        )
+
+        response = self.client.get(reverse("yearly_list"))
+        yearly_budgets = response.context["yearly_budgets"]
+
+        # Find our yearly budget in the list
+        budget = next((b for b in yearly_budgets if b.date.year == self.year), None)
+        self.assertIsNotNone(budget)
+        
+        # Verify summary metrics exist
+        self.assertTrue(hasattr(budget, 'summary'))
+        summary = budget.summary
+
+        # Verify the calculated values
+        # Total budgeted: 500*12 + 200*12 = 6000 + 2400 = 8400
+        self.assertEqual(summary['total_budgeted'], Decimal("8400.00"))
+        
+        # Total income: 5000 (only non-categorized income)
+        self.assertEqual(summary['total_income'], Decimal("5000.00"))
+        
+        # Total spent: 100 (only in spending categories)
+        self.assertEqual(summary['total_spent'], Decimal("100.00"))
+        
+        # Total saved: 50 (purchases in savings categories)
+        self.assertEqual(summary['total_saved'], Decimal("50.00"))
+        
+        # Total spent + saved: 100 + 50 = 150
+        self.assertEqual(summary['total_spent_saved'], Decimal("150.00"))
+
+    def test_yearly_list_view_with_savings_income(self):
+        """Verify that income to savings categories is included in total_saved."""
+        # Create savings budget item
+        for mb in self.monthly_budgets:
+            BudgetItemFactory(
+                user=self.user,
+                category=self.cat_vacation,
+                monthly_budget=mb,
+                yearly_budget=self.yearly_budget,
+                amount=Decimal("200.00"),
+                savings=True
+            )
+
+        # Create income for savings category
+        IncomeFactory(
+            user=self.user,
+            category=self.cat_vacation,
+            date=datetime.date(self.year, 1, 15),
+            amount=Decimal("100.00")
+        )
+
+        # Create purchase in savings category
+        PurchaseFactory(
+            user=self.user,
+            category=self.cat_vacation,
+            date=datetime.date(self.year, 2, 15),
+            amount=Decimal("50.00")
+        )
+
+        response = self.client.get(reverse("yearly_list"))
+        yearly_budgets = response.context["yearly_budgets"]
+
+        budget = next((b for b in yearly_budgets if b.date.year == self.year), None)
+        summary = budget.summary
+
+        # Total saved should include both purchase and income: 50 + 100 = 150
+        self.assertEqual(summary['total_saved'], Decimal("150.00"))
+
+    def test_yearly_list_view_multiple_years(self):
+        """Verify that multiple yearly budgets are displayed with correct summaries."""
+        # Create a second year
+        year2 = self.year - 1
+        yearly_budget2 = YearlyBudgetFactory(user=self.user, date=datetime.date(year2, 1, 1))
+        
+        monthly_budgets2 = []
+        for month in range(1, 13):
+            monthly_budgets2.append(
+                MonthlyBudgetFactory(
+                    user=self.user,
+                    yearly_budget=yearly_budget2,
+                    date=datetime.date(year2, month, 1)
+                )
+            )
+
+        # Create budget items for both years with different amounts
+        for mb in self.monthly_budgets:
+            BudgetItemFactory(
+                user=self.user,
+                category=self.cat_food,
+                monthly_budget=mb,
+                yearly_budget=self.yearly_budget,
+                amount=Decimal("500.00"),
+                savings=False
+            )
+
+        for mb in monthly_budgets2:
+            BudgetItemFactory(
+                user=self.user,
+                category=self.cat_food,
+                monthly_budget=mb,
+                yearly_budget=yearly_budget2,
+                amount=Decimal("300.00"),
+                savings=False
+            )
+
+        response = self.client.get(reverse("yearly_list"))
+        yearly_budgets = response.context["yearly_budgets"]
+
+        # Should have 2 yearly budgets
+        self.assertEqual(len(yearly_budgets), 2)
+
+        # Find each budget and verify summaries
+        budget_current = next((b for b in yearly_budgets if b.date.year == self.year), None)
+        budget_previous = next((b for b in yearly_budgets if b.date.year == year2), None)
+
+        self.assertIsNotNone(budget_current)
+        self.assertIsNotNone(budget_previous)
+
+        # Current year: 500 * 12 = 6000
+        self.assertEqual(budget_current.summary['total_budgeted'], Decimal("6000.00"))
+
+        # Previous year: 300 * 12 = 3600
+        self.assertEqual(budget_previous.summary['total_budgeted'], Decimal("3600.00"))
+
+    def test_yearly_list_view_empty_budget(self):
+        """Verify that a year with no budget items shows zero values."""
+        response = self.client.get(reverse("yearly_list"))
+        yearly_budgets = response.context["yearly_budgets"]
+
+        budget = next((b for b in yearly_budgets if b.date.year == self.year), None)
+        summary = budget.summary
+
+        # All values should be zero
+        self.assertEqual(summary['total_budgeted'], Decimal("0"))
+        self.assertEqual(summary['total_income'], Decimal("0"))
+        self.assertEqual(summary['total_spent'], Decimal("0"))
+        self.assertEqual(summary['total_saved'], Decimal("0"))
+        self.assertEqual(summary['total_spent_saved'], Decimal("0"))
+
