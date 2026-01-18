@@ -60,7 +60,7 @@ def purchase_delete_htmx(request, pk):
 
     return render(
         request,
-        "purchases/purchase_delete_htmx.html",
+        "purchases/purchase_delete_modal.html",
         {"purchase": purchase, "next": next},
     )
 
@@ -78,7 +78,7 @@ def income_delete_htmx(request, pk):
 
     return render(
         request,
-        "purchases/income_delete_htmx.html",
+        "purchases/income_delete_modal.html",
         {"income": income, "next": next},
     )
 
@@ -162,7 +162,7 @@ def purchase_edit(request, pk):
 
     return render(
         request,
-        "purchases/purchase_edit_htmx.html",
+        "purchases/purchase_edit_modal.html",
         {"form": form, "purchase": purchase, "next": next},
     )
 
@@ -185,7 +185,7 @@ def income_edit(request, pk):
 
     return render(
         request,
-        "purchases/income_edit_htmx.html",
+        "purchases/income_edit_modal.html",
         {"form": form, "income": income, "next": next},
     )
 
@@ -209,6 +209,6 @@ def income_create(request):
 
     return render(
         request,
-        "purchases/income_create_htmx.html",
+        "purchases/income_create_modal.html",
         {"form": form, "next": next},
     )
