@@ -1,0 +1,16 @@
+<form hx-post='{% url "category_edit_htmx" pk=category.id %}' method="POST">
+    {% csrf_token %}
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" value="{{ category.name }}" required>
+    
+    <label for="rollover">
+        <input type="checkbox" id="rollover" name="rollover" {% if category.rollover %}checked{% endif %}>
+        Rollover
+    </label>
+    
+    <input type="hidden" name="next" value="{{next}}">
+    <button type="submit">Save</button>
+</form>
