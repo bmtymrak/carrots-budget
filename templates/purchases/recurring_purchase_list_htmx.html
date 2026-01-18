@@ -1,0 +1,42 @@
+<h2>Manage Recurring Purchases</h2>
+
+<div class="card-base" style="margin-bottom: 1rem;">
+    <h3>Add New Recurring Purchase</h3>
+    <form hx-post='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' class="form-grid" method="POST">
+        {% csrf_token %}
+        {{form}}
+        <input type="hidden" name="next" value="{{next}}">
+        <button type="submit">Add Recurring Purchase</button>
+    </form>
+</div>
+
+<div class="card-base">
+    <h3>Existing Recurring Purchases</h3>
+    {% if recurring_purchases %}
+    <div class="recurring-purchase-grid-full card-table-header">
+        <div class="card-table-heading">Name</div>
+        <div class="card-table-heading">Amount</div>
+        <div class="card-table-heading">Category</div>
+        <div class="card-table-heading">Source</div>
+        <div class="card-table-heading">Location</div>
+        <div class="card-table-heading">Active</div>
+        <div class="card-table-heading"></div>
+    </div>
+    {% for recurring in recurring_purchases %}
+    <div class="recurring-purchase-grid-full">
+        <div>{{recurring.name}}</div>
+        <div>${{recurring.amount|floatformat:"-2"}}</div>
+        <div>{{recurring.category}}</div>
+        <div>{{recurring.source}}</div>
+        <div>{{recurring.location}}</div>
+        <div>{% if recurring.is_active %}Yes{% else %}No{% endif %}</div>
+        <div class="edit-links-container">
+            <button class="button-blank" hx-get='{% url "recurring_purchase_edit" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content">Edit</button>
+            <button class="button-blank" hx-get='{% url "recurring_purchase_delete" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content">Delete</button>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No recurring purchases yet. Add one above!</p>
+    {% endif %}
+</div>

@@ -13,9 +13,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseRedirect
 import datetime
 
-from .models import Purchase, Category, Income
-from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm
+from .models import Purchase, Category, Income, RecurringPurchase
+from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm, RecurringPurchaseForm
 from django_htmx.http import HttpResponseClientRedirect
+from budgets.models import MonthlyBudget
 
 
 class AddUserMixin:
@@ -211,4 +212,149 @@ def income_create(request):
         request,
         "purchases/income_create_modal.html",
         {"form": form, "next": next},
+    )
+
+
+@login_required
+def recurring_purchase_list(request):
+    """List all recurring purchases for the user with option to create new ones."""
+    recurring_purchases = RecurringPurchase.objects.filter(user=request.user)
+    form = RecurringPurchaseForm(user=request.user)
+    next_url = request.GET.get("next", reverse("yearly_list"))
+
+    if request.method == "POST":
+        form = RecurringPurchaseForm(data=request.POST, user=request.user)
+        form.instance.user = request.user
+
+        if form.is_valid():
+            form.save()
+            return HttpResponseClientRedirect(next_url)
+
+    return render(
+        request,
+        "purchases/recurring_purchase_list_htmx.html",
+        {
+            "recurring_purchases": recurring_purchases,
+            "form": form,
+            "next": next_url,
+        },
+    )
+
+
+@login_required
+def recurring_purchase_edit(request, pk):
+    """Edit a recurring purchase."""
+    recurring_purchase = RecurringPurchase.objects.get(user=request.user, pk=pk)
+    form = RecurringPurchaseForm(instance=recurring_purchase, user=request.user)
+    next_url = request.GET.get("next", reverse("yearly_list"))
+
+    if request.method == "POST":
+        next_url = request.POST.get("next", next_url)
+        form = RecurringPurchaseForm(
+            instance=recurring_purchase, data=request.POST, user=request.user
+        )
+        if form.is_valid():
+            form.save()
+            return HttpResponseClientRedirect(next_url)
+
+    return render(
+        request,
+        "purchases/recurring_purchase_edit_htmx.html",
+        {"form": form, "recurring_purchase": recurring_purchase, "next": next_url},
+    )
+
+
+@login_required
+def recurring_purchase_delete(request, pk):
+    """Delete a recurring purchase."""
+    recurring_purchase = RecurringPurchase.objects.get(user=request.user, pk=pk)
+    next_url = request.GET.get("next", reverse("yearly_list"))
+
+    if request.method == "DELETE":
+        recurring_purchase.delete()
+        return HttpResponseClientRedirect(next_url)
+
+    return render(
+        request,
+        "purchases/recurring_purchase_delete_htmx.html",
+        {"recurring_purchase": recurring_purchase, "next": next_url},
+    )
+
+
+@login_required
+def recurring_purchase_add_to_month(request, year, month):
+    """Add recurring purchases to a specific month as actual purchases."""
+    monthly_budget = MonthlyBudget.objects.get(
+        user=request.user, date__year=year, date__month=month
+    )
+    recurring_purchases = RecurringPurchase.objects.filter(
+        user=request.user, is_active=True
+    ).select_related("category")
+    next_url = request.GET.get(
+        "next", reverse("monthly_detail", kwargs={"year": year, "month": month})
+    )
+    
+    # Get categories for the user to allow category editing
+    categories = Category.objects.filter(user=request.user)
+    
+    # Check which recurring purchases have already been added this month
+    # by looking for purchases with a foreign key to a recurring purchase
+    purchase_date = monthly_budget.date
+    already_added_recurring_ids = Purchase.objects.filter(
+        user=request.user,
+        date__year=year,
+        date__month=month,
+        recurring_purchase__isnull=False
+    ).values_list("recurring_purchase_id", flat=True)
+    
+    already_added = set(already_added_recurring_ids)
+
+    if request.method == "POST":
+        next_url = request.POST.get("next", next_url)
+        selected_ids = request.POST.getlist("selected_recurring")
+
+        for recurring_id in selected_ids:
+            try:
+                recurring = RecurringPurchase.objects.get(
+                    pk=recurring_id, user=request.user
+                )
+                amount = request.POST.get(f"amount_{recurring_id}", recurring.amount)
+                source = request.POST.get(f"source_{recurring_id}", recurring.source)
+                location = request.POST.get(f"location_{recurring_id}", recurring.location)
+                notes = request.POST.get(f"notes_{recurring_id}", recurring.notes)
+                category_id = request.POST.get(f"category_{recurring_id}", recurring.category_id)
+                
+                try:
+                    category = Category.objects.get(pk=category_id, user=request.user)
+                except Category.DoesNotExist:
+                    category = recurring.category
+
+                Purchase.objects.create(
+                    user=request.user,
+                    item=recurring.name,
+                    date=purchase_date,
+                    amount=amount,
+                    source=source,
+                    location=location,
+                    category=category,
+                    notes=notes,
+                    savings=False,
+                    recurring_purchase=recurring,
+                )
+            except RecurringPurchase.DoesNotExist:
+                continue
+
+        return HttpResponseClientRedirect(next_url)
+
+    return render(
+        request,
+        "purchases/recurring_purchase_add_to_month_htmx.html",
+        {
+            "recurring_purchases": recurring_purchases,
+            "monthly_budget": monthly_budget,
+            "categories": categories,
+            "already_added": already_added,
+            "all_already_added": len(already_added) == recurring_purchases.count() and recurring_purchases.exists(),
+            "next": next_url,
+        },
     )

@@ -1,0 +1,78 @@
+<h2>Add Recurring Purchases for {{monthly_budget.date|date:"F Y"}}</h2>
+
+<form hx-post='{% url "recurring_purchase_add_to_month" year=monthly_budget.date.year month=monthly_budget.date.month %}' method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{next}}">
+
+    {% if recurring_purchases %}
+    <div class="card-base">
+        {% if all_already_added %}
+        <p class="alert-info" style="padding: 10px; background-color: #d4edda; border-radius: 5px; margin-bottom: 10px;">
+            All recurring purchases have already been added for this month.
+        </p>
+        {% else %}
+        <p>Select recurring purchases to add for this month. You can edit values before adding.</p>
+        {% endif %}
+        
+        <div class="recurring-add-grid-full card-table-header">
+            <div class="card-table-heading">Select</div>
+            <div class="card-table-heading">Name</div>
+            <div class="card-table-heading">Amount</div>
+            <div class="card-table-heading">Source</div>
+            <div class="card-table-heading">Location</div>
+            <div class="card-table-heading">Category</div>
+            <div class="card-table-heading">Notes</div>
+            <div class="card-table-heading">Status</div>
+        </div>
+
+        {% for recurring in recurring_purchases %}
+        <div class="recurring-add-grid-full {% if recurring.id in already_added %}already-added{% endif %}">
+            <div>
+                {% if recurring.id in already_added %}
+                <input type="checkbox" name="selected_recurring" value="{{recurring.id}}" disabled>
+                {% else %}
+                <input type="checkbox" name="selected_recurring" value="{{recurring.id}}" checked>
+                {% endif %}
+            </div>
+            <div>{{recurring.name}}</div>
+            <div>
+                <input type="number" name="amount_{{recurring.id}}" value="{{recurring.amount}}" step="0.01" min="0" style="width: 80px;" {% if recurring.id in already_added %}disabled{% endif %}>
+            </div>
+            <div>
+                <input type="text" name="source_{{recurring.id}}" value="{{recurring.source}}" style="width: 100px;" {% if recurring.id in already_added %}disabled{% endif %}>
+            </div>
+            <div>
+                <input type="text" name="location_{{recurring.id}}" value="{{recurring.location}}" style="width: 100px;" {% if recurring.id in already_added %}disabled{% endif %}>
+            </div>
+            <div>
+                <select name="category_{{recurring.id}}" style="width: 120px;" {% if recurring.id in already_added %}disabled{% endif %}>
+                    {% for category in categories %}
+                    <option value="{{category.id}}" {% if category.id == recurring.category_id %}selected{% endif %}>{{category.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <input type="text" name="notes_{{recurring.id}}" value="{{recurring.notes}}" style="width: 100px;" {% if recurring.id in already_added %}disabled{% endif %}>
+            </div>
+            <div>
+                {% if recurring.id in already_added %}
+                <span style="color: #28a745;">✓ Added</span>
+                {% else %}
+                <span style="color: #6c757d;">Pending</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if all_already_added %}
+    <button type="submit" class="button-create" style="margin-top: 1rem;" disabled>All Purchases Already Added</button>
+    {% else %}
+    <button type="submit" class="button-create" style="margin-top: 1rem;">Add Selected Purchases</button>
+    {% endif %}
+    {% else %}
+    <div class="card-base">
+        <p>No active recurring purchases found. <a href='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' hx-get='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' hx-target="#modal-content">Create some recurring purchases first.</a></p>
+    </div>
+    {% endif %}
+</form>

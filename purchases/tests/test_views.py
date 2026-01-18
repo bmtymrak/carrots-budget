@@ -6,13 +6,15 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
 
-from purchases.models import Category, Purchase, Income
+from purchases.models import Category, Purchase, Income, RecurringPurchase
 from purchases.forms import IncomeForm
+from budgets.models import YearlyBudget, MonthlyBudget
 from .factories import (
     CategoryFactory,
     SubcategoryFactory,
     PurchaseFactory,
     IncomeFactory,
+    RecurringPurchaseFactory,
 )
 
 
@@ -175,3 +177,216 @@ class CategoryViewTests(TestCase):
                 name='Test Category'
             ).exists()
         )
+
+
+class RecurringPurchaseViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = get_user_model().objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        self.category = CategoryFactory(user=self.user)
+
+    def test_recurring_purchase_list_view_get(self):
+        """Test GET request to recurring purchase list."""
+        response = self.client.get(
+            reverse('recurring_purchase_list'),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_list_htmx.html')
+
+    def test_recurring_purchase_create_via_list(self):
+        """Test creating a recurring purchase via the list view."""
+        response = self.client.post(
+            reverse('recurring_purchase_list'),
+            {
+                'name': 'Netflix',
+                'amount': '15.99',
+                'category': self.category.id,
+                'source': 'Netflix Inc',
+                'location': 'Online',
+                'notes': 'Monthly subscription',
+                'is_active': True,
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)  # HTMX redirect
+        self.assertTrue(
+            RecurringPurchase.objects.filter(
+                user=self.user,
+                name='Netflix'
+            ).exists()
+        )
+
+    def test_recurring_purchase_edit_view_get(self):
+        """Test GET request to recurring purchase edit view."""
+        recurring = RecurringPurchaseFactory(user=self.user, category=self.category)
+        response = self.client.get(
+            reverse('recurring_purchase_edit', kwargs={'pk': recurring.pk}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_edit_htmx.html')
+
+    def test_recurring_purchase_edit_view_post(self):
+        """Test POST request to update a recurring purchase."""
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            name='Old Name',
+            amount=Decimal('10.00')
+        )
+        response = self.client.post(
+            reverse('recurring_purchase_edit', kwargs={'pk': recurring.pk}),
+            {
+                'name': 'New Name',
+                'amount': '20.00',
+                'category': self.category.id,
+                'source': 'New Source',
+                'location': 'New Location',
+                'notes': 'Updated notes',
+                'is_active': True,
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)  # HTMX redirect
+        recurring.refresh_from_db()
+        self.assertEqual(recurring.name, 'New Name')
+        self.assertEqual(recurring.amount, Decimal('20.00'))
+
+    def test_recurring_purchase_delete_view_get(self):
+        """Test GET request to recurring purchase delete view."""
+        recurring = RecurringPurchaseFactory(user=self.user, category=self.category)
+        response = self.client.get(
+            reverse('recurring_purchase_delete', kwargs={'pk': recurring.pk}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_delete_htmx.html')
+
+    def test_recurring_purchase_delete_view_delete(self):
+        """Test DELETE request to delete a recurring purchase."""
+        recurring = RecurringPurchaseFactory(user=self.user, category=self.category)
+        recurring_id = recurring.pk
+        response = self.client.delete(
+            reverse('recurring_purchase_delete', kwargs={'pk': recurring.pk}) + '?next=/'
+        )
+        self.assertEqual(response.status_code, 200)  # HTMX redirect
+        self.assertFalse(
+            RecurringPurchase.objects.filter(pk=recurring_id).exists()
+        )
+
+    def test_recurring_purchase_add_to_month_view_get(self):
+        """Test GET request to add recurring purchases to month."""
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(user=self.user, category=self.category)
+        
+        response = self.client.get(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_add_to_month_htmx.html')
+
+    def test_recurring_purchase_add_to_month_creates_purchases(self):
+        """Test that submitting the form creates actual purchases."""
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            name='Netflix',
+            amount=Decimal('15.99'),
+            source='Netflix Inc',
+            location='Online'
+        )
+        
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            {
+                'selected_recurring': [str(recurring.pk)],
+                f'amount_{recurring.pk}': '15.99',
+                f'source_{recurring.pk}': 'Netflix Inc',
+                f'location_{recurring.pk}': 'Online',
+                f'category_{recurring.pk}': self.category.id,
+                f'notes_{recurring.pk}': 'Monthly sub',
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)  # HTMX redirect
+        
+        # Check that a purchase was created with the foreign key set
+        purchase = Purchase.objects.get(user=self.user, item='Netflix')
+        self.assertEqual(purchase.amount, Decimal('15.99'))
+        self.assertEqual(purchase.category, self.category)
+        self.assertEqual(purchase.date, datetime.date(2024, 1, 1))
+        self.assertEqual(purchase.recurring_purchase, recurring)
+
+    def test_recurring_purchase_already_added_detected_by_fk(self):
+        """Test that recurring purchases are detected as already added via FK."""
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            name='Netflix',
+            amount=Decimal('15.99')
+        )
+        
+        # Create an existing purchase with the recurring_purchase FK set
+        Purchase.objects.create(
+            user=self.user,
+            item='Netflix',
+            date=datetime.date(2024, 1, 15),
+            amount=Decimal('15.99'),
+            category=self.category,
+            recurring_purchase=recurring
+        )
+        
+        response = self.client.get(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(recurring.id, response.context['already_added'])
+
+    def test_recurring_purchase_add_with_modified_amount(self):
+        """Test that modified amounts are used when creating purchases."""
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            name='Spotify',
+            amount=Decimal('9.99')
+        )
+        
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            {
+                'selected_recurring': [str(recurring.pk)],
+                f'amount_{recurring.pk}': '14.99',  # Different amount
+                f'source_{recurring.pk}': recurring.source,
+                f'location_{recurring.pk}': recurring.location,
+                f'category_{recurring.pk}': self.category.id,
+                f'notes_{recurring.pk}': recurring.notes,
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        purchase = Purchase.objects.get(user=self.user, item='Spotify')
+        self.assertEqual(purchase.amount, Decimal('14.99'))

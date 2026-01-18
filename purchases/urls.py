@@ -10,6 +10,10 @@ from .views import (
     purchase_edit,
     income_edit,
     income_create,
+    recurring_purchase_list,
+    recurring_purchase_edit,
+    recurring_purchase_delete,
+    recurring_purchase_add_to_month,
 )
 
 urlpatterns = [
@@ -20,5 +24,9 @@ urlpatterns = [
     path("income-create/", income_create, name="income_create"),
     path("income/<int:pk>/edit/htmx", income_edit, name="income_edit_htmx"),
     path("income/<int:pk>/delete/htmx", income_delete_htmx, name="income_delete_htmx"),
+    path("recurring/", recurring_purchase_list, name="recurring_purchase_list"),
+    path("recurring/<int:pk>/edit/", recurring_purchase_edit, name="recurring_purchase_edit"),
+    path("recurring/<int:pk>/delete/", recurring_purchase_delete, name="recurring_purchase_delete"),
+    path("recurring/add-to-month/<int:year>/<int:month>/", recurring_purchase_add_to_month, name="recurring_purchase_add_to_month"),
     path("", PurchaseListView.as_view(), name="purchase_list"),
 ]
