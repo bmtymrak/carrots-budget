@@ -232,7 +232,7 @@ a {
 
 .recurring-add-grid-full {
     display: grid;
-    grid-template-columns: 50px 1.2fr 80px 80px 100px 100px 120px 100px 80px;
+    grid-template-columns: 55px 1.2fr 140px 90px 110px 110px 130px 110px 80px;
     margin-bottom: 10px;
     padding-left: 10px;
     column-gap: 10px;
@@ -248,6 +248,56 @@ a {
 .recurring-add-grid-full.already-added {
     opacity: 0.6;
     background-color: #f8f9fa;
+}
+
+/* Recurring purchase form inputs */
+.recurring-input-date {
+    width: 130px;
+}
+
+.recurring-input-amount {
+    width: 80px;
+}
+
+.recurring-input-source {
+    width: 100px;
+}
+
+.recurring-input-location {
+    width: 100px;
+}
+
+.recurring-input-category {
+    width: 120px;
+}
+
+.recurring-input-notes {
+    width: 100px;
+}
+
+/* Alert and status styles */
+.alert-success-box {
+    padding: 10px;
+    background-color: #d4edda;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.status-added {
+    color: #28a745;
+}
+
+.status-pending {
+    color: #6c757d;
+}
+
+/* Modal spacing */
+.modal-section-spacing {
+    margin-bottom: 1rem;
+}
+
+.modal-submit-spacing {
+    margin-top: 1rem;
 }
 
 .budget-monthly-single-col {

@@ -1,7 +1,7 @@
 {% load static %}
 <h2>Manage Recurring Purchases</h2>
 
-<div class="card-base" style="margin-bottom: 1rem;">
+<div class="card-base modal-section-spacing">
     <h3>Add New Recurring Purchase</h3>
     <form hx-post='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' hx-target="#modal-content" hx-swap="innerHTML" class="form-grid" method="POST">
         {% csrf_token %}

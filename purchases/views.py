@@ -301,14 +301,27 @@ def recurring_purchase_add_to_month(request, year, month):
     # Check which recurring purchases have already been added this month
     # by looking for purchases with a foreign key to a recurring purchase
     purchase_date = monthly_budget.date
-    already_added_recurring_ids = Purchase.objects.filter(
+    already_added_purchases = Purchase.objects.filter(
         user=request.user,
         date__year=year,
         date__month=month,
         recurring_purchase__isnull=False
-    ).values_list("recurring_purchase_id", flat=True)
+    ).select_related("category", "recurring_purchase")
     
-    already_added = set(already_added_recurring_ids)
+    # Create a dict mapping recurring_purchase_id to the actual purchase details
+    already_added_details = {
+        p.recurring_purchase_id: {
+            "date": p.date,
+            "amount": p.amount,
+            "source": p.source,
+            "location": p.location,
+            "category": p.category,
+            "category_id": p.category_id,
+            "notes": p.notes,
+        }
+        for p in already_added_purchases
+    }
+    already_added = set(already_added_details.keys())
 
     if request.method == "POST":
         next_url = request.POST.get("next", next_url)
@@ -362,6 +375,7 @@ def recurring_purchase_add_to_month(request, year, month):
             "monthly_budget": monthly_budget,
             "categories": categories,
             "already_added": already_added,
+            "already_added_details": already_added_details,
             "all_already_added": len(already_added) == recurring_purchases.count() and recurring_purchases.exists(),
             "next": next_url,
         },
