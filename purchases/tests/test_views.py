@@ -390,3 +390,86 @@ class RecurringPurchaseViewTests(TestCase):
         
         purchase = Purchase.objects.get(user=self.user, item='Spotify')
         self.assertEqual(purchase.amount, Decimal('14.99'))
+
+    def test_recurring_purchase_post_does_not_duplicate_existing_month_entry(self):
+        """Test POST path skips a recurring purchase already added for that month."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            name='Netflix',
+            amount=Decimal('15.99')
+        )
+
+        Purchase.objects.create(
+            user=self.user,
+            item='Netflix',
+            date=datetime.date(2024, 1, 10),
+            amount=Decimal('15.99'),
+            category=self.category,
+            recurring_purchase=recurring,
+        )
+
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            {
+                'selected_recurring': [str(recurring.pk)],
+                f'amount_{recurring.pk}': '15.99',
+                f'source_{recurring.pk}': recurring.source,
+                f'location_{recurring.pk}': recurring.location,
+                f'category_{recurring.pk}': self.category.id,
+                f'notes_{recurring.pk}': recurring.notes,
+                'next': '/',
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Purchase.objects.filter(
+                user=self.user,
+                recurring_purchase=recurring,
+                date__year=2024,
+                date__month=1,
+            ).count(),
+            1,
+        )
+
+    def test_recurring_purchase_post_does_not_duplicate_same_request_selection(self):
+        """Test duplicate IDs in one POST only create one purchase."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            name='GitHub',
+            amount=Decimal('4.00')
+        )
+
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            {
+                'selected_recurring': [str(recurring.pk), str(recurring.pk)],
+                f'amount_{recurring.pk}': '4.00',
+                f'source_{recurring.pk}': recurring.source,
+                f'location_{recurring.pk}': recurring.location,
+                f'category_{recurring.pk}': self.category.id,
+                f'notes_{recurring.pk}': recurring.notes,
+                'next': '/',
+            }
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Purchase.objects.filter(
+                user=self.user,
+                recurring_purchase=recurring,
+                date__year=2024,
+                date__month=1,
+            ).count(),
+            1,
+        )

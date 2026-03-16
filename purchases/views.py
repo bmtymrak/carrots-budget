@@ -332,6 +332,14 @@ def recurring_purchase_add_to_month(request, year, month):
                 recurring = RecurringPurchase.objects.get(
                     pk=recurring_id, user=request.user
                 )
+                already_exists_for_month = Purchase.objects.filter(
+                    user=request.user,
+                    recurring_purchase=recurring,
+                    date__year=year,
+                    date__month=month,
+                ).exists()
+                if recurring.id in already_added or already_exists_for_month:
+                    continue
                 amount = request.POST.get(f"amount_{recurring_id}", recurring.amount)
                 source = request.POST.get(f"source_{recurring_id}", recurring.source)
                 location = request.POST.get(f"location_{recurring_id}", recurring.location)
@@ -340,8 +348,7 @@ def recurring_purchase_add_to_month(request, year, month):
                 date_str = request.POST.get(f"date_{recurring_id}")
                 
                 if date_str:
-                    from datetime import datetime
-                    item_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                    item_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
                 else:
                     item_date = purchase_date
                 
@@ -362,6 +369,7 @@ def recurring_purchase_add_to_month(request, year, month):
                     savings=False,
                     recurring_purchase=recurring,
                 )
+                already_added.add(recurring.id)
             except RecurringPurchase.DoesNotExist:
                 continue
 
