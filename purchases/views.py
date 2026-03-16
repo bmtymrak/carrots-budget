@@ -326,19 +326,21 @@ def recurring_purchase_add_to_month(request, year, month):
     if request.method == "POST":
         next_url = request.POST.get("next", next_url)
         selected_ids = request.POST.getlist("selected_recurring")
+        existing_selected_ids = set(
+            Purchase.objects.filter(
+                user=request.user,
+                recurring_purchase_id__in=selected_ids,
+                date__year=year,
+                date__month=month,
+            ).values_list("recurring_purchase_id", flat=True)
+        )
 
         for recurring_id in selected_ids:
             try:
                 recurring = RecurringPurchase.objects.get(
                     pk=recurring_id, user=request.user
                 )
-                already_exists_for_month = Purchase.objects.filter(
-                    user=request.user,
-                    recurring_purchase=recurring,
-                    date__year=year,
-                    date__month=month,
-                ).exists()
-                if recurring.id in already_added or already_exists_for_month:
+                if recurring.id in already_added or recurring.id in existing_selected_ids:
                     continue
                 amount = request.POST.get(f"amount_{recurring_id}", recurring.amount)
                 source = request.POST.get(f"source_{recurring_id}", recurring.source)
