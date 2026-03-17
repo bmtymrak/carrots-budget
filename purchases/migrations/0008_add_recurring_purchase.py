@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('purchases', '0006_purchase_income_timestamps'),
+        ('purchases', '0007_alter_category_id_alter_income_id_alter_purchase_id_and_more'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='RecurringPurchase',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=250)),
                 ('amount', models.DecimalField(decimal_places=2, max_digits=12)),
                 ('source', models.CharField(blank=True, max_length=250)),
