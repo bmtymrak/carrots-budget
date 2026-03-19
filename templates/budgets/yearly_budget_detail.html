@@ -61,7 +61,7 @@
     <h3>YTD</h3>
     <div class="month-select-container">
         <p>YTD Month Select:</p>
-        <select class="month-select" name="month">
+        <select class="month-select" name="month" data-selected-month="{{request.GET.ytd}}" data-request-path="{{request.path}}">
             <option value="1">January</option>
             <option value="2">February</option>
             <option value="3">March</option>
@@ -167,7 +167,7 @@
                     <div class="rollover-items-grid">
                         {% for rollover in rollovers_spending %}
                         <div>
-                            <input class="rollover-edit" data-category="{{rollover.category}}" type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
+                            <input class="rollover-edit" data-category="{{rollover.category}}" data-year="{{yearly_budget.date.year}}" data-update-url='{% url "rollover_update" %}' type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
                         </div>
                         {% endfor %}
                     </div>
@@ -230,7 +230,7 @@
                     </div>
                     {% for rollover in rollovers_savings %}
                     <div>
-                        <input class="rollover-edit" data-category='{{rollover.category}}' type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
+                        <input class="rollover-edit" data-category='{{rollover.category}}' data-year="{{yearly_budget.date.year}}" data-update-url='{% url "rollover_update" %}' type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
                     </div>
                     
                     {% endfor %}
@@ -303,64 +303,8 @@
     {% endfor %}
 </div>
 
+
 </div>
 
-
-
-<script>
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    const csrftoken = getCookie('csrftoken');
-
-    const rollovers = document.querySelectorAll(".rollover-edit");
-
-    function saveRollover(event){
-        const key = event.key;
-        if (key==="Enter" || event.type==='blur'){
-            event.preventDefault();
-            const targ= event.currentTarget.value;
-            fetch('{% url "rollover_update" %}',{
-                method: 'POST',
-                credentials: 'same-origin',
-                headers:{
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrftoken,
-                },
-                body: JSON.stringify({'amount':targ, 'category': event.currentTarget.dataset.category, "year":'{{yearly_budget.date.year}}', })
-                })
-            }
-        }
-
-    rollovers.forEach((item) =>{
-        item.addEventListener('keydown', (event)=>{
-            const key = event.key
-            saveRollover(event)
-        })
-        item.addEventListener('blur', saveRollover)
-    })
-
-
-        const monthYtdSelect = document.querySelector(".month-select")
-        const monthYtd = `{{request.GET.ytd}}`
-        monthYtdSelect.selectedIndex = `${monthYtd- 1}`
-        monthYtdSelect.onchange = function(){
-            window.location=`{{request.path}}?ytd=${this.value}`
-    }
-
-</script>
+<script src="{% static 'js/yearly-budget.js' %}"></script>
 {% endblock body %}
