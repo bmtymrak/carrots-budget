@@ -218,7 +218,9 @@ def income_create(request):
 @login_required
 def recurring_purchase_list(request):
     """List all recurring purchases for the user with option to create new ones."""
-    recurring_purchases = RecurringPurchase.objects.filter(user=request.user)
+    recurring_purchases = RecurringPurchase.objects.filter(
+        user=request.user
+    ).select_related("category")
     form = RecurringPurchaseForm(user=request.user)
     next_url = request.GET.get("next", reverse("yearly_list"))
 
@@ -229,7 +231,9 @@ def recurring_purchase_list(request):
         if form.is_valid():
             form.save()
             form = RecurringPurchaseForm(user=request.user)
-            recurring_purchases = RecurringPurchase.objects.filter(user=request.user)
+            recurring_purchases = RecurringPurchase.objects.filter(
+                user=request.user
+            ).select_related("category")
 
     return render(
         request,
