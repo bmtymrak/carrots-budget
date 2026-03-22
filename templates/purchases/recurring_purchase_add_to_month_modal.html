@@ -29,7 +29,7 @@
         
         <div class="recurring-add-grid-full card-table-header">
             <div class="card-table-heading">Select</div>
-            <div class="card-table-heading">Name</div>
+            <div class="card-table-heading">Item</div>
             <div class="card-table-heading">Date</div>
             <div class="card-table-heading">Amount</div>
             <div class="card-table-heading">Source</div>
@@ -48,7 +48,7 @@
                 <div class="field-error-text">{{ error }}</div>
                 {% endfor %}
             </div>
-            <div class="recurring-add-cell recurring-add-label-cell">{{ row_form.recurring_purchase.name }}</div>
+            <div class="recurring-add-cell recurring-add-label-cell">{{ row_form.recurring_purchase.item }}</div>
             <div class="recurring-add-cell">
                 {{ row_form.date }}
                 {% for error in row_form.date.errors %}

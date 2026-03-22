@@ -29,7 +29,7 @@ We model recurring purchases as a separate template entity and connect created p
 A dedicated `RecurringPurchase` model is used to store reusable purchase defaults:
 
 - `user`
-- `name`
+- `item`
 - `amount`
 - `category`
 - `source`

@@ -95,7 +95,7 @@ class TestRecurringPurchaseAddToMonthFormSet(TestCase):
         cls.recurring = RecurringPurchaseFactory(
             user=cls.user1,
             category=cls.user1_category,
-            name="Netflix",
+            item="Netflix",
             amount=Decimal("15.99"),
             source="Netflix Inc",
             location="Online",
@@ -110,7 +110,7 @@ class TestRecurringPurchaseAddToMonthFormSet(TestCase):
             "form-MAX_NUM_FORMS": "1000",
         }
 
-    def test_selected_purchases_are_normalized(self):
+    def test_selected_purchases_include_selected_row_data(self):
         formset = RecurringPurchaseAddToMonthFormSet(
             data={
                 **self._management_form_data(1),
@@ -139,6 +139,32 @@ class TestRecurringPurchaseAddToMonthFormSet(TestCase):
         self.assertEqual(selected_purchase["location"], "Updated location")
         self.assertEqual(selected_purchase["category"], self.user1_alt_category)
         self.assertEqual(selected_purchase["notes"], "Updated notes")
+
+    def test_duplicate_selected_recurring_purchase_ids_raise_formset_error(self):
+        formset = RecurringPurchaseAddToMonthFormSet(
+            data={
+                **self._management_form_data(2),
+                "form-0-selected": "on",
+                "form-0-recurring_purchase_id": str(self.recurring.pk),
+                "form-0-date": "2024-01-15",
+                "form-0-amount": "19.99",
+                "form-0-category": str(self.user1_category.pk),
+                "form-1-selected": "on",
+                "form-1-recurring_purchase_id": str(self.recurring.pk),
+                "form-1-date": "2024-01-16",
+                "form-1-amount": "20.99",
+                "form-1-category": str(self.user1_category.pk),
+            },
+            user=self.user1,
+            recurring_purchases=[self.recurring, self.recurring],
+            purchase_date=datetime.date(2024, 1, 1),
+        )
+
+        self.assertFalse(formset.is_valid())
+        self.assertIn(
+            "Recurring purchases can only be added once per submission.",
+            formset.non_form_errors(),
+        )
 
     def test_row_defaults_are_applied_on_get(self):
         formset = RecurringPurchaseAddToMonthFormSet(

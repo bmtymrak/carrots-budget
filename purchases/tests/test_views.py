@@ -236,7 +236,7 @@ class RecurringPurchaseViewTests(TestCase):
         response = self.client.post(
             reverse('recurring_purchase_list'),
             {
-                'name': 'Netflix',
+                'item': 'Netflix',
                 'amount': '15.99',
                 'category': self.category.id,
                 'source': 'Netflix Inc',
@@ -250,7 +250,7 @@ class RecurringPurchaseViewTests(TestCase):
         self.assertTrue(
             RecurringPurchase.objects.filter(
                 user=self.user,
-                name='Netflix'
+                item='Netflix'
             ).exists()
         )
 
@@ -269,13 +269,13 @@ class RecurringPurchaseViewTests(TestCase):
         recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Old Name',
+            item='Old Name',
             amount=Decimal('10.00')
         )
         response = self.client.post(
             reverse('recurring_purchase_edit', kwargs={'pk': recurring.pk}),
             {
-                'name': 'New Name',
+                'item': 'New Name',
                 'amount': '20.00',
                 'category': self.category.id,
                 'source': 'New Source',
@@ -287,7 +287,7 @@ class RecurringPurchaseViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)  # HTMX redirect
         recurring.refresh_from_db()
-        self.assertEqual(recurring.name, 'New Name')
+        self.assertEqual(recurring.item, 'New Name')
         self.assertEqual(recurring.amount, Decimal('20.00'))
 
     def test_recurring_purchase_delete_view_get(self):
@@ -338,7 +338,7 @@ class RecurringPurchaseViewTests(TestCase):
         recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Netflix',
+            item='Netflix',
             amount=Decimal('15.99'),
             source='Netflix Inc',
             location='Online'
@@ -377,7 +377,7 @@ class RecurringPurchaseViewTests(TestCase):
         recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Netflix',
+            item='Netflix',
             amount=Decimal('15.99')
         )
         
@@ -407,7 +407,7 @@ class RecurringPurchaseViewTests(TestCase):
         recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Spotify',
+            item='Spotify',
             amount=Decimal('9.99')
         )
         
@@ -440,7 +440,7 @@ class RecurringPurchaseViewTests(TestCase):
         recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Daycare',
+            item='Daycare',
             amount=Decimal('1500.00')
         )
 
@@ -473,7 +473,7 @@ class RecurringPurchaseViewTests(TestCase):
         recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Netflix',
+            item='Netflix',
             amount=Decimal('15.99')
         )
 
@@ -522,14 +522,14 @@ class RecurringPurchaseViewTests(TestCase):
         recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='GitHub',
+            item='GitHub',
             amount=Decimal('4.00')
         )
 
         other_recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Other',
+            item='Other',
             amount=Decimal('7.00')
         )
 
@@ -578,13 +578,13 @@ class RecurringPurchaseViewTests(TestCase):
         existing_recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Netflix',
+            item='Netflix',
             amount=Decimal('15.99')
         )
         selected_recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Spotify',
+            item='Spotify',
             amount=Decimal('9.99')
         )
         other_user = get_user_model().objects.create_user(
@@ -645,7 +645,7 @@ class RecurringPurchaseViewTests(TestCase):
         recurring = RecurringPurchaseFactory(
             user=self.user,
             category=self.category,
-            name='Daycare',
+            item='Daycare',
             amount=Decimal('1500.00')
         )
 

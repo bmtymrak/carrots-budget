@@ -65,7 +65,7 @@ class RecurringPurchaseFactory(DjangoModelFactory):
         model = RecurringPurchase
 
     user = factory.SubFactory(UserFactory)
-    name = factory.Sequence(lambda n: f'Recurring Purchase {n}')
+    item = factory.Sequence(lambda n: f'Recurring Purchase {n}')
     amount = fuzzy.FuzzyDecimal(10, 500, precision=2)
     category = factory.SubFactory(CategoryFactory)
     source = factory.Faker('company')

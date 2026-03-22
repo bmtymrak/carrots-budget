@@ -354,7 +354,7 @@ def recurring_purchase_add_to_month(request, year, month):
 
                 Purchase.objects.create(
                     user=request.user,
-                    item=recurring.name,
+                    item=recurring.item,
                     date=selected_purchase["date"],
                     amount=selected_purchase["amount"],
                     source=selected_purchase["source"],

@@ -129,7 +129,7 @@ class RecurringPurchase(models.Model):
         related_name="recurring_purchases",
         null=False,
     )
-    name = models.CharField(max_length=250)
+    item = models.CharField(max_length=250)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.ForeignKey(
         Category,
@@ -144,10 +144,10 @@ class RecurringPurchase(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} ({self.category.name})"
+        return f"{self.item} ({self.category.name})"
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["item"]
         indexes = [
             models.Index(fields=["user", "is_active"], name="idx_recurring_user_active"),
         ]

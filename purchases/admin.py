@@ -7,9 +7,9 @@ class PurchaseAdmin(admin.ModelAdmin):
 
 
 class RecurringPurchaseAdmin(admin.ModelAdmin):
-    list_display = ("name", "category", "amount", "source", "location", "is_active", "user", "created_at", "updated_at")
+    list_display = ("item", "category", "amount", "source", "location", "is_active", "user", "created_at", "updated_at")
     list_filter = ("is_active", "category")
-    search_fields = ("name", "source", "location")
+    search_fields = ("item", "source", "location")
 
 
 admin.site.register(Purchase, PurchaseAdmin)

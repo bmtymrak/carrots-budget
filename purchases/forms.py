@@ -95,7 +95,7 @@ class RecurringPurchaseForm(ModelForm):
         self.fields["category"].queryset = Category.objects.filter(user=self.user)
         self.fields["category"].empty_label = "Category"
         
-        self.fields["name"].widget.attrs.update(placeholder="Name", size="20")
+        self.fields["item"].widget.attrs.update(placeholder="Item", size="20")
         self.fields["amount"].widget.attrs.update(placeholder="Amount")
         self.fields["source"].widget.attrs.update(placeholder="Source", size="20")
         self.fields["location"].widget.attrs.update(placeholder="Location", size="20")
@@ -104,7 +104,7 @@ class RecurringPurchaseForm(ModelForm):
     class Meta:
         model = RecurringPurchase
         fields = [
-            "name",
+            "item",
             "amount",
             "category",
             "source",
@@ -247,24 +247,20 @@ class BaseRecurringPurchaseAddToMonthFormSet(BaseFormSet):
 
             recurring_purchase_id = form.cleaned_data["recurring_purchase_id"]
             if recurring_purchase_id in seen_recurring_ids:
-                continue
+                raise forms.ValidationError(
+                    "Recurring purchases can only be added once per submission."
+                )
 
             seen_recurring_ids.add(recurring_purchase_id)
 
     @property
     def selected_purchases(self):
         selected_purchases = []
-        seen_recurring_ids = set()
 
         for form in self.forms:
             if not form.is_selected():
                 continue
 
-            recurring_purchase_id = form.cleaned_data["recurring_purchase_id"]
-            if recurring_purchase_id in seen_recurring_ids:
-                continue
-
-            seen_recurring_ids.add(recurring_purchase_id)
             selected_purchases.append(form.to_purchase_payload())
 
         return selected_purchases

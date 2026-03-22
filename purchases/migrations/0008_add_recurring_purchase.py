@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name='RecurringPurchase',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=250)),
+                ('item', models.CharField(max_length=250)),
                 ('amount', models.DecimalField(decimal_places=2, max_digits=12)),
                 ('source', models.CharField(blank=True, max_length=250)),
                 ('location', models.CharField(blank=True, max_length=250)),
@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recurring_purchases', to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                'ordering': ['name'],
+                'ordering': ['item'],
                 'indexes': [models.Index(fields=['user', 'is_active'], name='idx_recurring_user_active')],
             },
         ),

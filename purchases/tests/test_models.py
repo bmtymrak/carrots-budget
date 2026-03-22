@@ -21,7 +21,7 @@ class RecurringPurchaseModelTests(TestCase):
     def test_recurring_purchase_creation(self):
         recurring = RecurringPurchase.objects.create(
             user=self.user,
-            name="Netflix",
+            item="Netflix",
             amount=Decimal("15.99"),
             category=self.category,
             source="Netflix Inc.",
@@ -29,7 +29,7 @@ class RecurringPurchaseModelTests(TestCase):
             notes="Monthly subscription",
             is_active=True,
         )
-        self.assertEqual(recurring.name, "Netflix")
+        self.assertEqual(recurring.item, "Netflix")
         self.assertEqual(recurring.amount, Decimal("15.99"))
         self.assertEqual(recurring.category, self.category)
         self.assertEqual(recurring.source, "Netflix Inc.")
@@ -39,7 +39,7 @@ class RecurringPurchaseModelTests(TestCase):
     def test_recurring_purchase_str(self):
         recurring = RecurringPurchaseFactory(
             user=self.user,
-            name="Spotify",
+            item="Spotify",
             category=self.category
         )
         self.assertEqual(str(recurring), f"Spotify ({self.category.name})")
@@ -47,17 +47,17 @@ class RecurringPurchaseModelTests(TestCase):
     def test_recurring_purchase_default_is_active(self):
         recurring = RecurringPurchase.objects.create(
             user=self.user,
-            name="Test",
+            item="Test",
             amount=Decimal("10.00"),
             category=self.category,
         )
         self.assertTrue(recurring.is_active)
 
     def test_recurring_purchase_ordering(self):
-        RecurringPurchaseFactory(user=self.user, name="Zebra", category=self.category)
-        RecurringPurchaseFactory(user=self.user, name="Alpha", category=self.category)
-        RecurringPurchaseFactory(user=self.user, name="Middle", category=self.category)
+        RecurringPurchaseFactory(user=self.user, item="Zebra", category=self.category)
+        RecurringPurchaseFactory(user=self.user, item="Alpha", category=self.category)
+        RecurringPurchaseFactory(user=self.user, item="Middle", category=self.category)
 
         purchases = list(RecurringPurchase.objects.filter(user=self.user))
-        names = [p.name for p in purchases]
-        self.assertEqual(names, ["Alpha", "Middle", "Zebra"])
+        items = [p.item for p in purchases]
+        self.assertEqual(items, ["Alpha", "Middle", "Zebra"])
