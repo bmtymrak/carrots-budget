@@ -250,6 +250,27 @@ a {
     background-color: #f8f9fa;
 }
 
+.recurring-add-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    white-space: normal;
+    overflow: visible;
+}
+
+.recurring-add-label-cell,
+.recurring-add-status-cell {
+    justify-content: center;
+}
+
+.field-error-text {
+    color: #b42318;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    white-space: normal;
+}
+
 /* Recurring purchase form inputs */
 .recurring-input-date {
     width: 130px;
@@ -279,6 +300,14 @@ a {
 .alert-success-box {
     padding: 10px;
     background-color: #d4edda;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.alert-danger-box {
+    padding: 10px;
+    background-color: #f8d7da;
+    color: #842029;
     border-radius: 5px;
     margin-bottom: 10px;
 }

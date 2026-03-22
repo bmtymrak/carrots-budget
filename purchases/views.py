@@ -14,7 +14,13 @@ from django.http import HttpResponseRedirect
 import datetime
 
 from .models import Purchase, Category, Income, RecurringPurchase
-from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm, RecurringPurchaseForm
+from .forms import (
+    PurchaseForm,
+    PurchaseFormSetReceipt,
+    IncomeForm,
+    RecurringPurchaseForm,
+    RecurringPurchaseAddToMonthFormSet,
+)
 from django_htmx.http import HttpResponseClientRedirect
 from budgets.models import MonthlyBudget
 
@@ -299,9 +305,6 @@ def recurring_purchase_add_to_month(request, year, month):
         "next", reverse("monthly_detail", kwargs={"year": year, "month": month})
     )
     
-    # Get categories for the user to allow category editing
-    categories = Category.objects.filter(user=request.user)
-    
     # Check which recurring purchases have already been added this month
     # by looking for purchases with a foreign key to a recurring purchase
     purchase_date = monthly_budget.date
@@ -326,62 +329,53 @@ def recurring_purchase_add_to_month(request, year, month):
         for p in already_added_purchases
     }
     already_added = set(already_added_details.keys())
+    formset = RecurringPurchaseAddToMonthFormSet(
+        user=request.user,
+        recurring_purchases=recurring_purchases,
+        purchase_date=purchase_date,
+        already_added_details=already_added_details,
+    )
 
     if request.method == "POST":
         next_url = request.POST.get("next", next_url)
-        selected_ids = request.POST.getlist("selected_recurring")
+        formset = RecurringPurchaseAddToMonthFormSet(
+            data=request.POST,
+            user=request.user,
+            recurring_purchases=recurring_purchases,
+            purchase_date=purchase_date,
+            already_added_details=already_added_details,
+        )
 
-        for recurring_id in selected_ids:
-            try:
-                recurring = RecurringPurchase.objects.get(
-                    pk=recurring_id, user=request.user
-                )
+        if formset.is_valid():
+            for selected_purchase in formset.selected_purchases:
+                recurring = selected_purchase["recurring_purchase"]
                 if recurring.id in already_added:
                     continue
-                amount = request.POST.get(f"amount_{recurring_id}", recurring.amount)
-                source = request.POST.get(f"source_{recurring_id}", recurring.source)
-                location = request.POST.get(f"location_{recurring_id}", recurring.location)
-                notes = request.POST.get(f"notes_{recurring_id}", recurring.notes)
-                category_id = request.POST.get(f"category_{recurring_id}", recurring.category_id)
-                date_str = request.POST.get(f"date_{recurring_id}")
-                
-                if date_str:
-                    item_date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
-                else:
-                    item_date = purchase_date
-                
-                try:
-                    category = Category.objects.get(pk=category_id, user=request.user)
-                except Category.DoesNotExist:
-                    category = recurring.category
 
                 Purchase.objects.create(
                     user=request.user,
                     item=recurring.name,
-                    date=item_date,
-                    amount=amount,
-                    source=source,
-                    location=location,
-                    category=category,
-                    notes=notes,
+                    date=selected_purchase["date"],
+                    amount=selected_purchase["amount"],
+                    source=selected_purchase["source"],
+                    location=selected_purchase["location"],
+                    category=selected_purchase["category"],
+                    notes=selected_purchase["notes"],
                     savings=False,
                     recurring_purchase=recurring,
                 )
                 already_added.add(recurring.id)
-            except RecurringPurchase.DoesNotExist:
-                continue
 
-        return HttpResponseClientRedirect(next_url)
+            return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
         "purchases/recurring_purchase_add_to_month_modal.html",
         {
-            "recurring_purchases": recurring_purchases,
-            "monthly_budget": monthly_budget,
-            "categories": categories,
             "already_added": already_added,
-            "already_added_details": already_added_details,
+            "has_form_errors": formset.is_bound and (formset.total_error_count() > 0 or bool(formset.non_form_errors())),
+            "formset": formset,
+            "monthly_budget": monthly_budget,
             "all_already_added": len(already_added) == recurring_purchases.count() and recurring_purchases.exists(),
             "next": next_url,
         },
