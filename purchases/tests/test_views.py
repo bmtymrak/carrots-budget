@@ -1,10 +1,9 @@
 import datetime
 import unittest
 
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.http import Http404
 from decimal import Decimal
 
 from purchases.models import Category, Purchase, Income
@@ -150,6 +149,16 @@ class IncomeViewTests(TestCase):
 
 
 
+@override_settings(
+    STORAGES={
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+)
 class CategoryViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -176,6 +185,24 @@ class CategoryViewTests(TestCase):
                 name='Test Category'
             ).exists()
         )
+
+    def test_category_create_page_renders_management_sections(self):
+        CategoryFactory(user=self.user, name='Groceries', rollover=True)
+
+        response = self.client.get(reverse('category_create'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Create Category')
+        self.assertContains(response, 'Existing Categories')
+        self.assertContains(response, 'Groceries')
+        self.assertContains(response, 'Rollover')
+
+    def test_authenticated_sidebar_includes_categories_link(self):
+        response = self.client.get(reverse('purchase_list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse('category_create'))
+        self.assertContains(response, 'Categories')
 
     def test_category_edit_view(self):
         category = CategoryFactory(user=self.user, name='Original Name', rollover=False)
