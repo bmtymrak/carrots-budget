@@ -211,11 +211,6 @@ a {
     row-gap: 5px;
 }
 
-.recurring-purchase-grid-full div {
-    white-space: nowrap;
-    overflow: hidden;
-}
-
 .recurring-purchase-delete-grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
@@ -223,11 +218,6 @@ a {
     padding-left: 10px;
     column-gap: 10px;
     row-gap: 5px;
-}
-
-.recurring-purchase-delete-grid div {
-    white-space: nowrap;
-    overflow: hidden;
 }
 
 .recurring-add-grid-full {
@@ -240,7 +230,7 @@ a {
     align-items: center;
 }
 
-.recurring-add-grid-full div {
+.grid-cell-truncate>div {
     white-space: nowrap;
     overflow: hidden;
 }

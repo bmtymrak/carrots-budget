@@ -1,4 +1,4 @@
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     ListView,
@@ -255,7 +255,7 @@ def recurring_purchase_list(request):
 @login_required
 def recurring_purchase_edit(request, pk):
     """Edit a recurring purchase."""
-    recurring_purchase = RecurringPurchase.objects.get(user=request.user, pk=pk)
+    recurring_purchase = get_object_or_404(RecurringPurchase, user=request.user, pk=pk)
     form = RecurringPurchaseForm(instance=recurring_purchase, user=request.user)
     next_url = request.GET.get("next", reverse("yearly_list"))
 
@@ -278,7 +278,7 @@ def recurring_purchase_edit(request, pk):
 @login_required
 def recurring_purchase_delete(request, pk):
     """Delete a recurring purchase."""
-    recurring_purchase = RecurringPurchase.objects.get(user=request.user, pk=pk)
+    recurring_purchase = get_object_or_404(RecurringPurchase, user=request.user, pk=pk)
     next_url = request.GET.get("next", reverse("yearly_list"))
 
     if request.method == "DELETE":
@@ -295,9 +295,7 @@ def recurring_purchase_delete(request, pk):
 @login_required
 def recurring_purchase_add_to_month(request, year, month):
     """Add recurring purchases to a specific month as actual purchases."""
-    monthly_budget = MonthlyBudget.objects.get(
-        user=request.user, date__year=year, date__month=month
-    )
+    monthly_budget = get_object_or_404(MonthlyBudget, user=request.user, date__year=year, date__month=month)
     recurring_purchases = RecurringPurchase.objects.filter(
         user=request.user, is_active=True
     ).select_related("category")
@@ -329,21 +327,18 @@ def recurring_purchase_add_to_month(request, year, month):
         for p in already_added_purchases
     }
     already_added = set(already_added_details.keys())
-    formset = RecurringPurchaseAddToMonthFormSet(
-        user=request.user,
-        recurring_purchases=recurring_purchases,
-        purchase_date=purchase_date,
-        already_added_details=already_added_details,
-    )
+    formset_kwargs = {
+        "user": request.user,
+        "recurring_purchases": recurring_purchases,
+        "purchase_date": purchase_date,
+        "already_added_details": already_added_details,
+    }
 
     if request.method == "POST":
         next_url = request.POST.get("next", next_url)
         formset = RecurringPurchaseAddToMonthFormSet(
             data=request.POST,
-            user=request.user,
-            recurring_purchases=recurring_purchases,
-            purchase_date=purchase_date,
-            already_added_details=already_added_details,
+            **formset_kwargs,
         )
 
         if formset.is_valid():
@@ -367,6 +362,8 @@ def recurring_purchase_add_to_month(request, year, month):
                 already_added.add(recurring.id)
 
             return HttpResponseClientRedirect(next_url)
+    else:
+        formset = RecurringPurchaseAddToMonthFormSet(**formset_kwargs)
 
     return render(
         request,

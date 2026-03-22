@@ -27,7 +27,7 @@
         <p>Select recurring purchases to add for this month. You can edit values before adding.</p>
         {% endif %}
         
-        <div class="recurring-add-grid-full card-table-header">
+        <div class="recurring-add-grid-full grid-cell-truncate card-table-header">
             <div class="card-table-heading">Select</div>
             <div class="card-table-heading">Item</div>
             <div class="card-table-heading">Date</div>
@@ -40,7 +40,7 @@
         </div>
 
         {% for row_form in formset %}
-        <div class="recurring-add-grid-full {% if row_form.already_added %}already-added{% endif %}">
+        <div class="recurring-add-grid-full grid-cell-truncate {% if row_form.already_added %}already-added{% endif %}">
             {{ row_form.recurring_purchase_id }}
             <div class="recurring-add-cell">
                 {{ row_form.selected }}

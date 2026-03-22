@@ -11,6 +11,9 @@ class RecurringPurchaseAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "category")
     search_fields = ("item", "source", "location")
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("category")
+
 
 admin.site.register(Purchase, PurchaseAdmin)
 admin.site.register(Category)

@@ -14,7 +14,7 @@
 <div class="card-base">
     <h3>Existing Recurring Purchases</h3>
     {% if recurring_purchases %}
-    <div class="recurring-purchase-grid-full card-table-header">
+    <div class="recurring-purchase-grid-full grid-cell-truncate card-table-header">
         <div class="card-table-heading">Item</div>
         <div class="card-table-heading">Amount</div>
         <div class="card-table-heading">Category</div>
@@ -24,7 +24,7 @@
         <div class="card-table-heading"></div>
     </div>
     {% for recurring in recurring_purchases %}
-    <div class="recurring-purchase-grid-full">
+    <div class="recurring-purchase-grid-full grid-cell-truncate">
         <div>{{recurring.item}}</div>
         <div>${{recurring.amount|floatformat:"-2"}}</div>
         <div>{{recurring.category}}</div>
