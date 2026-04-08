@@ -234,7 +234,7 @@ class TestRecurringPurchaseAddToMonthFormSet(TestCase):
         self.assertFalse(formset.is_valid())
         self.assertIn("date", formset.forms[0].errors)
         self.assertIn(
-            "Date must be within the selected month.",
+            "Date must be within this budget's month and year.",
             formset.forms[0].errors["date"],
         )
 

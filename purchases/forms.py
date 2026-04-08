@@ -198,7 +198,7 @@ class RecurringPurchaseAddRowForm(forms.Form):
         ):
             self.add_error(
                 "date",
-                "Date must be within the selected month.",
+                "Date must be within this budget's month and year.",
             )
 
         return cleaned_data
