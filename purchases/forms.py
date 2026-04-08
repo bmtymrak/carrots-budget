@@ -124,8 +124,8 @@ class RecurringPurchaseAddRowForm(forms.Form):
         max_digits=12,
         decimal_places=2,
     )
-    source = forms.CharField(required=False)
-    location = forms.CharField(required=False)
+    source = forms.CharField(required=False, max_length=250)
+    location = forms.CharField(required=False, max_length=250)
     category = forms.ModelChoiceField(queryset=Category.objects.none(), required=False)
     notes = forms.CharField(required=False)
 

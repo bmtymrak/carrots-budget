@@ -7,20 +7,15 @@ from django.urls import reverse
 from decimal import Decimal
 
 from purchases.models import Category, Purchase, Income, RecurringPurchase
-from purchases.forms import IncomeForm
-from budgets.models import YearlyBudget, MonthlyBudget
+from budgets.models import YearlyBudget
 from .factories import (
     CategoryFactory,
     SubcategoryFactory,
-    PurchaseFactory,
-    IncomeFactory,
     RecurringPurchaseFactory,
 )
 
 
 User = get_user_model()
-
-
 
 
 class PurchaseViewTests(TestCase):
