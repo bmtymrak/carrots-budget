@@ -191,6 +191,16 @@ class RecurringPurchaseAddRowForm(forms.Form):
             if cleaned_data.get(field_name) in (None, ""):
                 self.add_error(field_name, "This field is required.")
 
+        submitted_date = cleaned_data.get("date")
+        if submitted_date and (
+            submitted_date.year != self.purchase_date.year
+            or submitted_date.month != self.purchase_date.month
+        ):
+            self.add_error(
+                "date",
+                "Date must be within the selected month.",
+            )
+
         return cleaned_data
 
     def is_selected(self):

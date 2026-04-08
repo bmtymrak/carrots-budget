@@ -230,7 +230,7 @@ a {
     align-items: center;
 }
 
-.grid-cell-truncate>div {
+.grid-cell-truncate:not(.recurring-add-cell)>div {
     white-space: nowrap;
     overflow: hidden;
 }

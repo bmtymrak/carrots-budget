@@ -216,6 +216,28 @@ class TestRecurringPurchaseAddToMonthFormSet(TestCase):
         self.assertTrue(formset.is_valid())
         self.assertIsNone(formset.selected_purchases[0]["amount"])
 
+    def test_selected_row_date_must_match_selected_month(self):
+        formset = RecurringPurchaseAddToMonthFormSet(
+            data={
+                **self._management_form_data(1),
+                "form-0-selected": "on",
+                "form-0-recurring_purchase_id": str(self.recurring.pk),
+                "form-0-date": "2024-02-15",
+                "form-0-amount": "15.99",
+                "form-0-category": str(self.user1_category.pk),
+            },
+            user=self.user1,
+            recurring_purchases=[self.recurring],
+            purchase_date=datetime.date(2024, 1, 1),
+        )
+
+        self.assertFalse(formset.is_valid())
+        self.assertIn("date", formset.forms[0].errors)
+        self.assertIn(
+            "Date must be within the selected month.",
+            formset.forms[0].errors["date"],
+        )
+
     def test_tampered_recurring_purchase_id_is_rejected(self):
         other_recurring = RecurringPurchaseFactory(
             user=self.user1,

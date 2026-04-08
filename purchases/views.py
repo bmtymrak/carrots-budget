@@ -296,9 +296,9 @@ def recurring_purchase_delete(request, pk):
 def recurring_purchase_add_to_month(request, year, month):
     """Add recurring purchases to a specific month as actual purchases."""
     monthly_budget = get_object_or_404(MonthlyBudget, user=request.user, date__year=year, date__month=month)
-    recurring_purchases = RecurringPurchase.objects.filter(
+    recurring_purchases = list(RecurringPurchase.objects.filter(
         user=request.user, is_active=True
-    ).select_related("category")
+    ).select_related("category"))
     next_url = request.GET.get(
         "next", reverse("monthly_detail", kwargs={"year": year, "month": month})
     )
@@ -306,12 +306,12 @@ def recurring_purchase_add_to_month(request, year, month):
     # Check which recurring purchases have already been added this month
     # by looking for purchases with a foreign key to a recurring purchase
     purchase_date = monthly_budget.date
-    already_added_purchases = Purchase.objects.filter(
+    already_added_purchases = list(Purchase.objects.filter(
         user=request.user,
         date__year=year,
         date__month=month,
         recurring_purchase__isnull=False
-    ).select_related("category", "recurring_purchase")
+    ).select_related("category", "recurring_purchase"))
     
     # Create a dict mapping recurring_purchase_id to the actual purchase details
     already_added_details = {
@@ -326,7 +326,10 @@ def recurring_purchase_add_to_month(request, year, month):
         }
         for p in already_added_purchases
     }
-    already_added = set(already_added_details.keys())
+    already_added = {
+        purchase.recurring_purchase_id
+        for purchase in already_added_purchases
+    }
     formset_kwargs = {
         "user": request.user,
         "recurring_purchases": recurring_purchases,
@@ -373,7 +376,7 @@ def recurring_purchase_add_to_month(request, year, month):
             "has_form_errors": formset.is_bound and (formset.total_error_count() > 0 or bool(formset.non_form_errors())),
             "formset": formset,
             "monthly_budget": monthly_budget,
-            "all_already_added": len(already_added) == recurring_purchases.count() and recurring_purchases.exists(),
+            "all_already_added": bool(recurring_purchases) and len(already_added) == len(recurring_purchases),
             "next": next_url,
         },
     )

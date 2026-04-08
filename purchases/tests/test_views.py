@@ -263,6 +263,8 @@ class RecurringPurchaseViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'purchases/recurring_purchase_edit_modal.html')
+        self.assertContains(response, 'hx-target="#modal-content"', html=False)
+        self.assertContains(response, 'hx-swap="innerHTML"', html=False)
 
     def test_recurring_purchase_edit_view_post(self):
         """Test POST request to update a recurring purchase."""
