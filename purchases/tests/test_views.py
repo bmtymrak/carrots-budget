@@ -6,19 +6,16 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
 
-from purchases.models import Category, Purchase, Income
-from purchases.forms import IncomeForm
+from purchases.models import Category, Purchase, Income, RecurringPurchase
+from budgets.models import YearlyBudget
 from .factories import (
     CategoryFactory,
     SubcategoryFactory,
-    PurchaseFactory,
-    IncomeFactory,
+    RecurringPurchaseFactory,
 )
 
 
 User = get_user_model()
-
-
 
 
 class PurchaseViewTests(TestCase):
@@ -305,3 +302,506 @@ class CategoryViewTests(TestCase):
         category2.refresh_from_db()
         # Name should not have changed
         self.assertEqual(category2.name, 'Category Two')
+
+@override_settings(
+    STORAGES={
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+)
+class RecurringPurchaseViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = get_user_model().objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+        self.client.login(username='testuser', password='testpass123')
+        self.category = CategoryFactory(user=self.user)
+
+    def _management_form_data(self, total_forms):
+        return {
+            'form-TOTAL_FORMS': str(total_forms),
+            'form-INITIAL_FORMS': '0',
+            'form-MIN_NUM_FORMS': '0',
+            'form-MAX_NUM_FORMS': '1000',
+        }
+
+    def _build_add_to_month_post_data(self, rows, next_url='/'):
+        data = {
+            **self._management_form_data(len(rows)),
+            'next': next_url,
+        }
+
+        for index, row in enumerate(rows):
+            recurring = row['recurring']
+            data[f'form-{index}-recurring_purchase_id'] = str(
+                row.get('recurring_purchase_id', recurring.pk)
+            )
+
+            if row.get('selected', True):
+                data[f'form-{index}-selected'] = 'on'
+
+            data[f'form-{index}-date'] = row.get('date', '2024-01-01')
+            data[f'form-{index}-amount'] = row.get('amount', str(recurring.amount))
+            data[f'form-{index}-source'] = row.get('source', recurring.source)
+            data[f'form-{index}-location'] = row.get('location', recurring.location)
+            data[f'form-{index}-category'] = row.get('category', str(recurring.category_id))
+            data[f'form-{index}-notes'] = row.get('notes', recurring.notes)
+
+        return data
+
+    def test_recurring_purchase_list_view_get(self):
+        """Test GET request to recurring purchase list."""
+        response = self.client.get(
+            reverse('recurring_purchase_list'),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_list_modal.html')
+
+    def test_recurring_purchase_create_via_list(self):
+        """Test creating a recurring purchase via the list view."""
+        response = self.client.post(
+            reverse('recurring_purchase_list'),
+            {
+                'item': 'Netflix',
+                'amount': '15.99',
+                'category': self.category.id,
+                'source': 'Netflix Inc',
+                'location': 'Online',
+                'notes': 'Monthly subscription',
+                'is_active': True,
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)  # HTMX redirect
+        self.assertTrue(
+            RecurringPurchase.objects.filter(
+                user=self.user,
+                item='Netflix'
+            ).exists()
+        )
+
+    def test_recurring_purchase_edit_view_get(self):
+        """Test GET request to recurring purchase edit view."""
+        recurring = RecurringPurchaseFactory(user=self.user, category=self.category)
+        response = self.client.get(
+            reverse('recurring_purchase_edit', kwargs={'pk': recurring.pk}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_edit_modal.html')
+        self.assertContains(response, 'hx-target="#modal-content"', html=False)
+        self.assertContains(response, 'hx-swap="innerHTML"', html=False)
+
+    def test_recurring_purchase_edit_view_post(self):
+        """Test POST request to update a recurring purchase."""
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Old Name',
+            amount=Decimal('10.00')
+        )
+        response = self.client.post(
+            reverse('recurring_purchase_edit', kwargs={'pk': recurring.pk}),
+            {
+                'item': 'New Name',
+                'amount': '20.00',
+                'category': self.category.id,
+                'source': 'New Source',
+                'location': 'New Location',
+                'notes': 'Updated notes',
+                'is_active': True,
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)  # HTMX redirect
+        recurring.refresh_from_db()
+        self.assertEqual(recurring.item, 'New Name')
+        self.assertEqual(recurring.amount, Decimal('20.00'))
+
+    def test_recurring_purchase_delete_view_get(self):
+        """Test GET request to recurring purchase delete view."""
+        recurring = RecurringPurchaseFactory(user=self.user, category=self.category)
+        response = self.client.get(
+            reverse('recurring_purchase_delete', kwargs={'pk': recurring.pk}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_delete_modal.html')
+
+    def test_recurring_purchase_delete_view_delete(self):
+        """Test DELETE request to delete a recurring purchase."""
+        recurring = RecurringPurchaseFactory(user=self.user, category=self.category)
+        recurring_id = recurring.pk
+        response = self.client.delete(
+            reverse('recurring_purchase_delete', kwargs={'pk': recurring.pk}) + '?next=/'
+        )
+        self.assertEqual(response.status_code, 200)  # HTMX redirect
+        self.assertFalse(
+            RecurringPurchase.objects.filter(pk=recurring_id).exists()
+        )
+
+    def test_recurring_purchase_add_to_month_view_get(self):
+        """Test GET request to add recurring purchases to month."""
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(user=self.user, category=self.category)
+        
+        response = self.client.get(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'purchases/recurring_purchase_add_to_month_modal.html')
+        self.assertContains(response, 'hx-target="#modal-content"', html=False)
+        self.assertContains(response, 'hx-swap="innerHTML"', html=False)
+
+    def test_recurring_purchase_add_to_month_creates_purchases(self):
+        """Test that submitting the form creates actual purchases."""
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Netflix',
+            amount=Decimal('15.99'),
+            source='Netflix Inc',
+            location='Online'
+        )
+        
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            self._build_add_to_month_post_data(
+                [
+                    {
+                        'recurring': recurring,
+                        'amount': '15.99',
+                        'source': 'Netflix Inc',
+                        'location': 'Online',
+                        'category': str(self.category.id),
+                        'notes': 'Monthly sub',
+                    }
+                ]
+            )
+        )
+        self.assertEqual(response.status_code, 200)  # HTMX redirect
+        
+        # Check that a purchase was created with the foreign key set
+        purchase = Purchase.objects.get(user=self.user, item='Netflix')
+        self.assertEqual(purchase.amount, Decimal('15.99'))
+        self.assertEqual(purchase.category, self.category)
+        self.assertEqual(purchase.date, datetime.date(2024, 1, 1))
+        self.assertEqual(purchase.recurring_purchase, recurring)
+
+    def test_recurring_purchase_already_added_detected_by_fk(self):
+        """Test that recurring purchases are detected as already added via FK."""
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Netflix',
+            amount=Decimal('15.99')
+        )
+        
+        # Create an existing purchase with the recurring_purchase FK set
+        Purchase.objects.create(
+            user=self.user,
+            item='Netflix',
+            date=datetime.date(2024, 1, 15),
+            amount=Decimal('15.99'),
+            category=self.category,
+            recurring_purchase=recurring
+        )
+        
+        response = self.client.get(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            {'next': '/'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(recurring.id, response.context['already_added'])
+
+    def test_recurring_purchase_add_with_modified_amount(self):
+        """Test that modified amounts are used when creating purchases."""
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Spotify',
+            amount=Decimal('9.99')
+        )
+        
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            self._build_add_to_month_post_data(
+                [
+                    {
+                        'recurring': recurring,
+                        'amount': '14.99',
+                        'source': recurring.source,
+                        'location': recurring.location,
+                        'category': str(self.category.id),
+                        'notes': recurring.notes,
+                    }
+                ]
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        
+        purchase = Purchase.objects.get(user=self.user, item='Spotify')
+        self.assertEqual(purchase.amount, Decimal('14.99'))
+
+    def test_recurring_purchase_add_allows_blank_amount(self):
+        """Test that selected recurring purchases can be created without an amount."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Daycare',
+            amount=Decimal('1500.00')
+        )
+
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            self._build_add_to_month_post_data(
+                [
+                    {
+                        'recurring': recurring,
+                        'amount': '',
+                        'source': recurring.source,
+                        'location': recurring.location,
+                        'category': str(self.category.id),
+                        'notes': recurring.notes,
+                    }
+                ]
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        purchase = Purchase.objects.get(user=self.user, item='Daycare')
+        self.assertIsNone(purchase.amount)
+
+    def test_recurring_purchase_post_does_not_duplicate_existing_month_entry(self):
+        """Test POST path skips a recurring purchase already added for that month."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Netflix',
+            amount=Decimal('15.99')
+        )
+
+        Purchase.objects.create(
+            user=self.user,
+            item='Netflix',
+            date=datetime.date(2024, 1, 10),
+            amount=Decimal('15.99'),
+            category=self.category,
+            recurring_purchase=recurring,
+        )
+
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            self._build_add_to_month_post_data(
+                [
+                    {
+                        'recurring': recurring,
+                        'amount': '15.99',
+                        'source': recurring.source,
+                        'location': recurring.location,
+                        'category': str(self.category.id),
+                        'notes': recurring.notes,
+                    }
+                ]
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Purchase.objects.filter(
+                user=self.user,
+                recurring_purchase=recurring,
+                date__year=2024,
+                date__month=1,
+            ).count(),
+            1,
+        )
+
+    def test_recurring_purchase_post_rejects_tampered_recurring_purchase_id(self):
+        """Test tampering with a row recurring_purchase_id re-renders with validation errors."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='GitHub',
+            amount=Decimal('4.00')
+        )
+
+        other_recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Other',
+            amount=Decimal('7.00')
+        )
+
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            self._build_add_to_month_post_data(
+                [
+                    {
+                        'recurring': recurring,
+                        'recurring_purchase_id': str(other_recurring.pk),
+                        'amount': '4.00',
+                        'source': recurring.source,
+                        'location': recurring.location,
+                        'category': str(self.category.id),
+                        'notes': recurring.notes,
+                    },
+                    {
+                        'recurring': other_recurring,
+                        'selected': False,
+                    },
+                ]
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            Purchase.objects.filter(
+                user=self.user,
+                recurring_purchase=recurring,
+                date__year=2024,
+                date__month=1,
+            ).exists()
+        )
+        self.assertFormError(
+            response.context['formset'].forms[0],
+            'recurring_purchase_id',
+            'Recurring purchase does not match this row.'
+        )
+
+    def test_invalid_post_preserves_selected_state_without_mutating_already_added(self):
+        """Invalid POST should preserve user input separately from persisted already-added state."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1)
+        )
+        existing_recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Netflix',
+            amount=Decimal('15.99')
+        )
+        selected_recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Spotify',
+            amount=Decimal('9.99')
+        )
+        other_user = get_user_model().objects.create_user(
+            username='otheruser',
+            email='other@example.com',
+            password='testpass123'
+        )
+        other_category = CategoryFactory(user=other_user)
+
+        Purchase.objects.create(
+            user=self.user,
+            item='Netflix',
+            date=datetime.date(2024, 1, 10),
+            amount=Decimal('15.99'),
+            category=self.category,
+            recurring_purchase=existing_recurring,
+        )
+
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
+            self._build_add_to_month_post_data(
+                [
+                    {
+                        'recurring': existing_recurring,
+                        'selected': False,
+                    },
+                    {
+                        'recurring': selected_recurring,
+                        'date': '2024-01-18',
+                        'amount': '12.34',
+                        'source': 'Updated source',
+                        'location': 'Updated location',
+                        'category': str(other_category.pk),
+                        'notes': 'Updated notes',
+                    },
+                ]
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        formset = response.context['formset']
+        self.assertTrue(formset.forms[0].already_added)
+        self.assertEqual(formset.forms[1]['amount'].value(), '12.34')
+        self.assertTrue(formset.forms[1]['selected'].value())
+        self.assertContains(
+            response,
+            'name="form-1-selected"',
+            html=False,
+        )
+        self.assertContains(response, 'Please correct the highlighted recurring purchase values and try again.')
+
+    def test_invalid_post_renders_single_heading(self):
+        """Invalid recurring purchase submission should render the modal heading exactly once."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2028, 2, 1)
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item='Daycare',
+            amount=Decimal('1500.00')
+        )
+
+        response = self.client.post(
+            reverse('recurring_purchase_add_to_month', kwargs={'year': 2028, 'month': 2}),
+            self._build_add_to_month_post_data(
+                [
+                    {
+                        'recurring': recurring,
+                        'category': '',
+                    }
+                ]
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            '<h2>Add Recurring Purchases for February 2028</h2>',
+            html=False,
+            count=1,
+        )
+        self.assertContains(response, 'This field is required.')

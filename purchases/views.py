@@ -1,22 +1,24 @@
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy, reverse
 from django.views.generic import (
     ListView,
     CreateView,
-    DetailView,
-    DeleteView,
-    UpdateView,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseRedirect
 from django.db import IntegrityError, transaction
 import datetime
 
-from .models import Purchase, Category, Income
-from .forms import PurchaseForm, PurchaseFormSet, PurchaseFormSetReceipt, IncomeForm
+from .models import Purchase, Category, Income, RecurringPurchase
+from .forms import (
+    PurchaseForm,
+    PurchaseFormSetReceipt,
+    IncomeForm,
+    RecurringPurchaseForm,
+    RecurringPurchaseAddToMonthFormSet,
+)
 from django_htmx.http import HttpResponseClientRedirect
+from budgets.models import MonthlyBudget
 
 
 class AddUserMixin:
@@ -95,7 +97,7 @@ def purchase_delete_htmx(request, pk):
 
     return render(
         request,
-        "purchases/purchase_delete_htmx.html",
+        "purchases/purchase_delete_modal.html",
         {"purchase": purchase, "next": next},
     )
 
@@ -113,7 +115,7 @@ def income_delete_htmx(request, pk):
 
     return render(
         request,
-        "purchases/income_delete_htmx.html",
+        "purchases/income_delete_modal.html",
         {"income": income, "next": next},
     )
 
@@ -197,7 +199,7 @@ def purchase_edit(request, pk):
 
     return render(
         request,
-        "purchases/purchase_edit_htmx.html",
+        "purchases/purchase_edit_modal.html",
         {"form": form, "purchase": purchase, "next": next},
     )
 
@@ -220,7 +222,7 @@ def income_edit(request, pk):
 
     return render(
         request,
-        "purchases/income_edit_htmx.html",
+        "purchases/income_edit_modal.html",
         {"form": form, "income": income, "next": next},
     )
 
@@ -244,6 +246,167 @@ def income_create(request):
 
     return render(
         request,
-        "purchases/income_create_htmx.html",
+        "purchases/income_create_modal.html",
         {"form": form, "next": next},
+    )
+
+
+@login_required
+def recurring_purchase_list(request):
+    """List all recurring purchases for the user with option to create new ones."""
+    recurring_purchases = RecurringPurchase.objects.filter(
+        user=request.user
+    ).select_related("category")
+    form = RecurringPurchaseForm(user=request.user)
+    next_url = request.GET.get("next", reverse("yearly_list"))
+
+    if request.method == "POST":
+        form = RecurringPurchaseForm(data=request.POST, user=request.user)
+        form.instance.user = request.user
+
+        if form.is_valid():
+            form.save()
+            form = RecurringPurchaseForm(user=request.user)
+            recurring_purchases = RecurringPurchase.objects.filter(
+                user=request.user
+            ).select_related("category")
+
+    return render(
+        request,
+        "purchases/recurring_purchase_list_modal.html",
+        {
+            "recurring_purchases": recurring_purchases,
+            "form": form,
+            "next": next_url,
+        },
+    )
+
+
+@login_required
+def recurring_purchase_edit(request, pk):
+    """Edit a recurring purchase."""
+    recurring_purchase = get_object_or_404(RecurringPurchase, user=request.user, pk=pk)
+    form = RecurringPurchaseForm(instance=recurring_purchase, user=request.user)
+    next_url = request.GET.get("next", reverse("yearly_list"))
+
+    if request.method == "POST":
+        next_url = request.POST.get("next", next_url)
+        form = RecurringPurchaseForm(
+            instance=recurring_purchase, data=request.POST, user=request.user
+        )
+        if form.is_valid():
+            form.save()
+            return HttpResponseClientRedirect(next_url)
+
+    return render(
+        request,
+        "purchases/recurring_purchase_edit_modal.html",
+        {"form": form, "recurring_purchase": recurring_purchase, "next": next_url},
+    )
+
+
+@login_required
+def recurring_purchase_delete(request, pk):
+    """Delete a recurring purchase."""
+    recurring_purchase = get_object_or_404(RecurringPurchase, user=request.user, pk=pk)
+    next_url = request.GET.get("next", reverse("yearly_list"))
+
+    if request.method == "DELETE":
+        recurring_purchase.delete()
+        return HttpResponseClientRedirect(next_url)
+
+    return render(
+        request,
+        "purchases/recurring_purchase_delete_modal.html",
+        {"recurring_purchase": recurring_purchase, "next": next_url},
+    )
+
+
+@login_required
+def recurring_purchase_add_to_month(request, year, month):
+    """Add recurring purchases to a specific month as actual purchases."""
+    monthly_budget = get_object_or_404(MonthlyBudget, user=request.user, date__year=year, date__month=month)
+    recurring_purchases = list(RecurringPurchase.objects.filter(
+        user=request.user, is_active=True
+    ).select_related("category"))
+    next_url = request.GET.get(
+        "next", reverse("monthly_detail", kwargs={"year": year, "month": month})
+    )
+    
+    # Check which recurring purchases have already been added this month
+    # by looking for purchases with a foreign key to a recurring purchase
+    purchase_date = monthly_budget.date
+    already_added_purchases = list(Purchase.objects.filter(
+        user=request.user,
+        date__year=year,
+        date__month=month,
+        recurring_purchase__isnull=False
+    ).select_related("category", "recurring_purchase"))
+    
+    # Create a dict mapping recurring_purchase_id to the actual purchase details
+    already_added_details = {
+        p.recurring_purchase_id: {
+            "date": p.date,
+            "amount": p.amount,
+            "source": p.source,
+            "location": p.location,
+            "category": p.category,
+            "category_id": p.category_id,
+            "notes": p.notes,
+        }
+        for p in already_added_purchases
+    }
+    already_added = {
+        purchase.recurring_purchase_id
+        for purchase in already_added_purchases
+    }
+    formset_kwargs = {
+        "user": request.user,
+        "recurring_purchases": recurring_purchases,
+        "purchase_date": purchase_date,
+        "already_added_details": already_added_details,
+    }
+
+    if request.method == "POST":
+        next_url = request.POST.get("next", next_url)
+        formset = RecurringPurchaseAddToMonthFormSet(
+            data=request.POST,
+            **formset_kwargs,
+        )
+
+        if formset.is_valid():
+            for selected_purchase in formset.selected_purchases:
+                recurring = selected_purchase["recurring_purchase"]
+                if recurring.id in already_added:
+                    continue
+
+                Purchase.objects.create(
+                    user=request.user,
+                    item=recurring.item,
+                    date=selected_purchase["date"],
+                    amount=selected_purchase["amount"],
+                    source=selected_purchase["source"],
+                    location=selected_purchase["location"],
+                    category=selected_purchase["category"],
+                    notes=selected_purchase["notes"],
+                    savings=False,
+                    recurring_purchase=recurring,
+                )
+                already_added.add(recurring.id)
+
+            return HttpResponseClientRedirect(next_url)
+    else:
+        formset = RecurringPurchaseAddToMonthFormSet(**formset_kwargs)
+
+    return render(
+        request,
+        "purchases/recurring_purchase_add_to_month_modal.html",
+        {
+            "already_added": already_added,
+            "has_form_errors": formset.is_bound and (formset.total_error_count() > 0 or bool(formset.non_form_errors())),
+            "formset": formset,
+            "monthly_budget": monthly_budget,
+            "all_already_added": bool(recurring_purchases) and len(already_added) == len(recurring_purchases),
+            "next": next_url,
+        },
     )
