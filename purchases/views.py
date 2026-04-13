@@ -6,6 +6,7 @@ from django.views.generic import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError, transaction
 import datetime
 
 from .models import Purchase, Category, Income, RecurringPurchase
@@ -47,6 +48,40 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
         categories = Category.objects.filter(user=self.request.user)
         kwargs.update({"categories": categories})
         return kwargs
+
+
+@login_required
+def category_edit(request, pk):
+    category = get_object_or_404(Category, user=request.user, pk=pk)
+    error_message = None
+
+    if request.method == "POST":
+        next = request.POST.get("next")
+        new_name = request.POST.get("name", "").strip()
+        rollover = request.POST.get("rollover") == "on"
+        
+        # Always update rollover, only update name if it's not empty
+        category.rollover = rollover
+        if new_name:
+            category.name = new_name
+        
+        try:
+            with transaction.atomic():
+                category.save()
+            return HttpResponseClientRedirect(next)
+        except IntegrityError:
+            # Handle duplicate category name - reload from DB to reset state
+            category.refresh_from_db()
+            error_message = "A category with this name already exists."
+
+    if request.method == "GET":
+        next = request.GET.get("next", "/")
+
+    return render(
+        request,
+        "purchases/category_edit_htmx.html",
+        {"category": category, "next": next, "error": error_message},
+    )
 
 
 @login_required

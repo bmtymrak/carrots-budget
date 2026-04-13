@@ -1,16 +1,44 @@
 {% extends "_base.html" %}
+{% load static %}
+
+{% block header %}
+<h1 class="page-title">Categories</h1>
+{% endblock header %}
 
 {% block body %}
+<div class="category-management-layout">
+    <section class="card-base category-card">
+        <div class="card-header">
+            <h2>Create Category</h2>
+        </div>
+        <form method="POST" class="category-form">
+            {% csrf_token %}
+            {{ form.as_p}}
+            <button type="submit" class="button-create category-submit-button">Create</button>
+        </form>
+    </section>
 
-<form method="POST">
-    {% csrf_token %}
-    {{ form.as_p}}
-    <button type="submit">Create</button>
-</form>
-
-<ul>
-    {% for category in categories %}
-    <li>{{category.name}}</li>
-    {% endfor %}
-</ul>
+    <section class="card-base category-card">
+        <div class="card-header">
+            <h2>Existing Categories</h2>
+        </div>
+        <ul class="category-list">
+            {% for category in categories %}
+            <li class="category-list-item">
+                <div class="category-list-text">
+                    <span class="category-name">{{ category.name }}</span>
+                    {% if category.rollover %}
+                    <span class="category-tag">Rollover</span>
+                    {% endif %}
+                </div>
+                <button class="button-blank category-edit-button" hx-get='{% url "category_edit_htmx" pk=category.id %}?next={{request.path|urlencode}}' hx-target="#modal-content" aria-label="Edit {{ category.name }}">
+                    <img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px" alt="Edit">
+                </button>
+            </li>
+            {% empty %}
+            <li class="category-empty-state">No categories yet.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
 {% endblock body %}
