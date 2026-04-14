@@ -6,14 +6,6 @@ class HomePageView(TemplateView):
     template_name = "home.html"
 
     def dispatch(self, request, *args, **kwargs):
-        if request.method.lower() in self.http_method_names:
-            handler = getattr(
-                self, request.method.lower(), self.http_method_not_allowed
-            )
-        else:
-            handler = self.http_method_not_allowed
-
-        if self.request.user.is_authenticated:
+        if request.user.is_authenticated:
             return redirect("yearly_list")
-        else:
-            return handler(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
