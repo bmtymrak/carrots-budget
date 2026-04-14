@@ -38,7 +38,7 @@ class TestBaseTemplateModalFocus(TestCase):
             email="modalfocus@test.com", username="modalfocus", password="testpass123"
         )
 
-    def test_modal_script_uses_shared_focus_helper(self):
+    def test_base_template_includes_modal_focus_function(self):
         self.client.login(email="modalfocus@test.com", password="testpass123")
 
         response = self.client.get(reverse("yearly_list"))
