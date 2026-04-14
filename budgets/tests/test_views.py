@@ -38,17 +38,14 @@ class TestBaseTemplateModalFocus(TestCase):
             email="modalfocus@test.com", username="modalfocus", password="testpass123"
         )
 
-    def test_modal_script_focuses_first_interactive_element(self):
+    def test_modal_script_uses_shared_focus_helper(self):
         self.client.login(email="modalfocus@test.com", password="testpass123")
 
         response = self.client.get(reverse("yearly_list"))
 
-        self.assertContains(
-            response,
-            'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
-            html=False,
-        )
-        self.assertContains(response, "firstInteractiveElement.focus()", html=False)
+        self.assertContains(response, "function focusFirstModalElement()", html=False)
+        self.assertContains(response, "modalContent.querySelector(", html=False)
+        self.assertContains(response, "focusFirstModalElement()", html=False)
         self.assertNotContains(response, "#id_form-0-date", html=False)
 
 
