@@ -1,7 +1,7 @@
 import datetime
 from urllib.parse import quote
 
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
@@ -19,6 +19,34 @@ from purchases.tests.factories import CategoryFactory, PurchaseFactory, IncomeFa
 
 
 User = get_user_model()
+
+TEST_STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+
+@override_settings(STORAGES=TEST_STORAGES)
+class TestBaseTemplateModalFocus(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            email="modalfocus@test.com", username="modalfocus", password="testpass123"
+        )
+
+    def test_modal_focuses_first_interactive_element(self):
+        self.client.login(email="modalfocus@test.com", password="testpass123")
+
+        response = self.client.get(reverse("yearly_list"))
+
+        self.assertContains(response, "function focusFirstModalElement()", html=False)
+        self.assertContains(response, "modalContent.querySelector(", html=False)
+        self.assertContains(response, "focusFirstModalElement()", html=False)
+        self.assertNotContains(response, "#id_form-0-date", html=False)
 
 
 class TestYearlyBudgetDetailView(TestCase):
