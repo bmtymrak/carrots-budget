@@ -63,7 +63,18 @@
 
 <script>
     const modal = document.querySelector("#modal")
+    const modalContent = document.querySelector("#modal-content")
     const overlay = document.querySelector(".overlay")
+
+    function focusFirstModalElement(){
+        const firstInteractiveElement = modalContent.querySelector(
+            'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+        )
+
+        if (firstInteractiveElement){
+            firstInteractiveElement.focus()
+        }
+    }
 
     function showModal(){
         modal.classList.remove("hidden")
@@ -78,11 +89,7 @@
     htmx.on("htmx:afterSwap", (e) => {
         if (e.detail.target.id == "modal-content") {
           showModal()
-          const dateInput = document.querySelector("#id_form-0-date")
-
-          if (dateInput){
-            dateInput.focus()
-          }
+          focusFirstModalElement()
         }
       })
 
