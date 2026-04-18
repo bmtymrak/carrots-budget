@@ -36,6 +36,10 @@ class IncomeFormTest(TestCase):
         form = IncomeForm(user=self.user1)
         self.assertTrue(len(form.fields["category"].queryset) == 1)
 
+    def test_date_field_uses_date_picker_widget(self):
+        form = IncomeForm(user=self.user1)
+        self.assertEqual(form.fields["date"].widget.input_type, "date")
+
 
 class TestPurchaseForm(TestCase):
     @classmethod
@@ -76,6 +80,10 @@ class TestPurchaseForm(TestCase):
 
         self.assertEqual(len(form.fields["subcategory"].queryset), 1)
         self.assertEqual(subcategory_user, self.user1)
+
+    def test_date_field_uses_date_picker_widget(self):
+        form = PurchaseForm(user=self.user1)
+        self.assertEqual(form.fields["date"].widget.input_type, "date")
 
 
 class TestRecurringPurchaseAddToMonthFormSet(TestCase):
@@ -179,6 +187,15 @@ class TestRecurringPurchaseAddToMonthFormSet(TestCase):
         self.assertEqual(row_form.initial["amount"], Decimal("15.99"))
         self.assertEqual(row_form.initial["category"], self.user1_category)
         self.assertTrue(row_form.initial["selected"])
+
+    def test_row_date_field_uses_date_picker_widget(self):
+        formset = RecurringPurchaseAddToMonthFormSet(
+            user=self.user1,
+            recurring_purchases=[self.recurring],
+            purchase_date=datetime.date(2024, 1, 1),
+        )
+
+        self.assertEqual(formset.forms[0].fields["date"].widget.input_type, "date")
 
     def test_category_must_belong_to_user(self):
         formset = RecurringPurchaseAddToMonthFormSet(

@@ -5,6 +5,10 @@ from .models import Purchase, Category, Subcategory, Income, RecurringPurchase
 from budgets.models import BudgetItem, YearlyBudget
 
 
+def date_picker_widget(attrs=None):
+    return forms.DateInput(attrs={"type": "date", **(attrs or {})})
+
+
 class PurchaseForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
@@ -48,7 +52,9 @@ class PurchaseForm(ModelForm):
         self.fields["notes"].widget.attrs.update(
             placeholder="Notes", rows="1", cols="15"
         )
-        self.fields["date"].widget.attrs.update(placeholder="Date", size="10")
+        self.fields["date"].widget = date_picker_widget(
+            {"placeholder": "Date", "size": "10"}
+        )
         self.fields["savings"].label = "Savings"
 
     class Meta:
@@ -75,6 +81,7 @@ class IncomeForm(ModelForm):
         self.user = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         self.fields["category"].queryset = Category.objects.filter(user=self.user)
+        self.fields["date"].widget = date_picker_widget()
 
     class Meta:
         model = Income
@@ -146,8 +153,8 @@ class RecurringPurchaseAddRowForm(forms.Form):
                 self.fields[field_name].disabled = True
 
     def _configure_widgets(self):
-        self.fields["date"].widget = forms.DateInput(
-            attrs={"class": "recurring-input-date", "type": "date"}
+        self.fields["date"].widget = date_picker_widget(
+            {"class": "recurring-input-date"}
         )
         self.fields["amount"].widget.attrs.update(
             {"class": "recurring-input-amount", "step": "0.01", "min": "0"}
