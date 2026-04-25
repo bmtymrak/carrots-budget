@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup 3: Minimal Yearly Budget - 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            font-size: 2em;
+            color: #00ff00;
+            font-weight: normal;
+        }
+
+        .nav-links {
+            margin-top: 10px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #00ff00;
+            text-decoration: none;
+            padding: 3px 8px;
+            border: 1px solid #00ff00;
+        }
+
+        .nav-links a:hover {
+            background-color: #00ff00;
+            color: #1a1a1a;
+        }
+
+        .command-line {
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .command-line .prompt {
+            color: #00ff00;
+        }
+
+        .command-line .output {
+            color: #e0e0e0;
+            margin-top: 5px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #00ff00;
+            font-size: 1.3em;
+            font-weight: normal;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 5px;
+        }
+
+        .data-grid {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .data-row {
+            display: grid;
+            grid-template-columns: 200px repeat(6, 1fr) 60px;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .data-row.header {
+            color: #00ff00;
+            border-bottom: 2px solid #00ff00;
+            font-weight: bold;
+        }
+
+        .data-row.total {
+            border-top: 2px solid #00ff00;
+            border-bottom: 2px solid #00ff00;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .data-row:hover {
+            background-color: #252525;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .positive {
+            color: #00ff00;
+        }
+
+        .negative {
+            color: #ff0066;
+        }
+
+        .actions {
+            text-align: right;
+        }
+
+        .actions a {
+            color: #00ff00;
+            text-decoration: none;
+            padding: 0 5px;
+        }
+
+        .actions a:hover {
+            background-color: #00ff00;
+            color: #1a1a1a;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            padding: 12px;
+        }
+
+        .summary-label {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 1.5em;
+            color: #00ff00;
+        }
+
+        .summary-value.positive {
+            color: #00ff00;
+        }
+
+        .summary-value.negative {
+            color: #ff0066;
+        }
+
+        select {
+            background-color: #0a0a0a;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .ytd-selector {
+            margin: 15px 0;
+        }
+
+        .compact-list {
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            padding: 15px;
+        }
+
+        .list-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a2a;
+            display: grid;
+            grid-template-columns: 100px 150px 150px 100px 1fr 60px;
+            gap: 10px;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item:hover {
+            background-color: #252525;
+        }
+
+        button {
+            background-color: transparent;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 5px 10px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #00ff00;
+            color: #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>$ budget --year 2025</h1>
+            <div class="nav-links">
+                <a href="#">jan</a>
+                <a href="#">feb</a>
+                <a href="#">mar</a>
+                <a href="#">apr</a>
+                <a href="#">may</a>
+                <a href="#">jun</a>
+                <a href="#">jul</a>
+                <a href="#">aug</a>
+                <a href="#">sep</a>
+                <a href="#">oct</a>
+                <a href="#">nov</a>
+                <a href="#">dec</a>
+            </div>
+        </header>
+
+        <div class="command-line">
+            <div class="prompt">$ budget add --help</div>
+            <div class="output">
+                <button>purchase</button>
+                <button>income</button>
+                <button>category</button>
+                <button>recurring</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## SUMMARY --full-year</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">budgeted</div>
+                    <div class="summary-value">$48,500.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">spent</div>
+                    <div class="summary-value">$42,150.75</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">saved</div>
+                    <div class="summary-value positive">$8,200.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">income</div>
+                    <div class="summary-value">$65,000.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">budgeted_income</div>
+                    <div class="summary-value">$60,000.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">remaining</div>
+                    <div class="summary-value positive">$14,649.25</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## SUMMARY --ytd</h2>
+            <div class="ytd-selector">
+                <span style="color: #888;">through:</span>
+                <select>
+                    <option>01-jan</option>
+                    <option>02-feb</option>
+                    <option>03-mar</option>
+                    <option selected>04-apr</option>
+                    <option>05-may</option>
+                    <option>06-jun</option>
+                    <option>07-jul</option>
+                    <option>08-aug</option>
+                    <option>09-sep</option>
+                    <option>10-oct</option>
+                    <option>11-nov</option>
+                    <option>12-dec</option>
+                </select>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">budgeted_ytd</div>
+                    <div class="summary-value">$16,200.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">spent_ytd</div>
+                    <div class="summary-value">$14,050.25</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">saved_ytd</div>
+                    <div class="summary-value positive">$2,800.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">income_ytd</div>
+                    <div class="summary-value">$21,666.67</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## SPENDING --type=expense</h2>
+            <div class="data-grid">
+                <div class="data-row header">
+                    <div>category</div>
+                    <div class="text-right">budget_ytd</div>
+                    <div class="text-right">spent_ytd</div>
+                    <div class="text-right">diff_ytd</div>
+                    <div class="text-right">budget_yr</div>
+                    <div class="text-right">spent_yr</div>
+                    <div class="text-right">diff_yr</div>
+                    <div class="actions">act</div>
+                </div>
+                <div class="data-row">
+                    <div>groceries</div>
+                    <div class="text-right">2000.00</div>
+                    <div class="text-right">1845.50</div>
+                    <div class="text-right positive">+154.50</div>
+                    <div class="text-right">6000.00</div>
+                    <div class="text-right">5536.50</div>
+                    <div class="text-right positive">+463.50</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>rent</div>
+                    <div class="text-right">5200.00</div>
+                    <div class="text-right">5200.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="text-right">15600.00</div>
+                    <div class="text-right">15600.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>utilities</div>
+                    <div class="text-right">600.00</div>
+                    <div class="text-right">542.75</div>
+                    <div class="text-right positive">+57.25</div>
+                    <div class="text-right">1800.00</div>
+                    <div class="text-right">1628.25</div>
+                    <div class="text-right positive">+171.75</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>transport</div>
+                    <div class="text-right">1200.00</div>
+                    <div class="text-right">1350.00</div>
+                    <div class="text-right negative">-150.00</div>
+                    <div class="text-right">3600.00</div>
+                    <div class="text-right">4050.00</div>
+                    <div class="text-right negative">-450.00</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>entertainment</div>
+                    <div class="text-right">800.00</div>
+                    <div class="text-right">625.00</div>
+                    <div class="text-right positive">+175.00</div>
+                    <div class="text-right">2400.00</div>
+                    <div class="text-right">1875.00</div>
+                    <div class="text-right positive">+525.00</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>dining_out</div>
+                    <div class="text-right">600.00</div>
+                    <div class="text-right">687.00</div>
+                    <div class="text-right negative">-87.00</div>
+                    <div class="text-right">1800.00</div>
+                    <div class="text-right">2061.00</div>
+                    <div class="text-right negative">-261.00</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>healthcare</div>
+                    <div class="text-right">400.00</div>
+                    <div class="text-right">325.00</div>
+                    <div class="text-right positive">+75.00</div>
+                    <div class="text-right">1200.00</div>
+                    <div class="text-right">975.00</div>
+                    <div class="text-right positive">+225.00</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row total">
+                    <div>TOTAL</div>
+                    <div class="text-right">11000.00</div>
+                    <div class="text-right">10750.25</div>
+                    <div class="text-right positive">+249.75</div>
+                    <div class="text-right">33000.00</div>
+                    <div class="text-right">32250.75</div>
+                    <div class="text-right positive">+749.25</div>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## SAVINGS --type=goal</h2>
+            <div class="data-grid">
+                <div class="data-row header">
+                    <div>category</div>
+                    <div class="text-right">budget_ytd</div>
+                    <div class="text-right">saved_ytd</div>
+                    <div class="text-right">diff_ytd</div>
+                    <div class="text-right">budget_yr</div>
+                    <div class="text-right">saved_yr</div>
+                    <div class="text-right">diff_yr</div>
+                    <div class="actions">act</div>
+                </div>
+                <div class="data-row">
+                    <div>emergency_fund</div>
+                    <div class="text-right">2000.00</div>
+                    <div class="text-right">2000.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="text-right">6000.00</div>
+                    <div class="text-right">6000.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>vacation</div>
+                    <div class="text-right">1000.00</div>
+                    <div class="text-right">1000.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="text-right">3000.00</div>
+                    <div class="text-right">3000.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>home_improve</div>
+                    <div class="text-right">1200.00</div>
+                    <div class="text-right">800.00</div>
+                    <div class="text-right negative">-400.00</div>
+                    <div class="text-right">3600.00</div>
+                    <div class="text-right">2400.00</div>
+                    <div class="text-right negative">-1200.00</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>retirement</div>
+                    <div class="text-right">2000.00</div>
+                    <div class="text-right">2000.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="text-right">6000.00</div>
+                    <div class="text-right">6000.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row total">
+                    <div>TOTAL</div>
+                    <div class="text-right">6200.00</div>
+                    <div class="text-right">5800.00</div>
+                    <div class="text-right negative">-400.00</div>
+                    <div class="text-right">18600.00</div>
+                    <div class="text-right">17400.00</div>
+                    <div class="text-right negative">-1200.00</div>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## INCOME --recent</h2>
+            <div class="compact-list">
+                <div class="list-item">
+                    <div style="color: #888;">amount</div>
+                    <div style="color: #888;">source</div>
+                    <div style="color: #888;">category</div>
+                    <div style="color: #888;">date</div>
+                    <div style="color: #888;">notes</div>
+                    <div style="color: #888;">act</div>
+                </div>
+                <div class="list-item">
+                    <div>5000.00</div>
+                    <div>acme_corp</div>
+                    <div>salary</div>
+                    <div>2025-04-15</div>
+                    <div>biweekly</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div>5000.00</div>
+                    <div>acme_corp</div>
+                    <div>salary</div>
+                    <div>2025-04-01</div>
+                    <div>biweekly</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div>500.00</div>
+                    <div>freelance</div>
+                    <div>side_income</div>
+                    <div>2025-04-10</div>
+                    <div>web_design</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## PURCHASES --uncategorized</h2>
+            <div class="compact-list">
+                <div class="list-item">
+                    <div style="color: #888;">date</div>
+                    <div style="color: #888;">item</div>
+                    <div style="color: #888;">amount</div>
+                    <div style="color: #888;">source</div>
+                    <div style="color: #888;">location</div>
+                    <div style="color: #888;">act</div>
+                </div>
+                <div class="list-item">
+                    <div>2025-04-20</div>
+                    <div>office_supplies</div>
+                    <div>45.99</div>
+                    <div>credit_card</div>
+                    <div>staples</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div>2025-04-18</div>
+                    <div>books</div>
+                    <div>32.50</div>
+                    <div>debit_card</div>
+                    <div>amazon</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="command-line">
+            <div class="prompt">$ _</div>
+        </div>
+    </div>
+</body>
+</html>

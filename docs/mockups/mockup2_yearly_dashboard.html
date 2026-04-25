@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup 2: Card-Based Yearly Dashboard - 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .month-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .month-tab {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .month-tab:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background-color: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: #888;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .metric-value.positive {
+            color: #10b981;
+        }
+
+        .metric-value.negative {
+            color: #ef4444;
+        }
+
+        .metric-change {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .add-btn {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            background-color: #5568d3;
+            transform: scale(1.05);
+        }
+
+        .category-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .category-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .category-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-info h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .category-amounts {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .amount-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .amount-label {
+            font-size: 0.75em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .amount-value {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .amount-value.positive {
+            color: #10b981;
+        }
+
+        .amount-value.negative {
+            color: #ef4444;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-button {
+            background: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .icon-button:hover {
+            background-color: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .ytd-toggle {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .ytd-toggle label {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .ytd-toggle select {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid #667eea;
+            background: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .progress-ring {
+            width: 80px;
+            height: 80px;
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .income-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .income-item {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .income-details {
+            flex: 1;
+        }
+
+        .income-amount {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .income-meta {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💰 2025 Budget Dashboard</h1>
+        <div class="month-tabs">
+            <button class="month-tab">Jan</button>
+            <button class="month-tab">Feb</button>
+            <button class="month-tab">Mar</button>
+            <button class="month-tab">Apr</button>
+            <button class="month-tab">May</button>
+            <button class="month-tab">Jun</button>
+            <button class="month-tab">Jul</button>
+            <button class="month-tab">Aug</button>
+            <button class="month-tab">Sep</button>
+            <button class="month-tab">Oct</button>
+            <button class="month-tab">Nov</button>
+            <button class="month-tab">Dec</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="actions">
+            <button class="action-btn">➕ Add Purchase</button>
+            <button class="action-btn">💵 Add Income</button>
+            <button class="action-btn">📊 Add Budget Item</button>
+            <button class="action-btn">🔄 Recurring Purchases</button>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Budgeted</div>
+                <div class="metric-value">$48,500.00</div>
+                <div class="metric-change">Full year allocation</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Spent</div>
+                <div class="metric-value">$42,150.75</div>
+                <div class="metric-change">87% of budget used</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Saved</div>
+                <div class="metric-value positive">$8,200.00</div>
+                <div class="metric-change">Goals on track</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Income</div>
+                <div class="metric-value">$65,000.00</div>
+                <div class="metric-change">All sources</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Budgeted Income</div>
+                <div class="metric-value">$60,000.00</div>
+                <div class="metric-change">Expected earnings</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Remaining</div>
+                <div class="metric-value positive">$14,649.25</div>
+                <div class="metric-change">Available funds</div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="ytd-toggle">
+                <label>Year-to-Date Through:</label>
+                <select>
+                    <option>January</option>
+                    <option>February</option>
+                    <option>March</option>
+                    <option selected>April</option>
+                    <option>May</option>
+                    <option>June</option>
+                    <option>July</option>
+                    <option>August</option>
+                    <option>September</option>
+                    <option>October</option>
+                    <option>November</option>
+                    <option>December</option>
+                </select>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Budgeted YTD</div>
+                    <div class="metric-value">$16,200.00</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Spent YTD</div>
+                    <div class="metric-value">$14,050.25</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Saved YTD</div>
+                    <div class="metric-value positive">$2,800.00</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Income YTD</div>
+                    <div class="metric-value">$21,666.67</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h2>💳 Spending Categories</h2>
+                <button class="add-btn">+ Add Category</button>
+            </div>
+
+            <div class="category-grid">
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>🛒 Groceries</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Budgeted</span>
+                                <span class="amount-value">$6,000</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Spent</span>
+                                <span class="amount-value">$5,536.50</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Remaining</span>
+                                <span class="amount-value positive">$463.50</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>🏠 Rent</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Budgeted</span>
+                                <span class="amount-value">$15,600</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Spent</span>
+                                <span class="amount-value">$15,600</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Remaining</span>
+                                <span class="amount-value">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>💡 Utilities</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Budgeted</span>
+                                <span class="amount-value">$1,800</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Spent</span>
+                                <span class="amount-value">$1,628.25</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Remaining</span>
+                                <span class="amount-value positive">$171.75</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>🚗 Transportation</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Budgeted</span>
+                                <span class="amount-value">$3,600</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Spent</span>
+                                <span class="amount-value">$4,050</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Over</span>
+                                <span class="amount-value negative">-$450</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>🎬 Entertainment</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Budgeted</span>
+                                <span class="amount-value">$2,400</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Spent</span>
+                                <span class="amount-value">$1,875</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Remaining</span>
+                                <span class="amount-value positive">$525</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>🍽️ Dining Out</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Budgeted</span>
+                                <span class="amount-value">$1,800</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Spent</span>
+                                <span class="amount-value">$2,061</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Over</span>
+                                <span class="amount-value negative">-$261</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h2>🎯 Savings Goals</h2>
+                <button class="add-btn">+ Add Goal</button>
+            </div>
+
+            <div class="category-grid">
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>🚨 Emergency Fund</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Goal</span>
+                                <span class="amount-value">$6,000</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Saved</span>
+                                <span class="amount-value positive">$6,000</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Progress</span>
+                                <span class="amount-value positive">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>✈️ Vacation</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Goal</span>
+                                <span class="amount-value">$3,000</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Saved</span>
+                                <span class="amount-value positive">$3,000</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Progress</span>
+                                <span class="amount-value positive">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>🔨 Home Improvement</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Goal</span>
+                                <span class="amount-value">$3,600</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Saved</span>
+                                <span class="amount-value">$2,400</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Progress</span>
+                                <span class="amount-value">67%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="category-card">
+                    <div class="category-info">
+                        <h3>👴 Retirement</h3>
+                        <div class="category-amounts">
+                            <div class="amount-item">
+                                <span class="amount-label">Goal</span>
+                                <span class="amount-value">$6,000</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Saved</span>
+                                <span class="amount-value positive">$6,000</span>
+                            </div>
+                            <div class="amount-item">
+                                <span class="amount-label">Progress</span>
+                                <span class="amount-value positive">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-header">
+                <h2>💵 Income Sources</h2>
+                <button class="add-btn">+ Add Income</button>
+            </div>
+
+            <div class="income-list">
+                <div class="income-item">
+                    <div class="income-details">
+                        <div class="income-amount">$5,000.00</div>
+                        <div class="income-meta">Acme Corp • Salary • April 15, 2025</div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="income-item">
+                    <div class="income-details">
+                        <div class="income-amount">$5,000.00</div>
+                        <div class="income-meta">Acme Corp • Salary • April 1, 2025</div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+
+                <div class="income-item">
+                    <div class="income-details">
+                        <div class="income-amount">$500.00</div>
+                        <div class="income-meta">Freelance • Side Income • April 10, 2025</div>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-button">✏️</button>
+                        <button class="icon-button">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
