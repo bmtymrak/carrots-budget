@@ -416,7 +416,7 @@ a {
 }
 
 #purchase-form-container {
-    width: 900px;
+    width: 1000px;
     max-width: 100%;
 }
 
@@ -428,8 +428,8 @@ a {
 
 .purchase-form {
     display: grid;
-    /* grid-template-columns: 1fr 1fr 1fr repeat(5, 1fr); */
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    grid-template-columns: 135px repeat(8, 1fr);
+    /* grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); */
     max-width: 100%;
 }
 
