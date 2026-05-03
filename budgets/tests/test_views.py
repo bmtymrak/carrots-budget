@@ -74,7 +74,7 @@ class TestYearlyBudgetCreateView(TestCase):
         self.client.login(email="testuser1@test.com", password="testpass123")
 
         response = self.client.post(
-            reverse("yearly_create"), {"date": datetime.date.today()}
+            reverse("yearly_create"), {"year": datetime.date.today().year}
         )
 
         self.assertTrue(len(YearlyBudget.objects.all()) == 1)
@@ -92,10 +92,53 @@ class TestYearlyBudgetCreateView(TestCase):
         self.client.login(email="testuser1@test.com", password="testpass123")
 
         response = self.client.post(
-            reverse("yearly_create"), {"date": datetime.date.today()}
+            reverse("yearly_create"), {"year": datetime.date.today().year}
         )
 
         self.assertRedirects(response, f"/budgets/", 200)
+
+    def test_duplicate_yearly_budget_validation(self):
+        """Test that creating a duplicate yearly budget for the same user/year shows an error"""
+        self.client.login(email="testuser1@test.com", password="testpass123")
+        year = 2024
+        
+        # Create first budget
+        response = self.client.post(
+            reverse("yearly_create"), {"year": year}
+        )
+        self.assertEqual(YearlyBudget.objects.filter(user=self.user1, date__year=year).count(), 1)
+        
+        # Try to create duplicate budget
+        response = self.client.post(
+            reverse("yearly_create"), {"year": year}
+        )
+        # Should not redirect (form should show error)
+        self.assertEqual(response.status_code, 200)
+        # Should still only have one budget
+        self.assertEqual(YearlyBudget.objects.filter(user=self.user1, date__year=year).count(), 1)
+        # Should show error message in form
+        self.assertIn("already exists", response.content.decode())
+
+    def test_different_users_can_create_same_year_budget(self):
+        """Test that different users can create budgets for the same year"""
+        year = 2024
+        
+        # User1 creates budget
+        self.client.login(email="testuser1@test.com", password="testpass123")
+        response = self.client.post(
+            reverse("yearly_create"), {"year": year}
+        )
+        self.assertEqual(YearlyBudget.objects.filter(user=self.user1, date__year=year).count(), 1)
+        
+        # User2 creates budget for same year
+        self.client.login(email="testuser2@test.com", password="testpass123")
+        response = self.client.post(
+            reverse("yearly_create"), {"year": year}
+        )
+        self.assertEqual(YearlyBudget.objects.filter(user=self.user2, date__year=year).count(), 1)
+        
+        # Both budgets should exist
+        self.assertEqual(YearlyBudget.objects.filter(date__year=year).count(), 2)
 
 
 class TestYearlyBudgetListView(TestCase):
@@ -524,7 +567,7 @@ class YearlyBudgetViewTests(TestCase):
         next_year = self.year + 1
         response = self.client.post(
             reverse('yearly_create'),
-            {'date': f'{next_year}-01-01'}
+            {'year': next_year}
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(

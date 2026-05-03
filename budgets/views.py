@@ -349,7 +349,7 @@ def budget_create(request):
         next = request.GET.get("next", "")
 
     return render(
-        request, "budgets/yearly_budget_create_htmx.html", {"form": form, "next": next}
+        request, "budgets/yearly_budget_create_modal.html", {"form": form, "next": next}
     )
 
 
@@ -379,7 +379,7 @@ def budgetitem_edit(request, year, month, category):
 
     return render(
         request,
-        "budgets/budgetitem_edit_htmx.html",
+        "budgets/budgetitem_edit_modal.html",
         {"form": form, "budget_item": budget_item, "next": next},
     )
 
@@ -410,7 +410,7 @@ def budgetitem_bulk_edit(request, year, category):
 
     return render(
         request,
-        "budgets/budgetitem_bulk_edit_htmx.html",
+        "budgets/budgetitem_bulk_edit_modal.html",
         {"formset": formset, "year": year, "category": category, "next": next},
     )
 
@@ -437,7 +437,7 @@ def budgetitem_delete(request, year, category):
 
     return render(
         request,
-        "budgets/budgetitem_delete_htmx.html",
+        "budgets/budgetitem_delete_modal.html",
         {
             "budget_items": budget_items,
             "year": year,
@@ -475,6 +475,6 @@ def budget_item_create(request, year):
 
     return render(
         request,
-        "budgets/budgetitem_create_htmx.html",
+        "budgets/budgetitem_create_modal.html",
         {"form": form, "next": next, "year": year},
     )

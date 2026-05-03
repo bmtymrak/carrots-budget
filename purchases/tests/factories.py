@@ -4,7 +4,7 @@ from factory.django import DjangoModelFactory
 from factory import fuzzy
 import datetime
 
-from purchases.models import Category, Subcategory, Purchase, Income, Receipt
+from purchases.models import Category, Subcategory, Purchase, Income, Receipt, RecurringPurchase
 
 class UserFactory(DjangoModelFactory):
     class Meta:
@@ -50,7 +50,7 @@ class PurchaseFactory(DjangoModelFactory):
     location = factory.Faker('city')
     category = factory.SubFactory(CategoryFactory)
     subcategory = factory.SubFactory(SubcategoryFactory)
-    receipt = factory.SubFactory(ReceiptFactory)
+    receipt = factory.SubFactory(ReceiptFactory, user=factory.SelfAttribute("..user"))
     notes = factory.Faker('text', max_nb_chars=200)
     savings = False
 
@@ -64,4 +64,18 @@ class IncomeFactory(DjangoModelFactory):
     source = factory.Faker('company')
     payer = factory.Faker('company')
     category = factory.SubFactory(CategoryFactory)
-    notes = factory.Faker('text', max_nb_chars=200) 
+    notes = factory.Faker('text', max_nb_chars=200)
+
+
+class RecurringPurchaseFactory(DjangoModelFactory):
+    class Meta:
+        model = RecurringPurchase
+
+    user = factory.SubFactory(UserFactory)
+    item = factory.Sequence(lambda n: f'Recurring Purchase {n}')
+    amount = fuzzy.FuzzyDecimal(10, 500, precision=2)
+    category = factory.SubFactory(CategoryFactory)
+    source = factory.Faker('company')
+    location = factory.Faker('city')
+    notes = factory.Faker('text', max_nb_chars=200)
+    is_active = True
