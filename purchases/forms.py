@@ -174,7 +174,7 @@ class RecurringPurchaseAddRowForm(forms.Form):
             "notes": self.recurring_purchase.notes,
         }
 
-        self.initial.setdefault("selected", not self.already_added)
+        self.initial.setdefault("selected", False)
         self.initial.setdefault("recurring_purchase_id", self.recurring_purchase.id)
         self.initial.setdefault("date", row_values["date"])
         self.initial.setdefault("amount", row_values["amount"])
