@@ -77,15 +77,18 @@
         }
     }
 
-    function showModal(){
-        modal.classList.remove("hidden")
-        overlay.classList.remove("hidden")
-    }
+	    function showModal(){
+	        modal.classList.remove("hidden")
+	        overlay.classList.remove("hidden")
+	        document.body.classList.add("modal-open")
+	        modal.scrollTo(0, 0)
+	    }
 
-    function closeModal(){
-        modal.classList.add("hidden")
-        overlay.classList.add("hidden")
-    }
+	    function closeModal(){
+	        modal.classList.add("hidden")
+	        overlay.classList.add("hidden")
+	        document.body.classList.remove("modal-open")
+	    }
 
     htmx.on("htmx:afterSwap", (e) => {
         if (e.detail.target.id == "modal-content") {

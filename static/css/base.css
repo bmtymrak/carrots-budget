@@ -698,16 +698,24 @@ h2 {
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 20px;
 }
 
+body.modal-open {
+    overflow: hidden;
+}
 
 .modal {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     background-color: #fdfdfd;
     border-radius: 20px;
     padding: 20px 35px;
+    max-height: calc(100vh - 40px);
+    max-width: calc(100vw - 40px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .hidden {
