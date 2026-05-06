@@ -325,6 +325,7 @@ class RecurringPurchaseViewTests(TestCase):
         self.assertTemplateUsed(response, 'purchases/recurring_purchase_add_to_month_modal.html')
         self.assertContains(response, 'hx-target="#modal-content"', html=False)
         self.assertContains(response, 'hx-swap="innerHTML"', html=False)
+        self.assertFalse(response.context['formset'].forms[0].initial['selected'])
 
     def test_recurring_purchase_add_to_month_creates_purchases(self):
         """Test that submitting the form creates actual purchases."""
