@@ -437,7 +437,6 @@ a {
     display: flex;
     justify-content: center;
     width: 100%;
-    margin-left: 10px;
     margin-bottom: 10px;
 
 }
@@ -701,10 +700,6 @@ h2 {
     overflow-y: auto;
     overscroll-behavior: contain;
     padding: 20px;
-}
-
-body.modal-open {
-    overflow: hidden;
 }
 
 .modal {
