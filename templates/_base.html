@@ -77,15 +77,16 @@
         }
     }
 
-    function showModal(){
-        modal.classList.remove("hidden")
-        overlay.classList.remove("hidden")
-    }
+	    function showModal(){
+	        modal.classList.remove("hidden")
+	        overlay.classList.remove("hidden")
+	        modal.scrollTo(0, 0)
+	    }
 
-    function closeModal(){
-        modal.classList.add("hidden")
-        overlay.classList.add("hidden")
-    }
+	    function closeModal(){
+	        modal.classList.add("hidden")
+	        overlay.classList.add("hidden")
+	    }
 
     htmx.on("htmx:afterSwap", (e) => {
         if (e.detail.target.id == "modal-content") {
