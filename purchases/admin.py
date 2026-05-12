@@ -1,9 +1,13 @@
 from django.contrib import admin
-from .models import Category, Purchase, Subcategory, Income, RecurringPurchase
+from .models import Category, Purchase, Subcategory, Income, RecurringPurchase, Receipt
 
 
 class PurchaseAdmin(admin.ModelAdmin):
-    list_display = ("item", "category", "amount", "date", "user", "created_at", "updated_at")
+    list_display = ("item", "category", "amount", "date", "receipt", "user", "created_at", "updated_at")
+
+
+class ReceiptAdmin(admin.ModelAdmin):
+    list_display = ("date", "source", "location", "user", "created_at", "updated_at")
 
 
 class RecurringPurchaseAdmin(admin.ModelAdmin):
@@ -16,8 +20,8 @@ class RecurringPurchaseAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Purchase, PurchaseAdmin)
+admin.site.register(Receipt, ReceiptAdmin)
 admin.site.register(Category)
 admin.site.register(Subcategory)
 admin.site.register(Income)
 admin.site.register(RecurringPurchase, RecurringPurchaseAdmin)
-

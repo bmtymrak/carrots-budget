@@ -1,12 +1,12 @@
 import datetime
 import unittest
 
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
 
-from purchases.models import Category, Purchase, Income, RecurringPurchase
+from purchases.models import Category, Purchase, Income, RecurringPurchase, Receipt
 from budgets.models import YearlyBudget
 from .factories import (
     CategoryFactory,
@@ -14,10 +14,16 @@ from .factories import (
     RecurringPurchaseFactory,
 )
 
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+
 
 User = get_user_model()
 
 
+@override_settings(STORAGES=TEST_STORAGES)
 class PurchaseViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -34,7 +40,7 @@ class PurchaseViewTests(TestCase):
         response = self.client.post(
             reverse('purchase_create'),
             {
-                'form-TOTAL_FORMS': '1',
+                'form-TOTAL_FORMS': '2',
                 'form-INITIAL_FORMS': '0',
                 'form-MIN_NUM_FORMS': '0',
                 'form-MAX_NUM_FORMS': '1000',
@@ -47,16 +53,29 @@ class PurchaseViewTests(TestCase):
                 'form-0-subcategory': self.subcategory.id,
                 'form-0-notes': 'Test notes',
                 'form-0-savings': False,
+                'form-1-item': 'Test Purchase 2',
+                'form-1-date': datetime.date.today(),
+                'form-1-amount': '50.00',
+                'form-1-source': 'Ignored Store',
+                'form-1-location': 'Ignored Location',
+                'form-1-category': self.category.id,
+                'form-1-subcategory': self.subcategory.id,
+                'form-1-notes': 'More notes',
+                'form-1-savings': False,
                 'next': '/'
             }
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            Purchase.objects.filter(
-                user=self.user,
-                item='Test Purchase'
-            ).exists()
+        purchases = list(
+            Purchase.objects.filter(user=self.user).order_by("item")
         )
+        self.assertEqual(len(purchases), 2)
+        self.assertEqual(purchases[0].receipt_id, purchases[1].receipt_id)
+        self.assertIsNotNone(purchases[0].receipt_id)
+
+        receipt = Receipt.objects.get(pk=purchases[0].receipt_id, user=self.user)
+        self.assertEqual(receipt.source, "Test Store")
+        self.assertEqual(receipt.location, "Test Location")
 
     @unittest.skip("Feature 'new_category' is not implemented in Purchase backend")
     def test_purchase_create_with_new_category(self):
@@ -90,6 +109,7 @@ class PurchaseViewTests(TestCase):
 
 
 
+@override_settings(STORAGES=TEST_STORAGES)
 class IncomeViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -146,6 +166,7 @@ class IncomeViewTests(TestCase):
 
 
 
+@override_settings(STORAGES=TEST_STORAGES)
 class CategoryViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -174,6 +195,7 @@ class CategoryViewTests(TestCase):
         )
 
 
+@override_settings(STORAGES=TEST_STORAGES)
 class RecurringPurchaseViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -365,6 +387,9 @@ class RecurringPurchaseViewTests(TestCase):
         self.assertEqual(purchase.category, self.category)
         self.assertEqual(purchase.date, datetime.date(2024, 1, 1))
         self.assertEqual(purchase.recurring_purchase, recurring)
+        self.assertIsNotNone(purchase.receipt_id)
+        self.assertEqual(purchase.receipt.source, "Netflix Inc")
+        self.assertEqual(purchase.receipt.location, "Online")
 
     def test_recurring_purchase_already_added_detected_by_fk(self):
         """Test that recurring purchases are detected as already added via FK."""
@@ -510,6 +535,44 @@ class RecurringPurchaseViewTests(TestCase):
             ).count(),
             1,
         )
+
+    def test_recurring_purchase_selected_rows_get_distinct_receipts(self):
+        """Test each selected recurring purchase is grouped under its own receipt."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1),
+        )
+        recurring1 = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Netflix",
+            amount=Decimal("15.99"),
+        )
+        recurring2 = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Spotify",
+            amount=Decimal("9.99"),
+        )
+
+        response = self.client.post(
+            reverse("recurring_purchase_add_to_month", kwargs={"year": 2024, "month": 1}),
+            self._build_add_to_month_post_data(
+                [
+                    {"recurring": recurring1, "category": str(self.category.id)},
+                    {"recurring": recurring2, "category": str(self.category.id)},
+                ]
+            ),
+        )
+        self.assertEqual(response.status_code, 200)
+
+        purchases = list(
+            Purchase.objects.filter(user=self.user, item__in=["Netflix", "Spotify"]).order_by("item")
+        )
+        self.assertEqual(len(purchases), 2)
+        self.assertIsNotNone(purchases[0].receipt_id)
+        self.assertIsNotNone(purchases[1].receipt_id)
+        self.assertNotEqual(purchases[0].receipt_id, purchases[1].receipt_id)
 
     def test_recurring_purchase_post_rejects_tampered_recurring_purchase_id(self):
         """Test tampering with a row recurring_purchase_id re-renders with validation errors."""

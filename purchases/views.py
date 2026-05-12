@@ -6,9 +6,10 @@ from django.views.generic import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 import datetime
 
-from .models import Purchase, Category, Income, RecurringPurchase
+from .models import Purchase, Category, Income, RecurringPurchase, Receipt
 from .forms import (
     PurchaseForm,
     PurchaseFormSetReceipt,
@@ -111,13 +112,24 @@ def purchase_create(request):
 
         if purchase_formset.is_valid():
             instances = purchase_formset.save(commit=False)
-            source = instances[0].source
-            location = instances[0].location
-            for instance in instances:
-                instance.user = request.user
-                instance.source = source
-                instance.location = location
-                instance.save()
+            if not instances:
+                return HttpResponseClientRedirect(next)
+
+            with transaction.atomic():
+                source = instances[0].source
+                location = instances[0].location
+                receipt = Receipt.objects.create(
+                    user=request.user,
+                    date=instances[0].date,
+                    source=source,
+                    location=location,
+                )
+                for instance in instances:
+                    instance.user = request.user
+                    instance.receipt = receipt
+                    instance.source = source
+                    instance.location = location
+                    instance.save()
             return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
@@ -345,18 +357,26 @@ def recurring_purchase_add_to_month(request, year, month):
                 if recurring.id in already_added:
                     continue
 
-                Purchase.objects.create(
-                    user=request.user,
-                    item=recurring.item,
-                    date=selected_purchase["date"],
-                    amount=selected_purchase["amount"],
-                    source=selected_purchase["source"],
-                    location=selected_purchase["location"],
-                    category=selected_purchase["category"],
-                    notes=selected_purchase["notes"],
-                    savings=False,
-                    recurring_purchase=recurring,
-                )
+                with transaction.atomic():
+                    receipt = Receipt.objects.create(
+                        user=request.user,
+                        date=selected_purchase["date"],
+                        source=selected_purchase["source"],
+                        location=selected_purchase["location"],
+                    )
+                    Purchase.objects.create(
+                        user=request.user,
+                        receipt=receipt,
+                        item=recurring.item,
+                        date=selected_purchase["date"],
+                        amount=selected_purchase["amount"],
+                        source=selected_purchase["source"],
+                        location=selected_purchase["location"],
+                        category=selected_purchase["category"],
+                        notes=selected_purchase["notes"],
+                        savings=False,
+                        recurring_purchase=recurring,
+                    )
                 already_added.add(recurring.id)
 
             return HttpResponseClientRedirect(next_url)
