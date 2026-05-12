@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
+from budgets.models import BudgetItem, MonthlyBudget, YearlyBudget
 from purchases.models import Category, Subcategory
 from purchases.forms import (
     IncomeForm,
@@ -76,6 +77,42 @@ class TestPurchaseForm(TestCase):
 
         self.assertEqual(len(form.fields["subcategory"].queryset), 1)
         self.assertEqual(subcategory_user, self.user1)
+
+    def test_categories_are_limited_to_budget_items_for_yearly_budget(self):
+        yearly_budget = YearlyBudget.objects.create(
+            user=self.user1, date=datetime.date(2024, 1, 1)
+        )
+        monthly_budget = MonthlyBudget.objects.get(
+            user=self.user1, yearly_budget=yearly_budget, date=datetime.date(2024, 1, 1)
+        )
+
+        budgeted_category = Category.objects.create(name="budgeted", user=self.user1)
+        unbudgeted_category = Category.objects.create(
+            name="unbudgeted", user=self.user1
+        )
+        BudgetItem.objects.create(
+            user=self.user1,
+            category=budgeted_category,
+            amount=0,
+            monthly_budget=monthly_budget,
+            yearly_budget=yearly_budget,
+            notes="",
+            savings=False,
+        )
+
+        form = PurchaseForm(user=self.user1, yearly_budget=yearly_budget)
+        self.assertEqual(list(form.fields["category"].queryset), [budgeted_category])
+
+        bound_form = PurchaseForm(
+            user=self.user1,
+            yearly_budget=yearly_budget,
+            data={
+                "date": "2024-01-15",
+                "category": str(unbudgeted_category.pk),
+            },
+        )
+        self.assertFalse(bound_form.is_valid())
+        self.assertIn("category", bound_form.errors)
 
 
 class TestRecurringPurchaseAddToMonthFormSet(TestCase):

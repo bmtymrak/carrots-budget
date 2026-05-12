@@ -90,6 +90,7 @@ def purchase_create(request):
 
     if request.method == "POST":
         next = request.POST.get("next")
+        yearly_budget_param = request.POST.get("yearly_budget")
         formset_data = request.POST.copy()  # Makes Querydict mutable
         formset_date = formset_data["form-0-date"]
 
@@ -97,13 +98,16 @@ def purchase_create(request):
             if "date" in key:
                 formset_data[key] = formset_date
 
+        form_kwargs = {"user": request.user}
+        if yearly_budget_param:
+            form_kwargs["yearly_budget"] = yearly_budget_param
+
         # Parse the date to pass to forms
         try:
             parsed_date = datetime.datetime.strptime(formset_date, "%Y-%m-%d").date()
-            form_kwargs = {"user": request.user, "date": parsed_date}
+            form_kwargs["date"] = parsed_date
         except ValueError:
-
-            form_kwargs = {"user": request.user}
+            pass
 
         purchase_formset = PurchaseFormSetReceipt(
             form_kwargs=form_kwargs, data=formset_data
@@ -122,18 +126,19 @@ def purchase_create(request):
 
     if request.method == "GET":
         next = request.GET["next"]
+        yearly_budget_param = request.GET.get("yearly_budget")
         
         # Check if a date is provided as a query parameter
         date_param = request.GET.get("date")
+        form_kwargs = {"user": request.user}
+        if yearly_budget_param:
+            form_kwargs["yearly_budget"] = yearly_budget_param
         if date_param:
             try:
                 parsed_date = datetime.datetime.strptime(date_param, "%Y-%m-%d").date()
-                form_kwargs = {"user": request.user, "date": parsed_date}
+                form_kwargs["date"] = parsed_date
             except ValueError:
-                # If date parsing fails, just pass the user
-                form_kwargs = {"user": request.user}
-        else:
-            form_kwargs = {"user": request.user}
+                pass
             
         purchase_formset = PurchaseFormSetReceipt(
             queryset=Purchase.objects.none(), form_kwargs=form_kwargs
@@ -142,7 +147,11 @@ def purchase_create(request):
     return render(
         request,
         "purchases/purchase_create.html",
-        {"purchase_formset": purchase_formset, "next": next},
+        {
+            "purchase_formset": purchase_formset,
+            "next": next,
+            "yearly_budget": yearly_budget_param,
+        },
     )
 
 

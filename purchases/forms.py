@@ -13,31 +13,39 @@ class PurchaseForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user")
         self.date = kwargs.pop("date", None)
+        self.yearly_budget = kwargs.pop("yearly_budget", None)
         super().__init__(*args, **kwargs)
-        
-        if self.date:
-            # Filter categories to only those associated with budget items in the yearly budget for this date
-            
-            year = self.date.year
-            
-            try:
-                yearly_budget = YearlyBudget.objects.get(user=self.user, date__year=year)
-                
-                # Find budget items for this user and yearly budget, and get their categories
-                budget_item_categories = BudgetItem.objects.filter(
-                    user=self.user,
-                    yearly_budget=yearly_budget
-                ).values_list('category', flat=True)
-                
-                self.fields["category"].queryset = Category.objects.filter(
-                    id__in=budget_item_categories
-                ).distinct()
-            except YearlyBudget.DoesNotExist:
-                # If no yearly budget exists for this year, show all categories for the user
-                self.fields["category"].queryset = Category.objects.filter(user=self.user)
-        else:
-            # Default behavior: show all categories for the user
-            self.fields["category"].queryset = Category.objects.filter(user=self.user)
+
+        category_queryset = Category.objects.filter(user=self.user)
+
+        yearly_budget = None
+        if self.yearly_budget is not None:
+            if isinstance(self.yearly_budget, YearlyBudget):
+                if self.yearly_budget.user_id == self.user.id:
+                    yearly_budget = self.yearly_budget
+            else:
+                try:
+                    yearly_budget = YearlyBudget.objects.get(
+                        user=self.user, pk=self.yearly_budget
+                    )
+                except (YearlyBudget.DoesNotExist, TypeError, ValueError):
+                    yearly_budget = None
+        elif self.date:
+            yearly_budgets = list(
+                YearlyBudget.objects.filter(user=self.user, date__year=self.date.year)
+            )
+            if len(yearly_budgets) == 1:
+                yearly_budget = yearly_budgets[0]
+
+        if yearly_budget is not None:
+            budget_item_category_ids = (
+                BudgetItem.objects.filter(user=self.user, yearly_budget=yearly_budget)
+                .values_list("category_id", flat=True)
+                .distinct()
+            )
+            category_queryset = category_queryset.filter(id__in=budget_item_category_ids)
+
+        self.fields["category"].queryset = category_queryset.distinct()
             
         self.fields["category"].empty_label = "Category"
         self.fields["subcategory"].queryset = Subcategory.objects.filter(user=self.user)

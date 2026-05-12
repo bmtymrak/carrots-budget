@@ -16,6 +16,9 @@
     </div>
     {% endfor %}
     <input type="hidden" name="next" value="{{next}}">
+    {% if yearly_budget %}
+    <input type="hidden" name="yearly_budget" value="{{yearly_budget}}">
+    {% endif %}
     <button id="submit-button" type="submit">Add</button>
     <button id="add-form" type="button">Add Item</button>
     <p id="total">Total: </p>
