@@ -37,6 +37,13 @@ select {
     font: inherit;
 }
 
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: var(--focus-outline-width) solid var(--focus-color);
+    outline-offset: 2px;
+}
+
 p,
 h1,
 h2,
@@ -56,6 +63,24 @@ h6 {
 
 :root {
     --main-color: hsl(144deg 100% 26% / 70%);
+    --focus-color: hsl(211deg 100% 50%);
+    --focus-outline-width: 3px;
+}
+
+/* Focus indication for keyboard navigation */
+*:focus {
+    outline: var(--focus-outline-width) solid var(--focus-color);
+    outline-offset: 2px;
+}
+
+/* Use :focus-visible for better UX - only show focus on keyboard navigation */
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+*:focus-visible {
+    outline: var(--focus-outline-width) solid var(--focus-color);
+    outline-offset: 2px;
 }
 
 * {
@@ -65,6 +90,12 @@ h6 {
 a {
     /* text-decoration: none; */
     color: black;
+    border-radius: 2px;
+}
+
+a:focus-visible {
+    outline: var(--focus-outline-width) solid var(--focus-color);
+    outline-offset: 2px;
 }
 
 
@@ -108,6 +139,12 @@ a {
     text-decoration: none;
     color: white;
     font-weight: bold;
+    border-radius: 4px;
+}
+
+.nav-list>li>a:focus-visible {
+    outline-color: white;
+    outline-offset: 4px;
 }
 
 .logo-sidebar-container {
@@ -662,6 +699,10 @@ h2 {
     border: 1px solid rgb(149, 44, 44);
 }
 
+.button-delete:focus-visible {
+    outline-offset: 4px;
+}
+
 .button-delete-standalone {
     margin-top: 20px;
 }
@@ -669,6 +710,12 @@ h2 {
 .button-blank {
     background-color: inherit;
     border: none;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.button-blank:focus-visible {
+    outline-offset: 2px;
 }
 
 .button-budget {
@@ -683,7 +730,11 @@ h2 {
     padding-right: 10px;
     height: 100%;
     padding-left: 10px;
-    border-radius: 10px
+    border-radius: 10px;
+}
+
+.button-create:focus-visible {
+    outline-offset: 4px;
 }
 
 .overlay {
@@ -720,6 +771,11 @@ h2 {
 /* Desktop menu toggle (hidden by default) */
 .menu-toggle {
     display: none;
+}
+
+.menu-toggle:focus-visible {
+    outline-color: white;
+    outline-offset: 4px;
 }
 
 
