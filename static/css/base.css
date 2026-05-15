@@ -63,7 +63,7 @@ h6 {
 
 :root {
     --main-color: hsl(144deg 100% 26% / 70%);
-    --focus-color: hsl(211deg 100% 50%);
+    --focus-color: hsl(144deg 100% 35%);
     --focus-outline-width: 3px;
 }
 
