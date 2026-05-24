@@ -54,6 +54,25 @@ class YearlyBudgetListView(LoginRequiredMixin, ListView):
         queryset = self.model.objects.filter(user=self.request.user).order_by("-date")
         return queryset
 
+    def get_context_data(self, **kwargs):
+        kwargs = super().get_context_data(**kwargs)
+        
+        # Add summary metrics for each yearly budget
+        service = BudgetService()
+        yearly_budgets_with_summary = []
+        
+        for budget in kwargs['yearly_budgets']:
+            summary = service.get_yearly_budget_summary(
+                user=self.request.user,
+                year=budget.date.year
+            )
+            budget.summary = summary
+            yearly_budgets_with_summary.append(budget)
+        
+        kwargs['yearly_budgets'] = yearly_budgets_with_summary
+        
+        return kwargs
+
 
 class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
     model = YearlyBudget
