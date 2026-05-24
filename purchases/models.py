@@ -3,6 +3,25 @@ from django.conf import settings
 from django.db.models.fields.related import ForeignKey
 
 
+class Receipt(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="receipts",
+        null=False,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Receipt {self.id} - {self.created_at.date()}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'created_at'], name='idx_receipt_user_created'),
+        ]
+
+
 class Category(models.Model):
     name = models.CharField(db_index=True, max_length=250, blank=False)
     rollover = models.BooleanField(null=False, default=False)
@@ -66,6 +85,13 @@ class Purchase(models.Model):
     subcategory = models.ForeignKey(
         Subcategory,
         on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="purchases",
+    )
+    receipt = models.ForeignKey(
+        Receipt,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name="purchases",
