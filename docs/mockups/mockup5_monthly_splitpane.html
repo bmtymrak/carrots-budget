@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup 5: Split-Pane Monthly Budget - April 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'system-ui', -apple-system, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: #2d3748;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            background-color: #1a202c;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .month-badge {
+            background-color: #4299e1;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            display: inline-block;
+        }
+
+        .back-link {
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 0.9em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        .nav-section {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-title {
+            font-size: 0.75em;
+            color: #a0aec0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .nav-list {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+
+        .nav-item {
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 5px;
+        }
+
+        .nav-item:hover {
+            background-color: #4a5568;
+        }
+
+        .nav-item.active {
+            background-color: #4299e1;
+        }
+
+        .quick-stats {
+            background-color: #1a202c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .quick-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .quick-stat:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #a0aec0;
+        }
+
+        .stat-value {
+            font-weight: 700;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            background-color: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar h2 {
+            font-size: 1.8em;
+            color: #2d3748;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #3182ce;
+        }
+
+        .btn-success {
+            background-color: #48bb78;
+        }
+
+        .btn-success:hover {
+            background-color: #38a169;
+        }
+
+        .split-view {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            overflow: hidden;
+        }
+
+        .left-pane {
+            padding: 30px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+        }
+
+        .right-pane {
+            background-color: white;
+            border-left: 1px solid #e2e8f0;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-box {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+        .category-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .category-item {
+            display: grid;
+            grid-template-columns: 30px 1fr auto;
+            gap: 15px;
+            align-items: center;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border-left: 4px solid #4299e1;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .category-item:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .category-item.overspent {
+            border-left-color: #f56565;
+        }
+
+        .category-item.warning {
+            border-left-color: #ed8936;
+        }
+
+        .category-icon {
+            font-size: 1.5em;
+        }
+
+        .category-details {
+            flex: 1;
+        }
+
+        .category-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2d3748;
+        }
+
+        .category-progress {
+            height: 6px;
+            background-color: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .category-progress-fill {
+            height: 100%;
+            background-color: #4299e1;
+            transition: width 0.3s;
+        }
+
+        .category-progress-fill.overspent {
+            background-color: #f56565;
+        }
+
+        .category-progress-fill.warning {
+            background-color: #ed8936;
+        }
+
+        .category-amounts {
+            text-align: right;
+        }
+
+        .category-spent {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .category-budget {
+            font-size: 0.85em;
+            color: #718096;
+        }
+
+        .detail-card {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .detail-header {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #718096;
+            font-size: 0.9em;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .detail-value.positive {
+            color: #48bb78;
+        }
+
+        .detail-value.negative {
+            color: #f56565;
+        }
+
+        .transaction-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .transaction-item {
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .transaction-item:hover {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .transaction-date {
+            font-size: 0.75em;
+            color: #718096;
+            margin-bottom: 5px;
+        }
+
+        .transaction-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 3px;
+        }
+
+        .transaction-meta {
+            font-size: 0.85em;
+            color: #a0aec0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .transaction-amount {
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .purchase-timeline {
+            display: grid;
+            gap: 12px;
+        }
+
+        .purchase-card {
+            background: white;
+            border-left: 4px solid #4299e1;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .purchase-card:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .purchase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .purchase-name {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .purchase-amount {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .purchase-meta {
+            font-size: 0.85em;
+            color: #718096;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="back-link">← Back to Year 2025</a>
+                <h1>Budget Manager</h1>
+                <span class="month-badge">April 2025</span>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Months</div>
+                <ul class="nav-list">
+                    <li class="nav-item">January</li>
+                    <li class="nav-item">February</li>
+                    <li class="nav-item">March</li>
+                    <li class="nav-item active">April</li>
+                    <li class="nav-item">May</li>
+                    <li class="nav-item">June</li>
+                    <li class="nav-item">July</li>
+                    <li class="nav-item">August</li>
+                    <li class="nav-item">September</li>
+                    <li class="nav-item">October</li>
+                    <li class="nav-item">November</li>
+                    <li class="nav-item">December</li>
+                </ul>
+
+                <div class="nav-title">Views</div>
+                <ul class="nav-list">
+                    <li class="nav-item active">Overview</li>
+                    <li class="nav-item">Spending</li>
+                    <li class="nav-item">Savings</li>
+                    <li class="nav-item">Income</li>
+                    <li class="nav-item">Purchases</li>
+                </ul>
+
+                <div class="quick-stats">
+                    <div class="nav-title">Month Summary</div>
+                    <div class="quick-stat">
+                        <span class="stat-label">Income</span>
+                        <span class="stat-value">$5,417</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span class="stat-label">Budgeted</span>
+                        <span class="stat-value">$4,050</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span class="stat-label">Spent</span>
+                        <span class="stat-value">$3,587</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span class="stat-label">Saved</span>
+                        <span class="stat-value" style="color: #48bb78;">$700</span>
+                    </div>
+                    <div class="quick-stat">
+                        <span class="stat-label">Remaining</span>
+                        <span class="stat-value" style="color: #48bb78;">$1,129</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="top-bar">
+                <h2>April 2025</h2>
+                <div class="action-buttons">
+                    <button class="btn">+ Purchase</button>
+                    <button class="btn">+ Recurring</button>
+                    <button class="btn btn-success">+ Income</button>
+                </div>
+            </div>
+
+            <div class="split-view">
+                <div class="left-pane">
+                    <div class="section">
+                        <div class="section-header">
+                            <div class="section-title">Month Summary</div>
+                        </div>
+                        <div class="metrics-grid">
+                            <div class="metric-box">
+                                <div class="metric-label">Budgeted</div>
+                                <div class="metric-value">$4,050</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">Spent</div>
+                                <div class="metric-value">$3,587</div>
+                            </div>
+                            <div class="metric-box" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                                <div class="metric-label">Remaining</div>
+                                <div class="metric-value">$1,129</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <div class="section-title">Spending</div>
+                        </div>
+                        <div class="category-list">
+                            <div class="category-item">
+                                <div class="category-icon">🛒</div>
+                                <div class="category-details">
+                                    <div class="category-name">Groceries</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill" style="width: 92%;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$461</div>
+                                    <div class="category-budget">of $500</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item">
+                                <div class="category-icon">🏠</div>
+                                <div class="category-details">
+                                    <div class="category-name">Rent</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$1,300</div>
+                                    <div class="category-budget">of $1,300</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item">
+                                <div class="category-icon">💡</div>
+                                <div class="category-details">
+                                    <div class="category-name">Utilities</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill" style="width: 90%;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$136</div>
+                                    <div class="category-budget">of $150</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item overspent">
+                                <div class="category-icon">🚗</div>
+                                <div class="category-details">
+                                    <div class="category-name">Transportation</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill overspent" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$338</div>
+                                    <div class="category-budget">of $300</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item">
+                                <div class="category-icon">🎬</div>
+                                <div class="category-details">
+                                    <div class="category-name">Entertainment</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill" style="width: 78%;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$156</div>
+                                    <div class="category-budget">of $200</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item overspent">
+                                <div class="category-icon">🍽️</div>
+                                <div class="category-details">
+                                    <div class="category-name">Dining Out</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill overspent" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$172</div>
+                                    <div class="category-budget">of $150</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item">
+                                <div class="category-icon">⚕️</div>
+                                <div class="category-details">
+                                    <div class="category-name">Healthcare</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill" style="width: 81%;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$81</div>
+                                    <div class="category-budget">of $100</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item warning">
+                                <div class="category-icon">💅</div>
+                                <div class="category-details">
+                                    <div class="category-name">Personal Care</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill warning" style="width: 88%;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$44</div>
+                                    <div class="category-budget">of $50</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-header">
+                            <div class="section-title">Savings Goals</div>
+                        </div>
+                        <div class="category-list">
+                            <div class="category-item" style="border-left-color: #48bb78;">
+                                <div class="category-icon">🚨</div>
+                                <div class="category-details">
+                                    <div class="category-name">Emergency Fund</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill" style="width: 100%; background-color: #48bb78;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$500</div>
+                                    <div class="category-budget">of $500</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item" style="border-left-color: #48bb78;">
+                                <div class="category-icon">✈️</div>
+                                <div class="category-details">
+                                    <div class="category-name">Vacation</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill" style="width: 100%; background-color: #48bb78;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$250</div>
+                                    <div class="category-budget">of $250</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item warning">
+                                <div class="category-icon">🔨</div>
+                                <div class="category-details">
+                                    <div class="category-name">Home Improvement</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill warning" style="width: 67%;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$200</div>
+                                    <div class="category-budget">of $300</div>
+                                </div>
+                            </div>
+
+                            <div class="category-item" style="border-left-color: #48bb78;">
+                                <div class="category-icon">👴</div>
+                                <div class="category-details">
+                                    <div class="category-name">Retirement</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-fill" style="width: 100%; background-color: #48bb78;"></div>
+                                    </div>
+                                </div>
+                                <div class="category-amounts">
+                                    <div class="category-spent">$500</div>
+                                    <div class="category-budget">of $500</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="right-pane">
+                    <div class="detail-card">
+                        <div class="detail-header">Budget Status</div>
+                        <div class="detail-row">
+                            <span class="detail-label">Income</span>
+                            <span class="detail-value">$5,416.67</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Budgeted</span>
+                            <span class="detail-value">$4,050.00</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Spent</span>
+                            <span class="detail-value">$3,587.25</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Saved</span>
+                            <span class="detail-value positive">$700.00</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Remaining</span>
+                            <span class="detail-value positive">$1,129.42</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Free Income</span>
+                            <span class="detail-value positive">$1,829.42</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-header">Income Sources</div>
+                        <div class="transaction-list">
+                            <div class="transaction-item">
+                                <div class="transaction-date">April 15, 2025</div>
+                                <div class="transaction-name">Acme Corp</div>
+                                <div class="transaction-meta">
+                                    <span>Salary</span>
+                                    <span class="transaction-amount">$2,500.00</span>
+                                </div>
+                            </div>
+
+                            <div class="transaction-item">
+                                <div class="transaction-date">April 1, 2025</div>
+                                <div class="transaction-name">Acme Corp</div>
+                                <div class="transaction-meta">
+                                    <span>Salary</span>
+                                    <span class="transaction-amount">$2,500.00</span>
+                                </div>
+                            </div>
+
+                            <div class="transaction-item">
+                                <div class="transaction-date">April 10, 2025</div>
+                                <div class="transaction-name">Freelance</div>
+                                <div class="transaction-meta">
+                                    <span>Side Income</span>
+                                    <span class="transaction-amount">$416.67</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-header">Recent Purchases</div>
+                        <div class="purchase-timeline">
+                            <div class="purchase-card">
+                                <div class="purchase-header">
+                                    <div class="purchase-name">Weekly groceries</div>
+                                    <div class="purchase-amount">$127</div>
+                                </div>
+                                <div class="purchase-meta">Apr 20 • Safeway • Groceries</div>
+                            </div>
+
+                            <div class="purchase-card">
+                                <div class="purchase-header">
+                                    <div class="purchase-name">Gas</div>
+                                    <div class="purchase-amount">$52</div>
+                                </div>
+                                <div class="purchase-meta">Apr 18 • Shell • Transportation</div>
+                            </div>
+
+                            <div class="purchase-card">
+                                <div class="purchase-header">
+                                    <div class="purchase-name">Dinner</div>
+                                    <div class="purchase-amount">$46</div>
+                                </div>
+                                <div class="purchase-meta">Apr 17 • Olive Garden • Dining</div>
+                            </div>
+
+                            <div class="purchase-card">
+                                <div class="purchase-header">
+                                    <div class="purchase-name">Electric bill</div>
+                                    <div class="purchase-amount">$85</div>
+                                </div>
+                                <div class="purchase-meta">Apr 15 • PG&E • Utilities</div>
+                            </div>
+
+                            <div class="purchase-card">
+                                <div class="purchase-header">
+                                    <div class="purchase-name">Movie tickets</div>
+                                    <div class="purchase-amount">$29</div>
+                                </div>
+                                <div class="purchase-meta">Apr 12 • AMC • Entertainment</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-header">Quick Actions</div>
+                        <button class="btn" style="width: 100%; margin-bottom: 10px;">Add Purchase</button>
+                        <button class="btn" style="width: 100%; margin-bottom: 10px;">Add Recurring</button>
+                        <button class="btn btn-success" style="width: 100%;">Add Income</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

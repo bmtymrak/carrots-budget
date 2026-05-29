@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup 3: Minimal Monthly Budget - April 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            line-height: 1.5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .back-link {
+            color: #00ff00;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .back-link:hover {
+            background-color: #00ff00;
+            color: #1a1a1a;
+        }
+
+        h1 {
+            font-size: 2em;
+            color: #00ff00;
+            font-weight: normal;
+        }
+
+        .nav-links {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: #00ff00;
+            text-decoration: none;
+            padding: 3px 8px;
+            border: 1px solid #333;
+        }
+
+        .nav-links a.active {
+            border: 1px solid #00ff00;
+            background-color: #00ff00;
+            color: #1a1a1a;
+        }
+
+        .nav-links a:hover {
+            border-color: #00ff00;
+        }
+
+        .command-line {
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .command-line .prompt {
+            color: #00ff00;
+        }
+
+        .command-line .output {
+            color: #e0e0e0;
+            margin-top: 5px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #00ff00;
+            font-size: 1.3em;
+            font-weight: normal;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 5px;
+        }
+
+        .data-grid {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .data-row {
+            display: grid;
+            grid-template-columns: 200px repeat(3, 1fr) 80px 60px;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .data-row.header {
+            color: #00ff00;
+            border-bottom: 2px solid #00ff00;
+            font-weight: bold;
+        }
+
+        .data-row.total {
+            border-top: 2px solid #00ff00;
+            border-bottom: 2px solid #00ff00;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .data-row:hover {
+            background-color: #252525;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .positive {
+            color: #00ff00;
+        }
+
+        .negative {
+            color: #ff0066;
+        }
+
+        .actions {
+            text-align: right;
+        }
+
+        .actions a {
+            color: #00ff00;
+            text-decoration: none;
+            padding: 0 5px;
+        }
+
+        .actions a:hover {
+            background-color: #00ff00;
+            color: #1a1a1a;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-item {
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            padding: 12px;
+        }
+
+        .summary-label {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 1.5em;
+            color: #00ff00;
+        }
+
+        .summary-value.positive {
+            color: #00ff00;
+        }
+
+        .summary-value.negative {
+            color: #ff0066;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background-color: #2a2a2a;
+            margin-top: 5px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #00ff00;
+        }
+
+        .progress-fill.overspent {
+            background-color: #ff0066;
+        }
+
+        .compact-list {
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            padding: 15px;
+        }
+
+        .list-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a2a;
+            display: grid;
+            grid-template-columns: 80px 150px 100px 100px 1fr 60px;
+            gap: 10px;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item:hover {
+            background-color: #252525;
+        }
+
+        button {
+            background-color: transparent;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 5px 10px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        button:hover {
+            background-color: #00ff00;
+            color: #1a1a1a;
+        }
+
+        .percentage {
+            font-size: 0.8em;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="#" class="back-link">← budget --year 2025</a>
+            <h1>$ budget --month april --year 2025</h1>
+            <div class="nav-links">
+                <a href="#">jan</a>
+                <a href="#">feb</a>
+                <a href="#">mar</a>
+                <a href="#" class="active">apr</a>
+                <a href="#">may</a>
+                <a href="#">jun</a>
+                <a href="#">jul</a>
+                <a href="#">aug</a>
+                <a href="#">sep</a>
+                <a href="#">oct</a>
+                <a href="#">nov</a>
+                <a href="#">dec</a>
+            </div>
+        </header>
+
+        <div class="command-line">
+            <div class="prompt">$ budget add --help</div>
+            <div class="output">
+                <button>purchase</button>
+                <button>recurring</button>
+                <button>income</button>
+                <button>category</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## SUMMARY</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-label">budgeted</div>
+                    <div class="summary-value">$4,050.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">spent</div>
+                    <div class="summary-value">$3,587.25</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">saved</div>
+                    <div class="summary-value positive">$700.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">income</div>
+                    <div class="summary-value">$5,416.67</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">remaining</div>
+                    <div class="summary-value positive">$1,129.42</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">free</div>
+                    <div class="summary-value positive">$1,829.42</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## SPENDING --type=expense</h2>
+            <div class="data-grid">
+                <div class="data-row header">
+                    <div>category</div>
+                    <div class="text-right">budgeted</div>
+                    <div class="text-right">spent</div>
+                    <div class="text-right">remaining</div>
+                    <div class="text-right">%</div>
+                    <div class="actions">act</div>
+                </div>
+                <div class="data-row">
+                    <div>groceries</div>
+                    <div class="text-right">500.00</div>
+                    <div class="text-right">461.38</div>
+                    <div class="text-right positive">+38.62</div>
+                    <div class="text-right percentage">92%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 92%;"></div>
+                        </div>
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="data-row">
+                    <div>rent</div>
+                    <div class="text-right">1300.00</div>
+                    <div class="text-right">1300.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="text-right percentage">100%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="data-row">
+                    <div>utilities</div>
+                    <div class="text-right">150.00</div>
+                    <div class="text-right">135.69</div>
+                    <div class="text-right positive">+14.31</div>
+                    <div class="text-right percentage">90%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 90%;"></div>
+                        </div>
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="data-row">
+                    <div>transport</div>
+                    <div class="text-right">300.00</div>
+                    <div class="text-right">337.50</div>
+                    <div class="text-right negative">-37.50</div>
+                    <div class="text-right percentage">113%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>
+                        <div class="progress-bar">
+                            <div class="progress-fill overspent" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="data-row">
+                    <div>entertainment</div>
+                    <div class="text-right">200.00</div>
+                    <div class="text-right">156.25</div>
+                    <div class="text-right positive">+43.75</div>
+                    <div class="text-right percentage">78%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 78%;"></div>
+                        </div>
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="data-row">
+                    <div>dining_out</div>
+                    <div class="text-right">150.00</div>
+                    <div class="text-right">171.75</div>
+                    <div class="text-right negative">-21.75</div>
+                    <div class="text-right percentage">115%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>
+                        <div class="progress-bar">
+                            <div class="progress-fill overspent" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="data-row">
+                    <div>healthcare</div>
+                    <div class="text-right">100.00</div>
+                    <div class="text-right">81.25</div>
+                    <div class="text-right positive">+18.75</div>
+                    <div class="text-right percentage">81%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 81%;"></div>
+                        </div>
+                    </div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="data-row total">
+                    <div>TOTAL</div>
+                    <div class="text-right">2750.00</div>
+                    <div class="text-right">2687.57</div>
+                    <div class="text-right positive">+62.43</div>
+                    <div class="text-right">98%</div>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## SAVINGS --type=goal</h2>
+            <div class="data-grid">
+                <div class="data-row header">
+                    <div>category</div>
+                    <div class="text-right">budgeted</div>
+                    <div class="text-right">saved</div>
+                    <div class="text-right">remaining</div>
+                    <div class="text-right">%</div>
+                    <div class="actions">act</div>
+                </div>
+                <div class="data-row">
+                    <div>emergency_fund</div>
+                    <div class="text-right">500.00</div>
+                    <div class="text-right">500.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="text-right percentage">100%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>vacation</div>
+                    <div class="text-right">250.00</div>
+                    <div class="text-right">250.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="text-right percentage">100%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>home_improve</div>
+                    <div class="text-right">300.00</div>
+                    <div class="text-right">200.00</div>
+                    <div class="text-right negative">-100.00</div>
+                    <div class="text-right percentage">67%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row">
+                    <div>retirement</div>
+                    <div class="text-right">500.00</div>
+                    <div class="text-right">500.00</div>
+                    <div class="text-right">0.00</div>
+                    <div class="text-right percentage">100%</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="data-row total">
+                    <div>TOTAL</div>
+                    <div class="text-right">1550.00</div>
+                    <div class="text-right">1450.00</div>
+                    <div class="text-right negative">-100.00</div>
+                    <div class="text-right">94%</div>
+                    <div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## INCOME</h2>
+            <div class="compact-list">
+                <div class="list-item">
+                    <div style="color: #888;">amount</div>
+                    <div style="color: #888;">source</div>
+                    <div style="color: #888;">category</div>
+                    <div style="color: #888;">date</div>
+                    <div style="color: #888;">notes</div>
+                    <div style="color: #888;">act</div>
+                </div>
+                <div class="list-item">
+                    <div>2500.00</div>
+                    <div>acme_corp</div>
+                    <div>salary</div>
+                    <div>2025-04-15</div>
+                    <div>biweekly</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div>2500.00</div>
+                    <div>acme_corp</div>
+                    <div>salary</div>
+                    <div>2025-04-01</div>
+                    <div>biweekly</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div>416.67</div>
+                    <div>freelance</div>
+                    <div>side_income</div>
+                    <div>2025-04-10</div>
+                    <div>web_design</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>## PURCHASES --recent --limit=7</h2>
+            <div class="compact-list">
+                <div class="list-item">
+                    <div style="color: #888;">date</div>
+                    <div style="color: #888;">item</div>
+                    <div style="color: #888;">amount</div>
+                    <div style="color: #888;">source</div>
+                    <div style="color: #888;">location • category</div>
+                    <div style="color: #888;">act</div>
+                </div>
+                <div class="list-item">
+                    <div>04-20</div>
+                    <div>groceries</div>
+                    <div>127.45</div>
+                    <div>credit</div>
+                    <div>safeway • groceries</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div>04-18</div>
+                    <div>gas</div>
+                    <div>52.00</div>
+                    <div>debit</div>
+                    <div>shell • transport</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div>04-17</div>
+                    <div>dinner</div>
+                    <div>45.75</div>
+                    <div>credit</div>
+                    <div>olive_garden • dining</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div>04-15</div>
+                    <div>electric</div>
+                    <div>85.32</div>
+                    <div>transfer</div>
+                    <div>pge • utilities</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+                <div class="list-item">
+                    <div>04-12</div>
+                    <div>movie</div>
+                    <div>28.50</div>
+                    <div>credit</div>
+                    <div>amc • entertainment</div>
+                    <div class="actions">
+                        <a href="#">e</a>
+                        <a href="#">d</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="command-line">
+            <div class="prompt">$ _</div>
+        </div>
+    </div>
+</body>
+</html>
