@@ -32,7 +32,7 @@ class AddUserMixin:
 class PurchaseListView(LoginRequiredMixin, ListView):
     model = Purchase
     context_object_name = "purchases"
-    template_name = "purchase_list.html"
+    template_name = "purchases/purchase_list.html"
     ordering = ["-date", "-created_at", "-pk"]
     paginate_by = 100
 

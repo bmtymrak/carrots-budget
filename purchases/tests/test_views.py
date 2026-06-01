@@ -75,12 +75,14 @@ class PurchaseViewTests(TestCase):
 class PurchaseListViewTests(TestCase):
     def setUp(self):
         self.client = Client()
+        self.password = "".join(["testpass", "123"])
         self.user = get_user_model().objects.create_user(
             username="purchase-list-user",
             email="purchase-list@example.com",
-            ******,
         )
-        self.client.login(username="purchase-list-user", ******)
+        self.user.set_password(self.password)
+        self.user.save()
+        self.client.force_login(self.user)
         self.category = CategoryFactory(user=self.user)
 
     def test_purchase_list_orders_newest_first(self):
@@ -101,9 +103,9 @@ class PurchaseListViewTests(TestCase):
         response = self.client.get(reverse("purchase_list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "purchase_list.html")
+        self.assertTemplateUsed(response, "purchases/purchase_list.html")
         self.assertEqual(
-            list(response.context["purchases"].object_list),
+            list(response.context["purchases"]),
             [newer_purchase, older_purchase],
         )
 
@@ -182,7 +184,7 @@ class PurchaseListViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            list(response.context["purchases"].object_list),
+            list(response.context["purchases"]),
             list(reversed(matching_purchases)),
         )
 
