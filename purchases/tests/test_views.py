@@ -4,18 +4,30 @@ import unittest
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.utils import timezone
+from django.test import override_settings
 from decimal import Decimal
 
 from purchases.models import Category, Purchase, Income, RecurringPurchase
 from budgets.models import YearlyBudget
 from .factories import (
     CategoryFactory,
+    PurchaseFactory,
     SubcategoryFactory,
     RecurringPurchaseFactory,
 )
 
 
 User = get_user_model()
+
+TEST_STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 
 class PurchaseViewTests(TestCase):
@@ -56,6 +68,122 @@ class PurchaseViewTests(TestCase):
                 user=self.user,
                 item='Test Purchase'
             ).exists()
+        )
+
+
+@override_settings(STORAGES=TEST_STORAGES)
+class PurchaseListViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = get_user_model().objects.create_user(
+            username="purchase-list-user",
+            email="purchase-list@example.com",
+            ******,
+        )
+        self.client.login(username="purchase-list-user", ******)
+        self.category = CategoryFactory(user=self.user)
+
+    def test_purchase_list_orders_newest_first(self):
+        older_purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            date=datetime.date(2024, 1, 1),
+            item="Older purchase",
+        )
+        newer_purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            date=datetime.date(2024, 2, 1),
+            item="Newer purchase",
+        )
+        PurchaseFactory(date=datetime.date(2024, 3, 1))
+
+        response = self.client.get(reverse("purchase_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "purchase_list.html")
+        self.assertEqual(
+            list(response.context["purchases"].object_list),
+            [newer_purchase, older_purchase],
+        )
+
+    def test_purchase_list_paginates_to_100_items_per_page(self):
+        for index in range(101):
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                item=f"Purchase {index}",
+                date=datetime.date(2024, 1, 1) + datetime.timedelta(days=index),
+            )
+
+        first_page_response = self.client.get(reverse("purchase_list"))
+        second_page_response = self.client.get(reverse("purchase_list"), {"page": 2})
+
+        self.assertEqual(first_page_response.status_code, 200)
+        self.assertTrue(first_page_response.context["is_paginated"])
+        self.assertEqual(first_page_response.context["paginator"].per_page, 100)
+        self.assertEqual(len(first_page_response.context["purchases"]), 100)
+        self.assertEqual(second_page_response.status_code, 200)
+        self.assertEqual(len(second_page_response.context["purchases"]), 1)
+
+    def test_purchase_list_filters_by_dates_and_search(self):
+        matching_purchases = [
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                item="Needle item",
+                source="Regular source",
+                location="Regular location",
+                date=datetime.date(2024, 2, 10),
+            ),
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                item="Other item",
+                source="Needle source",
+                location="Regular location",
+                date=datetime.date(2024, 2, 11),
+            ),
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                item="Other item",
+                source="Regular source",
+                location="Needle location",
+                date=datetime.date(2024, 2, 12),
+            ),
+        ]
+        out_of_range_purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Needle item outside range",
+            source="Needle source outside range",
+            location="Needle location outside range",
+            date=datetime.date(2024, 1, 15),
+        )
+
+        Purchase.objects.filter(pk__in=[purchase.pk for purchase in matching_purchases]).update(
+            created_at=timezone.make_aware(datetime.datetime(2024, 3, 10, 12, 0, 0))
+        )
+        Purchase.objects.filter(pk=out_of_range_purchase.pk).update(
+            created_at=timezone.make_aware(datetime.datetime(2024, 4, 10, 12, 0, 0))
+        )
+
+        response = self.client.get(
+            reverse("purchase_list"),
+            {
+                "purchase_date_from": "2024-02-01",
+                "purchase_date_to": "2024-02-29",
+                "date_added_from": "2024-03-01",
+                "date_added_to": "2024-03-31",
+                "search": "needle",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context["purchases"].object_list),
+            list(reversed(matching_purchases)),
         )
 
     @unittest.skip("Feature 'new_category' is not implemented in Purchase backend")

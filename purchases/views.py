@@ -1,5 +1,8 @@
+from django.db.models import Q
+from django.http import QueryDict
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy, reverse
+from django.utils.dateparse import parse_date
 from django.views.generic import (
     ListView,
     CreateView,
@@ -30,11 +33,57 @@ class PurchaseListView(LoginRequiredMixin, ListView):
     model = Purchase
     context_object_name = "purchases"
     template_name = "purchase_list.html"
-    ordering = "date"
+    ordering = ["-date", "-created_at", "-pk"]
+    paginate_by = 100
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.filter(user=self.request.user).prefetch_related("category")
+        qs = (
+            super()
+            .get_queryset()
+            .filter(user=self.request.user)
+            .select_related("category")
+        )
+
+        purchase_date_from = parse_date(
+            self.request.GET.get("purchase_date_from", "")
+        )
+        purchase_date_to = parse_date(self.request.GET.get("purchase_date_to", ""))
+        date_added_from = parse_date(self.request.GET.get("date_added_from", ""))
+        date_added_to = parse_date(self.request.GET.get("date_added_to", ""))
+        search = self.request.GET.get("search", "").strip()
+
+        if purchase_date_from:
+            qs = qs.filter(date__gte=purchase_date_from)
+        if purchase_date_to:
+            qs = qs.filter(date__lte=purchase_date_to)
+        if date_added_from:
+            qs = qs.filter(created_at__date__gte=date_added_from)
+        if date_added_to:
+            qs = qs.filter(created_at__date__lte=date_added_to)
+        if search:
+            qs = qs.filter(
+                Q(item__icontains=search)
+                | Q(location__icontains=search)
+                | Q(source__icontains=search)
+            )
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        query_params = QueryDict(mutable=True)
+        query_params.update(self.request.GET)
+        query_params.pop("page", None)
+
+        context["filters"] = {
+            "purchase_date_from": self.request.GET.get("purchase_date_from", ""),
+            "purchase_date_to": self.request.GET.get("purchase_date_to", ""),
+            "date_added_from": self.request.GET.get("date_added_from", ""),
+            "date_added_to": self.request.GET.get("date_added_to", ""),
+            "search": self.request.GET.get("search", ""),
+        }
+        context["page_querystring"] = query_params.urlencode()
+        return context
 
 class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Category

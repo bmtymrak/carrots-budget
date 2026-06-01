@@ -8,6 +8,35 @@
 {% endblock header %}
 
 {% block body %}
+<form method="get" class="card">
+    <div class="horizontal-form-grid">
+        <div>
+            <label for="purchase-date-from">Purchase date from</label>
+            <input id="purchase-date-from" type="date" name="purchase_date_from" value="{{ filters.purchase_date_from }}">
+        </div>
+        <div>
+            <label for="purchase-date-to">Purchase date to</label>
+            <input id="purchase-date-to" type="date" name="purchase_date_to" value="{{ filters.purchase_date_to }}">
+        </div>
+        <div>
+            <label for="date-added-from">Date added from</label>
+            <input id="date-added-from" type="date" name="date_added_from" value="{{ filters.date_added_from }}">
+        </div>
+        <div>
+            <label for="date-added-to">Date added to</label>
+            <input id="date-added-to" type="date" name="date_added_to" value="{{ filters.date_added_to }}">
+        </div>
+        <div>
+            <label for="purchase-search">Search</label>
+            <input id="purchase-search" type="search" name="search" value="{{ filters.search }}" placeholder="Name, location, or source">
+        </div>
+    </div>
+    <div class="edit-links-container">
+        <button type="submit">Filter</button>
+        <a href="{% url 'purchase_list' %}">Clear</a>
+    </div>
+</form>
+
 <div class="purchase-horizontal-grid purchase-horizontal-grid-categories card-table-header">
     <div>Date</div>
     <div>Item</div>
@@ -34,5 +63,17 @@
     </div>
     {% endfor %}
 </div>
+
+{% if is_paginated %}
+<div class="edit-links-container">
+    {% if page_obj.has_previous %}
+    <a href="?{% if page_querystring %}{{ page_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?{% if page_querystring %}{{ page_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</div>
+{% endif %}
 </div>
 {% endblock body %}
