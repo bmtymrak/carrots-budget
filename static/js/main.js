@@ -16,23 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize page-specific features based on DOM elements present
 
     // Rollover editor (yearly budget detail page)
-    if (document.querySelector('.rollover-edit')) {
-        const yearElement = document.querySelector('[data-year]');
-        const year = yearElement ? yearElement.dataset.year : null;
-
-        // If no data-year attribute, try to extract from page context
-        // This handles the current implementation where year is in template
-        if (!year) {
-            // Year will be passed via data attribute in updated template
-            const firstRollover = document.querySelector('.rollover-edit');
-            if (firstRollover) {
-                // For now, we'll need the year to be available
-                // The template will need to provide it
-                console.warn('Rollover editor requires year data attribute');
-            }
-        } else {
-            new RolloverEditor(year);
-        }
+    const rolloverContainer = document.querySelector('.rollover-col[data-year][data-rollover-url]');
+    if (rolloverContainer) {
+        new RolloverEditor(
+            rolloverContainer.dataset.year,
+            rolloverContainer.dataset.rolloverUrl,
+        );
     }
 
     // Purchase form manager (purchase create page)

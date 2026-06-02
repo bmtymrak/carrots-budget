@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block header %}
-    <h1 class="page-title" data-year="{{yearly_budget.date.year}}">{{yearly_budget.date.year}}</h1>
+    <h1 class="page-title">{{yearly_budget.date.year}}</h1>
 {% endblock header %}
 
 {% block heading_nav %}
@@ -225,7 +225,7 @@
                 </div>
             </div>
             <div>
-                <div class="rollover-col">
+                <div class="rollover-col" data-rollover-url="{% url 'rollover_update' %}" data-year="{{yearly_budget.date.year}}">
                     <div class="budget-monthly-single-col card-table-header">
                         <div class="card-table-heading">Rollover</div>
                     </div>

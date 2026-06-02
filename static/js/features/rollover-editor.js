@@ -6,12 +6,13 @@
 import { getCookie } from '../core/utils.js';
 
 export class RolloverEditor {
-    constructor(year) {
+    constructor(year, updateUrl) {
         this.year = year;
+        this.updateUrl = updateUrl;
         this.csrfToken = getCookie('csrftoken');
         this.inputs = document.querySelectorAll(".rollover-edit");
 
-        if (this.inputs.length > 0) {
+        if (this.inputs.length > 0 && this.year && this.updateUrl) {
             this.init();
         }
     }
@@ -36,7 +37,7 @@ export class RolloverEditor {
             const category = event.currentTarget.dataset.category;
 
             try {
-                const response = await fetch('/budgets/rollover/update/', {
+                const response = await fetch(this.updateUrl, {
                     method: 'POST',
                     credentials: 'same-origin',
                     headers: {
