@@ -599,6 +599,7 @@ h2 {
 .purchase-filter-panel {
     display: grid;
     gap: 16px;
+    margin-bottom: 20px;
 }
 
 .purchase-filter-heading {
@@ -611,11 +612,6 @@ h2 {
 .purchase-filter-title {
     margin: 0;
     font-size: 1.5rem;
-}
-
-.purchase-filter-description {
-    color: #4b5563;
-    margin-top: 4px;
 }
 
 .purchase-filter-grid {
@@ -661,7 +657,6 @@ h2 {
     justify-content: flex-end;
     align-items: center;
     gap: 12px;
-    flex-wrap: wrap;
 }
 
 .purchase-filter-submit {
