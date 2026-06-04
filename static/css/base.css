@@ -227,6 +227,12 @@ a {
     background-color: #F1F1F1;
 }
 
+.purchase-list-table th:first-child,
+.purchase-list-table td:first-child {
+    white-space: nowrap;
+    width: 1%;
+}
+
 .purchase-list-table .purchase-list-actions {
     width: 1%;
     white-space: nowrap;
