@@ -193,13 +193,14 @@ class PurchaseListViewTests(TestCase):
         purchase = PurchaseFactory(
             user=self.user,
             category=self.category,
-            item="Filtered purchase",
+            item="Needle purchase",
+            date=datetime.date(2024, 2, 10),
         )
         filtered_url = (
             f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
             "&purchase_date_to=2024-02-29&search=needle"
         )
-        encoded_next = quote(filtered_url, safe="")
+        encoded_next = quote(filtered_url, safe="/")
 
         response = self.client.get(filtered_url)
 
@@ -225,7 +226,7 @@ class PurchaseListViewTests(TestCase):
             f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
             "&purchase_date_to=2024-02-29&search=needle"
         )
-        encoded_next = quote(filtered_url, safe="")
+        encoded_next = quote(filtered_url, safe="/")
 
         response = self.client.get(
             reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk}),
