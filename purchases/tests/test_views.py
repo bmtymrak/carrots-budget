@@ -98,7 +98,7 @@ class PurchaseViewTests(TestCase):
         response = self.client.get(reverse('purchase_list'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'purchase_list.html')
+        self.assertTemplateUsed(response, 'purchases/purchase_list.html')
         self.assertContains(response, '<table class="purchase-list-table">', html=False)
         self.assertContains(response, '<th scope="col">Date</th>', html=False)
         self.assertContains(response, '<td>Table Purchase</td>', html=False)
