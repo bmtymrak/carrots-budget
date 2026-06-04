@@ -102,6 +102,8 @@ class PurchaseViewTests(TestCase):
         self.assertContains(response, '<table class="purchase-list-table">', html=False)
         self.assertContains(response, '<th scope="col">Date</th>', html=False)
         self.assertContains(response, '<td>Table Purchase</td>', html=False)
+        self.assertContains(response, 'aria-label="Edit purchase"', html=False)
+        self.assertContains(response, 'aria-label="Delete purchase"', html=False)
         self.assertNotContains(response, 'Hidden Purchase')
 
     @unittest.skip("Feature 'new_category' is not implemented in Purchase backend")
