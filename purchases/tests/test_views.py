@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
@@ -57,6 +57,52 @@ class PurchaseViewTests(TestCase):
                 item='Test Purchase'
             ).exists()
         )
+
+    @override_settings(
+        STORAGES={
+            "default": {
+                "BACKEND": "django.core.files.storage.FileSystemStorage",
+            },
+            "staticfiles": {
+                "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+            },
+        }
+    )
+    def test_purchase_list_view_renders_table_rows(self):
+        Purchase.objects.create(
+            item='Table Purchase',
+            date=datetime.date(2024, 1, 15),
+            user=self.user,
+            amount='42.50',
+            source='Test Store',
+            location='Test Location',
+            category=self.category,
+            subcategory=self.subcategory,
+        )
+        other_user = get_user_model().objects.create_user(
+            username='otheruser',
+            email='other@example.com',
+            password='testpass123'
+        )
+        other_category = CategoryFactory(user=other_user)
+        Purchase.objects.create(
+            item='Hidden Purchase',
+            date=datetime.date(2024, 1, 16),
+            user=other_user,
+            amount='99.99',
+            source='Other Store',
+            location='Other Location',
+            category=other_category,
+        )
+
+        response = self.client.get(reverse('purchase_list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'purchase_list.html')
+        self.assertContains(response, '<table class="purchase-list-table">', html=False)
+        self.assertContains(response, '<th scope="col">Date</th>', html=False)
+        self.assertContains(response, '<td>Table Purchase</td>', html=False)
+        self.assertNotContains(response, 'Hidden Purchase')
 
     @unittest.skip("Feature 'new_category' is not implemented in Purchase backend")
     def test_purchase_create_with_new_category(self):
