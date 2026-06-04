@@ -1,5 +1,6 @@
 import datetime
 import unittest
+from urllib.parse import quote
 
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
@@ -186,6 +187,56 @@ class PurchaseListViewTests(TestCase):
         self.assertEqual(
             list(response.context["purchases"]),
             list(reversed(matching_purchases)),
+        )
+
+    def test_purchase_list_modal_links_preserve_filters(self):
+        purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Filtered purchase",
+        )
+        filtered_url = (
+            f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
+            "&purchase_date_to=2024-02-29&search=needle"
+        )
+        encoded_next = quote(filtered_url, safe="")
+
+        response = self.client.get(filtered_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'hx-get=\'{reverse("purchase_edit_htmx", kwargs={"pk": purchase.pk})}?next={encoded_next}\'',
+            html=False,
+        )
+        self.assertContains(
+            response,
+            f'hx-get=\'{reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk})}?next={encoded_next}\'',
+            html=False,
+        )
+
+    def test_purchase_delete_modal_preserves_filtered_redirect(self):
+        purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Delete me",
+        )
+        filtered_url = (
+            f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
+            "&purchase_date_to=2024-02-29&search=needle"
+        )
+        encoded_next = quote(filtered_url, safe="")
+
+        response = self.client.get(
+            reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk}),
+            {"next": filtered_url},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'hx-delete=\'{reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk})}?next={encoded_next}\'',
+            html=False,
         )
 
     @unittest.skip("Feature 'new_category' is not implemented in Purchase backend")

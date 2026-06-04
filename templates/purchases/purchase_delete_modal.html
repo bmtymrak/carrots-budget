@@ -19,5 +19,5 @@
             <div>{{purchase.category}}</div>
         </div>
     </div>
-    <button hx-delete='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
+    <button hx-delete='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{next|urlencode}}' class="button-delete button-delete-standalone">Delete</button>
 </div>
