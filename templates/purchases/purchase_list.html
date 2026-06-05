@@ -35,6 +35,15 @@
             <label for="purchase-search">Search</label>
             <input id="purchase-search" type="search" name="search" value="{{ filters.search }}" placeholder="Name, location, or source">
         </div>
+        <div class="purchase-filter-field">
+            <label for="purchase-category">Category</label>
+            <select id="purchase-category" name="category">
+                <option value="">All categories</option>
+                {% for category in filter_categories %}
+                <option value="{{ category.id }}"{% if filters.category == category.id|stringformat:"s" %} selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
     <div class="purchase-filter-actions">
         <button type="submit" class="button-create purchase-filter-submit">Filter</button>

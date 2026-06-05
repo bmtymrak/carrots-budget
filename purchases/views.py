@@ -51,6 +51,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         date_added_from = parse_date(self.request.GET.get("date_added_from", ""))
         date_added_to = parse_date(self.request.GET.get("date_added_to", ""))
         search = self.request.GET.get("search", "").strip()
+        category = self.request.GET.get("category", "").strip()
 
         if purchase_date_from:
             qs = qs.filter(date__gte=purchase_date_from)
@@ -66,6 +67,8 @@ class PurchaseListView(LoginRequiredMixin, ListView):
                 | Q(location__icontains=search)
                 | Q(source__icontains=search)
             )
+        if category.isdigit():
+            qs = qs.filter(category_id=int(category))
 
         return qs
 
@@ -81,7 +84,11 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             "date_added_from": self.request.GET.get("date_added_from", ""),
             "date_added_to": self.request.GET.get("date_added_to", ""),
             "search": self.request.GET.get("search", ""),
+            "category": self.request.GET.get("category", ""),
         }
+        context["filter_categories"] = Category.objects.filter(
+            purchases__user=self.request.user,
+        ).distinct()
         context["page_querystring"] = query_params.urlencode()
         return context
 

@@ -189,6 +189,50 @@ class PurchaseListViewTests(TestCase):
             list(reversed(matching_purchases)),
         )
 
+    def test_purchase_list_filters_by_category_with_used_category_options(self):
+        other_category = CategoryFactory(user=self.user, name="Other category")
+        unused_category = CategoryFactory(user=self.user, name="Unused category")
+        matching_purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Matching purchase",
+            date=datetime.date(2024, 2, 10),
+        )
+        non_matching_purchase = PurchaseFactory(
+            user=self.user,
+            category=other_category,
+            item="Non matching purchase",
+            date=datetime.date(2024, 2, 11),
+        )
+
+        response = self.client.get(
+            reverse("purchase_list"),
+            {"category": str(self.category.pk)},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context["purchases"]),
+            [matching_purchase],
+        )
+        self.assertEqual(
+            list(response.context["filter_categories"]),
+            [self.category, other_category],
+        )
+        self.assertNotIn(unused_category, response.context["filter_categories"])
+        self.assertContains(
+            response,
+            f'<option value="{self.category.pk}" selected>{self.category.name}</option>',
+            html=True,
+        )
+        self.assertContains(
+            response,
+            f'<option value="{other_category.pk}">{other_category.name}</option>',
+            html=True,
+        )
+        self.assertNotContains(response, unused_category.name)
+        self.assertNotIn(non_matching_purchase, response.context["purchases"])
+
     def test_purchase_list_modal_links_preserve_filters(self):
         purchase = PurchaseFactory(
             user=self.user,
@@ -198,7 +242,7 @@ class PurchaseListViewTests(TestCase):
         )
         filtered_url = (
             f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
-            "&purchase_date_to=2024-02-29&search=needle"
+            f"&purchase_date_to=2024-02-29&search=needle&category={self.category.pk}"
         )
         encoded_next = quote(filtered_url, safe="/")
 
@@ -224,7 +268,7 @@ class PurchaseListViewTests(TestCase):
         )
         filtered_url = (
             f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
-            "&purchase_date_to=2024-02-29&search=needle"
+            f"&purchase_date_to=2024-02-29&search=needle&category={self.category.pk}"
         )
         encoded_next = quote(filtered_url, safe="/")
 
