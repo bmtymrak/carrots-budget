@@ -207,6 +207,41 @@ a {
     overflow: hidden;
 }
 
+.purchase-list-table-container {
+    overflow-x: auto;
+}
+
+.purchase-list-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+}
+
+.purchase-list-table th,
+.purchase-list-table td {
+    padding: 5px 10px;
+    text-align: left;
+}
+
+.purchase-list-table thead th {
+    background-color: #F1F1F1;
+}
+
+.purchase-list-table th:first-child,
+.purchase-list-table td:first-child {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.purchase-list-table tr {
+    border-bottom: 1px solid black;
+}
+
+.purchase-list-table .purchase-list-actions {
+    width: 1%;
+    white-space: nowrap;
+}
+
 .income-horizontal-grid-monthly {
     display: grid;
     grid-template-columns: repeat(5, 1fr) 75px;
