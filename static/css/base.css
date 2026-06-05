@@ -631,7 +631,8 @@ h2 {
     font-weight: 700;
 }
 
-.purchase-filter-field input {
+.purchase-filter-field input,
+.purchase-filter-field select {
     width: 100%;
     min-height: 42px;
     padding: 10px 12px;
