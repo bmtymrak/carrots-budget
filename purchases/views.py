@@ -68,7 +68,10 @@ class PurchaseListView(LoginRequiredMixin, ListView):
                 | Q(source__icontains=search)
             )
         if category.isdigit():
-            qs = qs.filter(category_id=int(category))
+            qs = qs.filter(
+                category_id=int(category),
+                category__user=self.request.user,
+            )
 
         return qs
 
@@ -87,8 +90,9 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             "category": self.request.GET.get("category", ""),
         }
         context["filter_categories"] = Category.objects.filter(
+            user=self.request.user,
             purchases__user=self.request.user,
-        ).distinct()
+        ).only("id", "name").order_by("name").distinct()
         context["page_querystring"] = query_params.urlencode()
         return context
 
