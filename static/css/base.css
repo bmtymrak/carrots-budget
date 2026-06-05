@@ -233,6 +233,10 @@ a {
     width: 1%;
 }
 
+.purchase-list-table tr {
+    border-bottom: 1px solid black;
+}
+
 .purchase-list-table .purchase-list-actions {
     width: 1%;
     white-space: nowrap;
