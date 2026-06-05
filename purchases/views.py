@@ -1,5 +1,4 @@
 from django.db.models import Q
-from django.http import QueryDict
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy, reverse
 from django.utils.dateparse import parse_date
@@ -52,6 +51,10 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         date_added_to = parse_date(self.request.GET.get("date_added_to", ""))
         search = self.request.GET.get("search", "").strip()
         category = self.request.GET.get("category", "").strip()
+        try:
+            category_id = int(category)
+        except (TypeError, ValueError):
+            category_id = None
 
         if purchase_date_from:
             qs = qs.filter(date__gte=purchase_date_from)
@@ -67,9 +70,9 @@ class PurchaseListView(LoginRequiredMixin, ListView):
                 | Q(location__icontains=search)
                 | Q(source__icontains=search)
             )
-        if category.isdigit():
+        if category_id is not None:
             qs = qs.filter(
-                category_id=int(category),
+                category_id=category_id,
                 category__user=self.request.user,
             )
 
@@ -77,8 +80,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        query_params = QueryDict(mutable=True)
-        query_params.update(self.request.GET)
+        query_params = self.request.GET.copy()
         query_params.pop("page", None)
 
         context["filters"] = {
