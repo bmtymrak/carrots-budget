@@ -25,6 +25,7 @@ TEST_STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
+    # Avoid manifest-based static file lookups when rendering templates in tests.
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
@@ -86,7 +87,7 @@ class PurchaseListViewTests(TestCase):
         self.client.force_login(self.user)
         self.category = CategoryFactory(user=self.user)
 
-    def test_purchase_list_orders_newest_first(self):
+    def test_purchase_list_orders_by_date_descending(self):
         older_purchase = PurchaseFactory(
             user=self.user,
             category=self.category,
