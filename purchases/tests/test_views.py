@@ -99,7 +99,16 @@ class PurchaseListViewTests(TestCase):
             date=datetime.date(2024, 2, 1),
             item="Newer purchase",
         )
-        PurchaseFactory(date=datetime.date(2024, 3, 1))
+        other_user = get_user_model().objects.create_user(
+            username="other-purchase-list-user",
+            email="other-purchase-list@example.com",
+        )
+        other_category = CategoryFactory(user=other_user)
+        PurchaseFactory(
+            user=other_user,
+            category=other_category,
+            date=datetime.date(2024, 3, 1),
+        )
 
         response = self.client.get(reverse("purchase_list"))
 

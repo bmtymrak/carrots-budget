@@ -36,6 +36,9 @@ class PurchaseListView(LoginRequiredMixin, ListView):
     paginate_by = 100
 
     def get_queryset(self):
+        def get_date_param(name):
+            return parse_date(self.request.GET.get(name, ""))
+
         qs = (
             super()
             .get_queryset()
@@ -43,15 +46,16 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             .select_related("category")
         )
 
-        purchase_date_from = parse_date(
-            self.request.GET.get("purchase_date_from", "")
-        )
-        purchase_date_to = parse_date(self.request.GET.get("purchase_date_to", ""))
-        date_added_from = parse_date(self.request.GET.get("date_added_from", ""))
-        date_added_to = parse_date(self.request.GET.get("date_added_to", ""))
+        purchase_date_from = get_date_param("purchase_date_from")
+        purchase_date_to = get_date_param("purchase_date_to")
+        date_added_from = get_date_param("date_added_from")
+        date_added_to = get_date_param("date_added_to")
         search = self.request.GET.get("search", "").strip()
         category = self.request.GET.get("category", "").strip()
-        category_id = int(category) if category.isdigit() else None
+        try:
+            category_id = int(category)
+        except ValueError:
+            category_id = None
 
         if purchase_date_from:
             qs = qs.filter(date__gte=purchase_date_from)
@@ -96,8 +100,8 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             .only("id", "name")
             .order_by("name")
         )
-        page_querystring = query_params.urlencode()
-        base_query_string = f"{page_querystring}&" if page_querystring else ""
+        filter_querystring = query_params.urlencode()
+        base_query_string = f"{filter_querystring}&" if filter_querystring else ""
         context["previous_page_url"] = None
         context["next_page_url"] = None
 
