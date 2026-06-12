@@ -93,6 +93,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         }
         context["filter_categories"] = Category.objects.filter(
             user=self.request.user,
+            purchases__isnull=False,
         ).only("id", "name").order_by("name").distinct()
         page_querystring = query_params.urlencode()
         page_query_prefix = f"{page_querystring}&" if page_querystring else ""
