@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy, reverse
 from django.utils.dateparse import parse_date
@@ -71,10 +71,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
                 | Q(source__icontains=search)
             )
         if category_id is not None:
-            qs = qs.filter(
-                category_id=category_id,
-                category__user=self.request.user,
-            )
+            qs = qs.filter(category_id=category_id)
 
         return qs
 
@@ -91,10 +88,17 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             "search": self.request.GET.get("search", ""),
             "category": self.request.GET.get("category", ""),
         }
-        context["filter_categories"] = Category.objects.filter(
+        used_categories = Purchase.objects.filter(
             user=self.request.user,
-            purchases__isnull=False,
-        ).only("id", "name").order_by("name").distinct()
+            category_id=OuterRef("pk"),
+        )
+        context["filter_categories"] = (
+            Category.objects.filter(user=self.request.user)
+            .annotate(has_purchases=Exists(used_categories))
+            .filter(has_purchases=True)
+            .only("id", "name")
+            .order_by("name")
+        )
         page_querystring = query_params.urlencode()
         page_query_prefix = f"{page_querystring}&" if page_querystring else ""
         context["previous_page_url"] = None
