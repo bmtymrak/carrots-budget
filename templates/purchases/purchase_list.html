@@ -51,31 +51,38 @@
     </div>
 </form>
 
-<div class="purchase-horizontal-grid purchase-horizontal-grid-categories card-table-header">
-    <div>Date</div>
-    <div>Item</div>
-    <div>Amount</div>
-    <div>Source</div>
-    <div>Location</div>
-    <div>Category</div>
-    <div></div>
-</div>
-
-<div class="purchase-horizontal-grid purchase-horizontal-grid-categories">
-    {% for purchase in purchases %}
-    <div>{{purchase.date}}</div>
-    <div>{{purchase.item}}</div>
-    <div>{{purchase.amount}}</div>
-    <div>{{purchase.source}}</div>
-    <div>{{purchase.location}}</div>
-    <div>{{purchase.category}}</div>
-    <div>
-        <div class="edit-links-container">
-            <button class="button-blank" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{request.get_full_path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px" alt="" aria-hidden="true"></button>
-            <button class="button-blank" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{request.get_full_path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px" alt="" aria-hidden="true"></button>
-        </div>
-    </div>
-    {% endfor %}
+<div class="purchase-list-table-container">
+    <table class="purchase-list-table">
+        <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Item</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Source</th>
+                <th scope="col">Location</th>
+                <th scope="col">Category</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+            <tr>
+                <td>{{purchase.date}}</td>
+                <td>{{purchase.item}}</td>
+                <td>{{purchase.amount}}</td>
+                <td>{{purchase.source}}</td>
+                <td>{{purchase.location}}</td>
+                <td>{{purchase.category}}</td>
+                <td class="purchase-list-actions">
+                    <div class="edit-links-container">
+                        <button class="button-blank" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{request.get_full_path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17px"></button>
+                        <button class="button-blank" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{request.get_full_path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17px"></button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 {% if is_paginated %}
