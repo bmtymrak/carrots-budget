@@ -129,6 +129,32 @@ class PurchaseListViewTests(TestCase):
         self.assertEqual(second_page_response.status_code, 200)
         self.assertEqual(len(second_page_response.context["purchases"]), 1)
 
+    def test_purchase_list_pagination_links_preserve_filters(self):
+        for index in range(101):
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                item=f"Needle purchase {index}",
+                date=datetime.date(2024, 2, 1),
+            )
+
+        response = self.client.get(
+            reverse("purchase_list"),
+            {"search": "needle", "category": str(self.category.pk)},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["next_page_url"],
+            f"?search=needle&category={self.category.pk}&page=2",
+        )
+        self.assertIsNone(response.context["previous_page_url"])
+        self.assertContains(
+            response,
+            f'href="?search=needle&amp;category={self.category.pk}&amp;page=2"',
+            html=False,
+        )
+
     def test_purchase_list_filters_by_dates_and_search(self):
         matching_purchases = [
             PurchaseFactory(

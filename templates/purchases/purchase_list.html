@@ -87,12 +87,12 @@
 
 {% if is_paginated %}
 <div class="edit-links-container">
-    {% if page_obj.has_previous %}
-    <a href="?{% if page_querystring %}{{ page_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+    {% if previous_page_url %}
+    <a href="{{ previous_page_url }}">Previous</a>
     {% endif %}
     <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    {% if page_obj.has_next %}
-    <a href="?{% if page_querystring %}{{ page_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+    {% if next_page_url %}
+    <a href="{{ next_page_url }}">Next</a>
     {% endif %}
 </div>
 {% endif %}
