@@ -76,7 +76,7 @@ class PurchaseViewTests(TestCase):
 class PurchaseListViewTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.password = "".join(["testpass", "123"])
+        self.password = "testpass123"
         self.user = get_user_model().objects.create_user(
             username="purchase-list-user",
             email="purchase-list@example.com",

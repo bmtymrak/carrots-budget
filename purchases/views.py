@@ -53,7 +53,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         category = self.request.GET.get("category", "").strip()
         try:
             category_id = int(category)
-        except (TypeError, ValueError):
+        except ValueError:
             category_id = None
 
         if purchase_date_from:
@@ -100,18 +100,18 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             .order_by("name")
         )
         page_querystring = query_params.urlencode()
-        page_query_prefix = f"{page_querystring}&" if page_querystring else ""
+        base_query_string = f"{page_querystring}&" if page_querystring else ""
         context["previous_page_url"] = None
         context["next_page_url"] = None
 
         if context["page_obj"].has_previous():
             context["previous_page_url"] = (
-                f"?{page_query_prefix}page="
+                f"?{base_query_string}page="
                 f'{context["page_obj"].previous_page_number()}'
             )
         if context["page_obj"].has_next():
             context["next_page_url"] = (
-                f"?{page_query_prefix}page="
+                f"?{base_query_string}page="
                 f'{context["page_obj"].next_page_number()}'
             )
         return context
