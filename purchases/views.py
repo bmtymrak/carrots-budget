@@ -51,10 +51,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         date_added_to = parse_date(self.request.GET.get("date_added_to", ""))
         search = self.request.GET.get("search", "").strip()
         category = self.request.GET.get("category", "").strip()
-        try:
-            category_id = int(category)
-        except ValueError:
-            category_id = None
+        category_id = int(category) if category.isdigit() else None
 
         if purchase_date_from:
             qs = qs.filter(date__gte=purchase_date_from)

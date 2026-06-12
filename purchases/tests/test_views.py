@@ -191,7 +191,8 @@ class PurchaseListViewTests(TestCase):
             date=datetime.date(2024, 1, 15),
         )
 
-        Purchase.objects.filter(pk__in=[purchase.pk for purchase in matching_purchases]).update(
+        matching_purchase_ids = [purchase.pk for purchase in matching_purchases]
+        Purchase.objects.filter(pk__in=matching_purchase_ids).update(
             created_at=timezone.make_aware(datetime.datetime(2024, 3, 10, 12, 0, 0))
         )
         Purchase.objects.filter(pk=out_of_range_purchase.pk).update(
@@ -270,7 +271,7 @@ class PurchaseListViewTests(TestCase):
             f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
             f"&purchase_date_to=2024-02-29&search=needle&category={self.category.pk}"
         )
-        encoded_next = quote(filtered_url, safe="/")
+        encoded_next = quote(filtered_url, safe="")
 
         response = self.client.get(filtered_url)
 
@@ -296,7 +297,7 @@ class PurchaseListViewTests(TestCase):
             f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
             f"&purchase_date_to=2024-02-29&search=needle&category={self.category.pk}"
         )
-        encoded_next = quote(filtered_url, safe="/")
+        encoded_next = quote(filtered_url, safe="")
 
         response = self.client.get(
             reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk}),
