@@ -78,7 +78,7 @@ class PurchaseListViewTests(TestCase):
         self.client = Client()
         self.password = "testpass123"
         self.user = get_user_model().objects.create_user(
-            username="purchase-list-user",
+            username="purchase_list_user",
             email="purchase-list@example.com",
         )
         self.user.set_password(self.password)
@@ -100,7 +100,7 @@ class PurchaseListViewTests(TestCase):
             item="Newer purchase",
         )
         other_user = get_user_model().objects.create_user(
-            username="other-purchase-list-user",
+            username="other_purchase_list_user",
             email="other-purchase-list@example.com",
         )
         other_category = CategoryFactory(user=other_user)

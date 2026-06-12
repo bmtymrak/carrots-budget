@@ -101,18 +101,18 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             .order_by("name")
         )
         filter_query_string = query_params.urlencode()
-        base_query_string = f"{filter_query_string}&" if filter_query_string else ""
+        query_string_prefix = f"{filter_query_string}&" if filter_query_string else ""
         context["previous_page_url"] = None
         context["next_page_url"] = None
 
         if context["page_obj"].has_previous():
             context["previous_page_url"] = (
-                f"?{base_query_string}page="
+                f"?{query_string_prefix}page="
                 f'{context["page_obj"].previous_page_number()}'
             )
         if context["page_obj"].has_next():
             context["next_page_url"] = (
-                f"?{base_query_string}page="
+                f"?{query_string_prefix}page="
                 f'{context["page_obj"].next_page_number()}'
             )
         return context
