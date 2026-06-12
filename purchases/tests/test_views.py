@@ -165,7 +165,7 @@ class PurchaseListViewTests(TestCase):
         )
 
     def test_purchase_list_filters_by_dates_and_search(self):
-        matching_purchases = [
+        filtered_purchases = [
             PurchaseFactory(
                 user=self.user,
                 category=self.category,
@@ -200,7 +200,7 @@ class PurchaseListViewTests(TestCase):
             date=datetime.date(2024, 1, 15),
         )
 
-        matching_purchase_ids = [purchase.pk for purchase in matching_purchases]
+        matching_purchase_ids = [purchase.pk for purchase in filtered_purchases]
         Purchase.objects.filter(pk__in=matching_purchase_ids).update(
             created_at=timezone.make_aware(datetime.datetime(2024, 3, 10, 12, 0, 0))
         )
@@ -222,7 +222,7 @@ class PurchaseListViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             list(response.context["purchases"]),
-            list(reversed(matching_purchases)),
+            list(reversed(filtered_purchases)),
         )
 
     def test_purchase_list_filters_by_category_with_used_category_options(self):

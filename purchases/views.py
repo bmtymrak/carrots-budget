@@ -36,7 +36,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
     paginate_by = 100
 
     def get_queryset(self):
-        def get_date_param(name):
+        def parse_request_date_param(name):
             return parse_date(self.request.GET.get(name, ""))
 
         qs = (
@@ -46,10 +46,10 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             .select_related("category")
         )
 
-        purchase_date_from = get_date_param("purchase_date_from")
-        purchase_date_to = get_date_param("purchase_date_to")
-        date_added_from = get_date_param("date_added_from")
-        date_added_to = get_date_param("date_added_to")
+        purchase_date_from = parse_request_date_param("purchase_date_from")
+        purchase_date_to = parse_request_date_param("purchase_date_to")
+        date_added_from = parse_request_date_param("date_added_from")
+        date_added_to = parse_request_date_param("date_added_to")
         search = self.request.GET.get("search", "").strip()
         category = self.request.GET.get("category", "").strip()
         try:
@@ -100,8 +100,8 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             .only("id", "name")
             .order_by("name")
         )
-        filter_querystring = query_params.urlencode()
-        base_query_string = f"{filter_querystring}&" if filter_querystring else ""
+        filter_query_string = query_params.urlencode()
+        base_query_string = f"{filter_query_string}&" if filter_query_string else ""
         context["previous_page_url"] = None
         context["next_page_url"] = None
 
