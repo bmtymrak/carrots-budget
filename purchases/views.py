@@ -1,12 +1,10 @@
-from django.shortcuts import get_object_or_404, render
-from django.urls import reverse_lazy, reverse
-from django.views.generic import (
-    ListView,
-    CreateView,
-)
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
 import datetime
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse, reverse_lazy
+from django.views.generic import CreateView, ListView
 
 from .models import Purchase, Category, Income, RecurringPurchase
 from .forms import (
@@ -36,6 +34,7 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         qs = super().get_queryset()
         return qs.filter(user=self.request.user).prefetch_related("category")
 
+
 class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Category
     fields = ["name", "rollover"]
@@ -52,36 +51,34 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 @login_required
 def purchase_delete_htmx(request, pk):
 
-    purchase = Purchase.objects.get(user=request.user, pk=pk)
-
-    next = request.GET["next"]
+    purchase = get_object_or_404(Purchase, user=request.user, pk=pk)
+    next_url = request.GET.get("next", reverse("yearly_list"))
 
     if request.method == "DELETE":
         purchase.delete()
-        return HttpResponseClientRedirect(next)
+        return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
         "purchases/purchase_delete_modal.html",
-        {"purchase": purchase, "next": next},
+        {"purchase": purchase, "next": next_url},
     )
 
 
 @login_required
 def income_delete_htmx(request, pk):
 
-    income = Income.objects.get(user=request.user, pk=pk)
-
-    next = request.GET["next"]
+    income = get_object_or_404(Income, user=request.user, pk=pk)
+    next_url = request.GET.get("next", reverse("yearly_list"))
 
     if request.method == "DELETE":
         income.delete()
-        return HttpResponseClientRedirect(next)
+        return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
         "purchases/income_delete_modal.html",
-        {"income": income, "next": next},
+        {"income": income, "next": next_url},
     )
 
 

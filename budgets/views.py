@@ -1,42 +1,27 @@
 import datetime
 import json
-import calendar
-import time
 
-from django.db.models.fields import DecimalField, BooleanField
-from django.db import connection
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 from django.http.response import HttpResponseRedirect
-from django.http import JsonResponse, QueryDict
-from django.views.generic.edit import DeleteView
-from purchases.forms import PurchaseForm, PurchaseFormSetReceipt
-from django.shortcuts import redirect, render
-from django.urls import reverse_lazy, reverse
+from django.shortcuts import render
+from django.urls import reverse, reverse_lazy
 from django.views.generic import (
-    ListView,
     CreateView,
     DetailView,
-    UpdateView,
+    ListView,
     TemplateView,
+    UpdateView,
 )
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import login_required
-from django.db.models import (
-    Sum,
-    F,
-    Value,
-    Q,
-    OuterRef,
-    Subquery,
-    ExpressionWrapper,
-    Exists,
-)
-from django.db.models.functions import Coalesce
-
-from budgets.models import MonthlyBudget, YearlyBudget, BudgetItem, Rollover
-from purchases.models import Category, Purchase, Income
-from budgets.forms import BudgetItemForm, BudgetItemFormset, YearlyBudgetForm
-from budgets.services import BudgetService
+from django.views.generic.edit import DeleteView
 from django_htmx.http import HttpResponseClientRedirect
+
+from budgets.forms import BudgetItemForm, BudgetItemFormset, YearlyBudgetForm
+from budgets.models import BudgetItem, MonthlyBudget, Rollover, YearlyBudget
+from budgets.services import BudgetService
+from purchases.forms import PurchaseForm, PurchaseFormSetReceipt
+from purchases.models import Category, Income, Purchase
 
 
 class AddUserMixin:
@@ -214,7 +199,7 @@ class BudgetItemDetailView(LoginRequiredMixin, DetailView):
         return obj
 
     def get_context_data(self, **kwargs):
-        kwargs = super().get_context_data()
+        kwargs = super().get_context_data(**kwargs)
 
         purchases = (
             Purchase.objects.all()
