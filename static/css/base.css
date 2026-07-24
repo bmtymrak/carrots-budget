@@ -259,6 +259,11 @@ a {
     row-gap: 5px;
 }
 
+.recurring-income-grid-full {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1.5fr 1fr .75fr 100px;
+}
+
 .recurring-purchase-delete-grid {
     display: grid;
     grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
@@ -266,6 +271,11 @@ a {
     padding-left: 10px;
     column-gap: 10px;
     row-gap: 5px;
+}
+
+.recurring-income-delete-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1.5fr 1fr;
 }
 
 .recurring-add-grid-full {
@@ -278,12 +288,18 @@ a {
     align-items: center;
 }
 
+.recurring-income-add-grid-full {
+    display: grid;
+    grid-template-columns: 60px 140px 90px 110px 110px 130px 110px 80px;
+}
+
 .grid-cell-truncate:not(.recurring-add-cell)>div {
     white-space: nowrap;
     overflow: hidden;
 }
 
-.recurring-add-grid-full.already-added {
+.recurring-add-grid-full.already-added,
+.recurring-income-add-grid-full.already-added {
     opacity: 0.6;
     background-color: #f8f9fa;
 }

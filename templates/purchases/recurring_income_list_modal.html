@@ -1,0 +1,41 @@
+{% load static %}
+<h2>Manage Recurring Income</h2>
+
+<div class="card-base modal-section-spacing">
+    <h3>Add New Recurring Income</h3>
+    <form hx-post='{% url "recurring_income_list" %}?next={{next|urlencode}}' hx-target="#modal-content" hx-swap="innerHTML" class="form-grid" method="POST">
+        {% csrf_token %}
+        {{form}}
+        <input type="hidden" name="next" value="{{next}}">
+        <button type="submit">Add Recurring Income</button>
+    </form>
+</div>
+
+<div class="card-base">
+    <h3>Existing Recurring Income</h3>
+    {% if recurring_incomes %}
+    <div class="recurring-income-grid-full grid-cell-truncate card-table-header">
+        <div class="card-table-heading">Amount</div>
+        <div class="card-table-heading">Source</div>
+        <div class="card-table-heading">Payer</div>
+        <div class="card-table-heading">Category</div>
+        <div class="card-table-heading">Active</div>
+        <div class="card-table-heading"></div>
+    </div>
+    {% for recurring in recurring_incomes %}
+    <div class="recurring-income-grid-full grid-cell-truncate">
+        <div>${{recurring.amount|floatformat:"-2"}}</div>
+        <div>{{recurring.source}}</div>
+        <div>{{recurring.payer}}</div>
+        <div>{{recurring.category}}</div>
+        <div>{% if recurring.is_active %}Yes{% else %}No{% endif %}</div>
+        <div class="edit-links-container">
+            <button class="button-blank" hx-get='{% url "recurring_income_edit" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
+            <button class="button-blank" hx-get='{% url "recurring_income_delete" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No recurring income yet. Add one above!</p>
+    {% endif %}
+</div>

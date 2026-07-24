@@ -1,0 +1,7 @@
+<h2>Edit Recurring Income: {{recurring_income.source}}</h2>
+<form hx-post='{% url "recurring_income_edit" pk=recurring_income.id %}' hx-target="#modal-content" hx-swap="innerHTML" class="form-grid" method="POST">
+    {% csrf_token %}
+    {{form}}
+    <input type="hidden" name="next" value="{{next}}">
+    <button type="submit">Save</button>
+</form>
