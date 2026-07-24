@@ -2,8 +2,12 @@ from decimal import Decimal
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from purchases.models import RecurringPurchase
-from .factories import RecurringPurchaseFactory, CategoryFactory
+from purchases.models import RecurringIncome, RecurringPurchase
+from .factories import (
+    CategoryFactory,
+    RecurringIncomeFactory,
+    RecurringPurchaseFactory,
+)
 
 
 User = get_user_model()
@@ -61,3 +65,38 @@ class RecurringPurchaseModelTests(TestCase):
         purchases = list(RecurringPurchase.objects.filter(user=self.user))
         items = [p.item for p in purchases]
         self.assertEqual(items, ["Alpha", "Middle", "Zebra"])
+
+
+class RecurringIncomeModelTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="incomeuser",
+            email="income@example.com",
+            ******,
+        )
+        self.category = CategoryFactory(user=self.user)
+
+    def test_recurring_income_creation_and_string_representation(self):
+        recurring = RecurringIncome.objects.create(
+            user=self.user,
+            amount=Decimal("5000.00"),
+            source="Employer",
+            payer="Payroll",
+            category=self.category,
+        )
+
+        self.assertEqual(str(recurring), f"Employer ({self.category.name})")
+        self.assertTrue(recurring.is_active)
+
+    def test_recurring_income_ordering(self):
+        RecurringIncomeFactory(user=self.user, category=self.category, source="Zebra")
+        RecurringIncomeFactory(user=self.user, category=self.category, source="Alpha")
+
+        self.assertEqual(
+            list(
+                RecurringIncome.objects.filter(user=self.user).values_list(
+                    "source", flat=True
+                )
+            ),
+            ["Alpha", "Zebra"],
+        )
