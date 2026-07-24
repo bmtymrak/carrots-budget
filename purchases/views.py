@@ -8,13 +8,21 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 import datetime
 
-from .models import Purchase, Category, Income, RecurringPurchase
+from .models import (
+    Purchase,
+    Category,
+    Income,
+    RecurringIncome,
+    RecurringPurchase,
+)
 from .forms import (
     PurchaseForm,
     PurchaseFormSetReceipt,
     IncomeForm,
     RecurringPurchaseForm,
     RecurringPurchaseAddToMonthFormSet,
+    RecurringIncomeForm,
+    RecurringIncomeAddToMonthFormSet,
 )
 from django_htmx.http import HttpResponseClientRedirect
 from budgets.models import MonthlyBudget
@@ -372,6 +380,135 @@ def recurring_purchase_add_to_month(request, year, month):
             "formset": formset,
             "monthly_budget": monthly_budget,
             "all_already_added": bool(recurring_purchases) and len(already_added) == len(recurring_purchases),
+            "next": next_url,
+        },
+    )
+
+
+@login_required
+def recurring_income_list(request):
+    recurring_incomes = RecurringIncome.objects.filter(
+        user=request.user
+    ).select_related("category")
+    form = RecurringIncomeForm(user=request.user)
+    next_url = request.GET.get("next", reverse("yearly_list"))
+    if request.method == "POST":
+        form = RecurringIncomeForm(data=request.POST, user=request.user)
+        form.instance.user = request.user
+        if form.is_valid():
+            form.save()
+            form = RecurringIncomeForm(user=request.user)
+            recurring_incomes = RecurringIncome.objects.filter(
+                user=request.user
+            ).select_related("category")
+    return render(
+        request,
+        "purchases/recurring_income_list_modal.html",
+        {"recurring_incomes": recurring_incomes, "form": form, "next": next_url},
+    )
+
+
+@login_required
+def recurring_income_edit(request, pk):
+    recurring_income = get_object_or_404(RecurringIncome, user=request.user, pk=pk)
+    form = RecurringIncomeForm(instance=recurring_income, user=request.user)
+    next_url = request.GET.get("next", reverse("yearly_list"))
+    if request.method == "POST":
+        next_url = request.POST.get("next", next_url)
+        form = RecurringIncomeForm(
+            instance=recurring_income, data=request.POST, user=request.user
+        )
+        if form.is_valid():
+            form.save()
+            return HttpResponseClientRedirect(next_url)
+    return render(
+        request,
+        "purchases/recurring_income_edit_modal.html",
+        {"form": form, "recurring_income": recurring_income, "next": next_url},
+    )
+
+
+@login_required
+def recurring_income_delete(request, pk):
+    recurring_income = get_object_or_404(RecurringIncome, user=request.user, pk=pk)
+    next_url = request.GET.get("next", reverse("yearly_list"))
+    if request.method == "DELETE":
+        recurring_income.delete()
+        return HttpResponseClientRedirect(next_url)
+    return render(
+        request,
+        "purchases/recurring_income_delete_modal.html",
+        {"recurring_income": recurring_income, "next": next_url},
+    )
+
+
+@login_required
+def recurring_income_add_to_month(request, year, month):
+    monthly_budget = get_object_or_404(
+        MonthlyBudget, user=request.user, date__year=year, date__month=month
+    )
+    recurring_incomes = list(
+        RecurringIncome.objects.filter(
+            user=request.user, is_active=True
+        ).select_related("category")
+    )
+    next_url = request.GET.get(
+        "next", reverse("monthly_detail", kwargs={"year": year, "month": month})
+    )
+    income_date = monthly_budget.date
+    already_added_incomes = list(
+        Income.objects.filter(
+            user=request.user,
+            date__year=year,
+            date__month=month,
+            recurring_income__isnull=False,
+        ).select_related("category", "recurring_income")
+    )
+    already_added_details = {
+        income.recurring_income_id: {
+            "date": income.date,
+            "amount": income.amount,
+            "source": income.source,
+            "payer": income.payer,
+            "category": income.category,
+            "notes": income.notes,
+        }
+        for income in already_added_incomes
+    }
+    already_added = {
+        income.recurring_income_id for income in already_added_incomes
+    }
+    formset_kwargs = {
+        "user": request.user,
+        "recurring_incomes": recurring_incomes,
+        "income_date": income_date,
+        "already_added_details": already_added_details,
+    }
+    if request.method == "POST":
+        next_url = request.POST.get("next", next_url)
+        formset = RecurringIncomeAddToMonthFormSet(
+            data=request.POST, **formset_kwargs
+        )
+        if formset.is_valid():
+            for selected_income in formset.selected_incomes:
+                recurring = selected_income["recurring_income"]
+                if recurring.id not in already_added:
+                    Income.objects.create(user=request.user, **selected_income)
+                    already_added.add(recurring.id)
+            return HttpResponseClientRedirect(next_url)
+    else:
+        formset = RecurringIncomeAddToMonthFormSet(**formset_kwargs)
+    return render(
+        request,
+        "purchases/recurring_income_add_to_month_modal.html",
+        {
+            "already_added": already_added,
+            "has_form_errors": formset.is_bound
+            and (formset.total_error_count() > 0 or bool(formset.non_form_errors())),
+            "formset": formset,
+            "monthly_budget": monthly_budget,
+            "all_already_added": bool(recurring_incomes)
+            and len(already_added) == len(recurring_incomes),
             "next": next_url,
         },
     )
