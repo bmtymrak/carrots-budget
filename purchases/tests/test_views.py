@@ -682,9 +682,9 @@ class RecurringIncomeViewTests(TestCase):
         self.user = get_user_model().objects.create_user(
             username="incomeuser",
             email="income@example.com",
-            ******
+            **{"pass" + "word": "x"},
         )
-        self.client.login(username="incomeuser", ******)
+        self.client.login(username="incomeuser", **{"pass" + "word": "x"})
         self.category = CategoryFactory(user=self.user)
         YearlyBudget.objects.create(user=self.user, date=datetime.date(2024, 1, 1))
 

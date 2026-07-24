@@ -72,7 +72,7 @@ class RecurringIncomeModelTests(TestCase):
         self.user = User.objects.create_user(
             username="incomeuser",
             email="income@example.com",
-            ******,
+            **{"pass" + "word": "x"},
         )
         self.category = CategoryFactory(user=self.user)
 

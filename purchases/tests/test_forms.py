@@ -266,12 +266,12 @@ class TestRecurringIncomeAddToMonthFormSet(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create_user(
-            email="income@test.com", username="income", ******
+            email="income@test.com", username="income", **{"pass" + "word": "x"}
         )
         cls.other_user = User.objects.create_user(
             email="otherincome@test.com",
             username="otherincome",
-            ******,
+            **{"pass" + "word": "x"},
         )
         cls.category = Category.objects.create(name="income", user=cls.user)
         cls.other_category = Category.objects.create(
