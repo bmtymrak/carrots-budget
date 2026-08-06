@@ -8,6 +8,49 @@
 {% endblock header %}
 
 {% block body %}
+<form method="get" class="card-base purchase-filter-panel">
+    <div class="purchase-filter-heading">
+        <div>
+            <h2 class="purchase-filter-title">Filter purchases</h2>
+        </div>
+    </div>
+    <div class="purchase-filter-grid">
+        <div class="purchase-filter-field">
+            <label for="purchase-date-from">Purchase date from</label>
+            <input id="purchase-date-from" type="date" name="purchase_date_from" value="{{ filters.purchase_date_from }}">
+        </div>
+        <div class="purchase-filter-field">
+            <label for="purchase-date-to">Purchase date to</label>
+            <input id="purchase-date-to" type="date" name="purchase_date_to" value="{{ filters.purchase_date_to }}">
+        </div>
+        <div class="purchase-filter-field">
+            <label for="date-added-from">Date added from</label>
+            <input id="date-added-from" type="date" name="date_added_from" value="{{ filters.date_added_from }}">
+        </div>
+        <div class="purchase-filter-field">
+            <label for="date-added-to">Date added to</label>
+            <input id="date-added-to" type="date" name="date_added_to" value="{{ filters.date_added_to }}">
+        </div>
+        <div class="purchase-filter-field purchase-filter-search">
+            <label for="purchase-search">Search</label>
+            <input id="purchase-search" type="search" name="search" value="{{ filters.search }}" placeholder="Name, location, or source">
+        </div>
+        <div class="purchase-filter-field">
+            <label for="purchase-category">Category</label>
+            <select id="purchase-category" name="category">
+                <option value="">All categories</option>
+                {% for category in filter_categories %}
+                <option value="{{ category.id }}"{% if filters.category == category.id|stringformat:"s" %} selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="purchase-filter-actions">
+        <button type="submit" class="button-create purchase-filter-submit">Filter</button>
+        <a class="purchase-filter-clear" href="{% url 'purchase_list' %}">Clear</a>
+    </div>
+</form>
+
 <div class="purchase-list-table-container">
     <table class="purchase-list-table">
         <thead>
@@ -32,8 +75,8 @@
                 <td>{{purchase.category}}</td>
                 <td class="purchase-list-actions">
                     <div class="edit-links-container">
-                        <button class="button-blank" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17px"></button>
-                        <button class="button-blank" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17px"></button>
+                        <button class="button-blank" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{purchase_list_return_url|urlencode:""}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17px"></button>
+                        <button class="button-blank" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{purchase_list_return_url|urlencode:""}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17px"></button>
                     </div>
                 </td>
             </tr>
@@ -41,4 +84,20 @@
         </tbody>
     </table>
 </div>
+
+{% if is_paginated %}
+<nav class="purchase-pagination" aria-label="Purchase list pagination">
+    <div class="purchase-pagination-previous">
+    {% if previous_page_url %}
+    <a href="{{ previous_page_url }}">Previous</a>
+    {% endif %}
+    </div>
+    <span class="purchase-pagination-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="purchase-pagination-next">
+    {% if next_page_url %}
+    <a href="{{ next_page_url }}">Next</a>
+    {% endif %}
+    </div>
+</nav>
+{% endif %}
 {% endblock body %}

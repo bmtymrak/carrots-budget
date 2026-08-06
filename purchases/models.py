@@ -90,6 +90,7 @@ class Purchase(models.Model):
             models.Index(fields=['user', 'date'], name='idx_purchase_user_date'),
             models.Index(fields=['user', 'category', 'date'], name='idx_purchase_user_cat_date'),
             models.Index(fields=['category', 'date'], name='idx_purchase_category_date'),
+            models.Index(fields=['user', 'created_at'], name='idx_purchase_user_created'),
         ]
 
 
