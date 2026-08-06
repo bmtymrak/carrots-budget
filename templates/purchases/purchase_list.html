@@ -75,8 +75,8 @@
                 <td>{{purchase.category}}</td>
                 <td class="purchase-list-actions">
                     <div class="edit-links-container">
-                        <button class="button-blank" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{request.get_full_path|urlencode:""}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17px"></button>
-                        <button class="button-blank" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{request.get_full_path|urlencode:""}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17px"></button>
+                        <button class="button-blank" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{purchase_list_return_url|urlencode:""}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17px"></button>
+                        <button class="button-blank" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{purchase_list_return_url|urlencode:""}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17px"></button>
                     </div>
                 </td>
             </tr>
@@ -86,14 +86,18 @@
 </div>
 
 {% if is_paginated %}
-<div class="edit-links-container">
+<nav class="purchase-pagination" aria-label="Purchase list pagination">
+    <div class="purchase-pagination-previous">
     {% if previous_page_url %}
     <a href="{{ previous_page_url }}">Previous</a>
     {% endif %}
-    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    </div>
+    <span class="purchase-pagination-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="purchase-pagination-next">
     {% if next_page_url %}
     <a href="{{ next_page_url }}">Next</a>
     {% endif %}
-</div>
+    </div>
+</nav>
 {% endif %}
 {% endblock body %}

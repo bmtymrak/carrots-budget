@@ -1,6 +1,7 @@
 from django.db.models import Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy, reverse
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.views.generic import (
     ListView,
@@ -61,10 +62,23 @@ class PurchaseListView(LoginRequiredMixin, ListView):
             qs = qs.filter(date__gte=purchase_date_from)
         if purchase_date_to:
             qs = qs.filter(date__lte=purchase_date_to)
+
+        current_timezone = timezone.get_current_timezone()
+
+        def start_of_date(value):
+            return timezone.make_aware(
+                datetime.datetime.combine(value, datetime.time.min),
+                current_timezone,
+            )
+
         if date_added_from:
-            qs = qs.filter(created_at__date__gte=date_added_from)
+            qs = qs.filter(created_at__gte=start_of_date(date_added_from))
         if date_added_to:
-            qs = qs.filter(created_at__date__lte=date_added_to)
+            qs = qs.filter(
+                created_at__lt=start_of_date(
+                    date_added_to + datetime.timedelta(days=1)
+                )
+            )
         if search:
             qs = qs.filter(
                 Q(item__icontains=search)
@@ -102,6 +116,9 @@ class PurchaseListView(LoginRequiredMixin, ListView):
         )
         filter_query_string = query_params.urlencode()
         query_string_prefix = f"{filter_query_string}&" if filter_query_string else ""
+        context["purchase_list_return_url"] = self.request.path
+        if filter_query_string:
+            context["purchase_list_return_url"] += f"?{filter_query_string}"
         context["previous_page_url"] = None
         context["next_page_url"] = None
 

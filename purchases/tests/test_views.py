@@ -72,6 +72,35 @@ class PurchaseViewTests(TestCase):
             ).exists()
         )
 
+    @unittest.skip("Feature 'new_category' is not implemented in Purchase backend")
+    def test_purchase_create_with_new_category(self):
+        response = self.client.post(
+            reverse('purchase_create'),
+            {
+                'form-TOTAL_FORMS': '1',
+                'form-INITIAL_FORMS': '0',
+                'form-MIN_NUM_FORMS': '0',
+                'form-MAX_NUM_FORMS': '1000',
+                'form-0-item': 'Test Purchase',
+                'form-0-date': datetime.date.today(),
+                'form-0-amount': '100.00',
+                'form-0-source': 'Test Store',
+                'form-0-location': 'Test Location',
+                'form-0-new_category': 'New Test Category',
+                'form-0-notes': 'Test notes',
+                'form-0-savings': False,
+                'next': '/'
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            Purchase.objects.filter(
+                user=self.user,
+                item='Test Purchase',
+                category__name='New Test Category'
+            ).exists()
+        )
+
 
 @override_settings(STORAGES=TEST_STORAGES)
 class PurchaseListViewTests(TestCase):
@@ -125,6 +154,7 @@ class PurchaseListViewTests(TestCase):
             PurchaseFactory(
                 user=self.user,
                 category=self.category,
+                subcategory=None,
                 item=f"Purchase {index}",
                 date=datetime.date(2024, 1, 1) + datetime.timedelta(days=index),
             )
@@ -144,6 +174,7 @@ class PurchaseListViewTests(TestCase):
             PurchaseFactory(
                 user=self.user,
                 category=self.category,
+                subcategory=None,
                 item=f"Needle purchase {index}",
                 date=datetime.date(2024, 2, 1),
             )
@@ -164,6 +195,43 @@ class PurchaseListViewTests(TestCase):
             f'href="?search=needle&amp;category={self.category.pk}&amp;page=2"',
             html=False,
         )
+
+    def test_purchase_delete_from_last_page_redirects_to_valid_page(self):
+        for index in range(101):
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                subcategory=None,
+                item=f"Purchase {index}",
+                date=datetime.date(2024, 1, 1) + datetime.timedelta(days=index),
+            )
+
+        page_two_url = f'{reverse("purchase_list")}?search=purchase&page=2'
+        page_two_response = self.client.get(page_two_url)
+        purchase = page_two_response.context["purchases"][0]
+        return_url = f'{reverse("purchase_list")}?search=purchase'
+
+        self.assertContains(
+            page_two_response,
+            f'hx-get=\'{reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk})}'
+            f'?next={quote(return_url, safe="")}\'',
+            html=False,
+        )
+
+        delete_url = (
+            f'{reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk})}'
+            f'?next={quote(return_url, safe="")}'
+        )
+        response = self.client.delete(delete_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["HX-Redirect"], return_url)
+
+        redirected_response = self.client.get(response["HX-Redirect"])
+
+        self.assertEqual(redirected_response.status_code, 200)
+        self.assertEqual(redirected_response.context["page_obj"].number, 1)
+        self.assertEqual(len(redirected_response.context["purchases"]), 100)
 
     def test_purchase_list_filters_by_dates_and_search(self):
         filtered_purchases = [
@@ -203,10 +271,10 @@ class PurchaseListViewTests(TestCase):
 
         matching_purchase_ids = [purchase.pk for purchase in filtered_purchases]
         Purchase.objects.filter(pk__in=matching_purchase_ids).update(
-            created_at=timezone.make_aware(datetime.datetime(2024, 3, 10, 12, 0, 0))
+            created_at=timezone.make_aware(datetime.datetime(2024, 3, 31, 23, 59, 59))
         )
         Purchase.objects.filter(pk=out_of_range_purchase.pk).update(
-            created_at=timezone.make_aware(datetime.datetime(2024, 4, 10, 12, 0, 0))
+            created_at=timezone.make_aware(datetime.datetime(2024, 4, 1, 0, 0, 0))
         )
 
         response = self.client.get(
@@ -320,38 +388,6 @@ class PurchaseListViewTests(TestCase):
             f'hx-delete=\'{reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk})}?next={encoded_next}\'',
             html=False,
         )
-
-    @unittest.skip("Feature 'new_category' is not implemented in Purchase backend")
-    def test_purchase_create_with_new_category(self):
-        response = self.client.post(
-            reverse('purchase_create'),
-            {
-                'form-TOTAL_FORMS': '1',
-                'form-INITIAL_FORMS': '0',
-                'form-MIN_NUM_FORMS': '0',
-                'form-MAX_NUM_FORMS': '1000',
-                'form-0-item': 'Test Purchase',
-                'form-0-date': datetime.date.today(),
-                'form-0-amount': '100.00',
-                'form-0-source': 'Test Store',
-                'form-0-location': 'Test Location',
-                'form-0-new_category': 'New Test Category',
-                'form-0-notes': 'Test notes',
-                'form-0-savings': False,
-                'next': '/'
-            }
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            Purchase.objects.filter(
-                user=self.user,
-                item='Test Purchase',
-                category__name='New Test Category'
-            ).exists()
-        )
-
-
-
 
 class IncomeViewTests(TestCase):
     def setUp(self):

@@ -788,6 +788,28 @@ h2 {
     justify-content: space-around;
 }
 
+.purchase-pagination {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.purchase-pagination-previous {
+    justify-self: start;
+}
+
+.purchase-pagination-current {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.purchase-pagination-next {
+    justify-self: end;
+}
+
 .delete-single-item {
     display: flex;
     flex-direction: column;
