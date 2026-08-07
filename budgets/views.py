@@ -76,7 +76,14 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         if datetime.datetime.now().year > self.object.date.year:
             ytd_month = 12
         else:
-            ytd_month = int(self.request.GET.get("ytd", datetime.datetime.now().month))
+            current_month = datetime.datetime.now().month
+            try:
+                ytd_month = int(self.request.GET.get("ytd", current_month))
+            except (TypeError, ValueError):
+                ytd_month = current_month
+
+            if not 1 <= ytd_month <= 12:
+                ytd_month = current_month
 
 
         service = BudgetService()
