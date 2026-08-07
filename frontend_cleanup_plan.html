@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrots Budget - Frontend Cleanup & Organization Plan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 15px;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #4a5568;
+            font-size: 1.8em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        h3 {
+            color: #5a67d8;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #4a5568;
+            font-size: 1.1em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        p, li {
+            color: #4a5568;
+            margin-bottom: 10px;
+        }
+
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .diagram {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+
+        .diagram pre {
+            margin: 0;
+            white-space: pre;
+            line-height: 1.5;
+        }
+
+        .issue-box {
+            background: #fff5f5;
+            border-left: 4px solid #fc8181;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .issue-box h4 {
+            color: #c53030;
+            margin-top: 0;
+        }
+
+        .recommendation-box {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .recommendation-box h4 {
+            color: #22543d;
+            margin-top: 0;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .metric-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .metric-card .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .priority-high {
+            color: #c53030;
+            font-weight: bold;
+        }
+
+        .priority-medium {
+            color: #dd6b20;
+            font-weight: bold;
+        }
+
+        .priority-low {
+            color: #2f855a;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #edf2f7;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .toc {
+            background: #edf2f7;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            color: #5a67d8;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        .highlight {
+            background: #fef5e7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Carrots Budget Frontend Cleanup & Organization Plan</h1>
+        <p class="subtitle">Comprehensive analysis and refactoring strategy for HTML, CSS, and JavaScript</p>
+
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#current-state">1. Current State Analysis</a></li>
+                <li><a href="#issues">2. Identified Issues</a></li>
+                <li><a href="#proposed-structure">3. Proposed Structure</a></li>
+                <li><a href="#css-refactoring">4. CSS Refactoring Plan</a></li>
+                <li><a href="#js-refactoring">5. JavaScript Refactoring Plan</a></li>
+                <li><a href="#html-refactoring">6. HTML/Template Refactoring Plan</a></li>
+                <li><a href="#implementation">7. Implementation Roadmap</a></li>
+            </ul>
+        </div>
+
+        <div class="section" id="current-state">
+            <h2>1. Current State Analysis</h2>
+
+            <div class="metrics">
+                <div class="metric-card">
+                    <span class="number">30</span>
+                    <span class="label">HTML Templates</span>
+                </div>
+                <div class="metric-card">
+                    <span class="number">1</span>
+                    <span class="label">CSS File (785 lines)</span>
+                </div>
+                <div class="metric-card">
+                    <span class="number">3</span>
+                    <span class="label">Templates with Inline JS</span>
+                </div>
+                <div class="metric-card">
+                    <span class="number">94</span>
+                    <span class="label">CSS Classes</span>
+                </div>
+            </div>
+
+            <h3>Current File Structure</h3>
+            <div class="diagram">
+                <pre>
+carrots-budget/
+├── static/
+│   ├── css/
+│   │   └── base.css (785 lines - monolithic)
+│   ├── js/
+│   │   └── htmx.min.js (third-party library only)
+│   └── images/
+│       ├── carrots_logo.svg
+│       ├── edit-pencil.svg
+│       └── trash.svg
+└── templates/
+    ├── _base.html (with 54 lines of inline JS)
+    ├── home.html
+    ├── account/
+    │   ├── login.html
+    │   ├── signup.html
+    │   └── logout.html
+    ├── budgets/ (11 templates)
+    │   ├── *_modal.html (4 modals)
+    │   ├── *_detail.html (4 detail views)
+    │   └── *_list.html (2 list views)
+    └── purchases/ (11 templates)
+        ├── *_modal.html (7 modals)
+        ├── *_list.html (1 list view)
+        └── *_create.html (1 create view with 56 lines of inline JS)
+                </pre>
+            </div>
+
+            <h3>Key Observations</h3>
+            <ul>
+                <li><strong>Single CSS File:</strong> All styles in one 785-line file without clear organization</li>
+                <li><strong>No Custom JavaScript Files:</strong> Only HTMX library, all custom JS is inline in templates</li>
+                <li><strong>Inline JavaScript:</strong> Found in 3 templates (_base.html, yearly_budget_detail.html, purchase_create.html)</li>
+                <li><strong>Repetitive HTML Patterns:</strong> Edit/delete buttons, table headers, grid layouts repeated across templates</li>
+                <li><strong>Modal Architecture:</strong> 11 modal templates with similar structure</li>
+            </ul>
+        </div>
+
+        <div class="section" id="issues">
+            <h2>2. Identified Issues</h2>
+
+            <h3>CSS Issues</h3>
+
+            <div class="issue-box">
+                <h4>🔴 Issue 1: Monolithic CSS File (Priority: <span class="priority-high">HIGH</span>)</h4>
+                <p><strong>Problem:</strong> All 785 lines of CSS are in a single file with minimal organization.</p>
+                <ul>
+                    <li>Difficult to maintain and navigate</li>
+                    <li>No clear separation of concerns (layout, components, utilities)</li>
+                    <li>Hard to identify unused styles</li>
+                    <li>Limited comments/sections (only 8 section comments)</li>
+                </ul>
+            </div>
+
+            <div class="issue-box">
+                <h4>🔴 Issue 2: CSS Class Naming Inconsistency (Priority: <span class="priority-high">HIGH</span>)</h4>
+                <p><strong>Problem:</strong> Multiple naming conventions used throughout:</p>
+                <ul>
+                    <li>BEM-like: <code>card-base</code>, <code>card-header</code>, <code>card-table-header</code></li>
+                    <li>Utility-based: <code>flex</code>, <code>hidden</code></li>
+                    <li>Grid-specific: <code>purchase-horizontal-grid</code>, <code>budget-horizontal-grid-yearly</code></li>
+                    <li>Context-specific: <code>rollover-edit</code>, <code>menu-toggle</code></li>
+                </ul>
+                <p>No clear methodology makes classes hard to predict and reuse.</p>
+            </div>
+
+            <div class="issue-box">
+                <h4>🟡 Issue 3: Excessive Grid Layout Classes (Priority: <span class="priority-medium">MEDIUM</span>)</h4>
+                <p><strong>Problem:</strong> 15+ specific grid classes for different layouts:</p>
+                <div class="code-block">
+.summary-horizontal-grid-monthly
+.purchase-horizontal-grid
+.purchase-horizontal-grid-categories
+.purchase-horizontal-grid-delete
+.income-horizontal-grid-monthly
+.recurring-purchase-grid-full
+.recurring-purchase-delete-grid
+.recurring-add-grid-full
+.budget-horizontal-grid-yearly
+.budget-horizontal-grid-monthly
+.budget-horizontal-grid-month
+...and more
+                </div>
+                <p>These could be consolidated using utility classes or a more flexible grid system.</p>
+            </div>
+
+            <div class="issue-box">
+                <h4>🟡 Issue 4: Commented-out Code (Priority: <span class="priority-low">LOW</span>)</h4>
+                <p><strong>Problem:</strong> Several instances of commented-out CSS:</p>
+                <ul>
+                    <li>Lines 66, 143-146, 352-355, 502-506, 376, 779-786</li>
+                    <li>Makes file harder to read</li>
+                    <li>Unclear if code should be removed or kept for reference</li>
+                </ul>
+            </div>
+
+            <h3>JavaScript Issues</h3>
+
+            <div class="issue-box">
+                <h4>🔴 Issue 5: No Separate JavaScript Files (Priority: <span class="priority-high">HIGH</span>)</h4>
+                <p><strong>Problem:</strong> All custom JavaScript is inline in HTML templates:</p>
+                <ul>
+                    <li><strong>_base.html:</strong> 54 lines of modal and menu logic</li>
+                    <li><strong>yearly_budget_detail.html:</strong> 56 lines for rollover editing and YTD selector</li>
+                    <li><strong>purchase_create.html:</strong> 56 lines for dynamic form management</li>
+                </ul>
+                <p><strong>Consequences:</strong></p>
+                <ul>
+                    <li>JavaScript not cached by browser (loaded with every page)</li>
+                    <li>Cannot be minified or bundled</li>
+                    <li>Harder to test in isolation</li>
+                    <li>Code reuse impossible (e.g., modal logic duplicated conceptually)</li>
+                    <li>No IDE support for JavaScript in template files</li>
+                </ul>
+            </div>
+
+            <div class="issue-box">
+                <h4>🟡 Issue 6: Duplicate CSRF Token Handling (Priority: <span class="priority-medium">MEDIUM</span>)</h4>
+                <p><strong>Problem:</strong> getCookie() function defined inline in yearly_budget_detail.html, but CSRF token also handled via HTMX headers in base template.</p>
+                <p>Should use a consistent approach across all JavaScript.</p>
+            </div>
+
+            <div class="issue-box">
+                <h4>🟡 Issue 7: Console.log Statements in Production Code (Priority: <span class="priority-low">LOW</span>)</h4>
+                <p><strong>Problem:</strong> Debug console.log statements in purchase_create.html (lines 65, 67, 75)</p>
+                <p>Should be removed or wrapped in development checks.</p>
+            </div>
+
+            <h3>HTML/Template Issues</h3>
+
+            <div class="issue-box">
+                <h4>🔴 Issue 8: Repetitive HTML Patterns (Priority: <span class="priority-high">HIGH</span>)</h4>
+                <p><strong>Problem:</strong> Same HTML structures repeated across multiple templates:</p>
+                <ul>
+                    <li><strong>Edit/Delete Button Pattern:</strong> Found 10+ times
+                        <div class="code-block" style="font-size: 0.8em;">
+&lt;div class="edit-links-container"&gt;
+    &lt;button class="button-blank" hx-get='...' hx-target="#modal-content"&gt;
+        &lt;img src="edit-pencil.svg" width="17px"&gt;
+    &lt;/button&gt;
+    &lt;button class="button-blank" hx-get='...' hx-target="#modal-content"&gt;
+        &lt;img src="trash.svg" width="17px"&gt;
+    &lt;/button&gt;
+&lt;/div&gt;
+                        </div>
+                    </li>
+                    <li><strong>Card Table Headers:</strong> Found 25+ times</li>
+                    <li><strong>Modal Structure:</strong> Similar structure in 11 modal templates</li>
+                    <li><strong>Action Buttons:</strong> "Add Purchase", "Add Income" repeated across pages</li>
+                </ul>
+            </div>
+
+            <div class="issue-box">
+                <h4>🟡 Issue 9: No Template Partials/Includes (Priority: <span class="priority-medium">MEDIUM</span>)</h4>
+                <p><strong>Problem:</strong> Not leveraging Django's {% include %} tag for reusable components.</p>
+                <p>Common patterns like action buttons, table rows, modal wrappers could be extracted.</p>
+            </div>
+
+            <div class="issue-box">
+                <h4>🟡 Issue 10: Inline Styles (Priority: <span class="priority-low">LOW</span>)</h4>
+                <p><strong>Problem:</strong> One instance found: <code>style="flex-grow:1;"</code> in yearly_budget_detail.html</p>
+                <p>Should be moved to CSS classes.</p>
+            </div>
+
+            <div class="issue-box">
+                <h4>🟢 Issue 11: Icon Sizing Inconsistency (Priority: <span class="priority-low">LOW</span>)</h4>
+                <p><strong>Problem:</strong> SVG icon widths hardcoded as "17px" in HTML rather than CSS.</p>
+                <p>Should be standardized through CSS classes.</p>
+            </div>
+        </div>
+
+        <div class="section" id="proposed-structure">
+            <h2>3. Proposed Structure</h2>
+
+            <h3>New Directory Organization</h3>
+            <div class="diagram">
+                <pre>
+carrots-budget/
+├── static/
+│   ├── css/
+│   │   ├── 1-base/
+│   │   │   ├── reset.css           (CSS reset - 55 lines)
+│   │   │   ├── variables.css       (CSS custom properties)
+│   │   │   └── typography.css      (font, heading styles)
+│   │   ├── 2-layout/
+│   │   │   ├── grid.css            (grid utilities & systems)
+│   │   │   ├── containers.css      (main-container, content-container)
+│   │   │   └── navigation.css      (nav, sidebar, menu styles)
+│   │   ├── 3-components/
+│   │   │   ├── buttons.css         (all button variants)
+│   │   │   ├── cards.css           (card-base, card-header, etc.)
+│   │   │   ├── forms.css           (form layouts, inputs)
+│   │   │   ├── modals.css          (modal, overlay styles)
+│   │   │   ├── tables.css          (table headers, grids)
+│   │   │   └── alerts.css          (alert boxes, status indicators)
+│   │   ├── 4-utilities/
+│   │   │   └── utilities.css       (flex, hidden, spacing utils)
+│   │   ├── 5-pages/
+│   │   │   ├── budget-pages.css    (budget-specific overrides)
+│   │   │   ├── purchase-pages.css  (purchase-specific overrides)
+│   │   │   └── home.css            (home page specific)
+│   │   └── main.css                (imports all of the above)
+│   │
+│   ├── js/
+│   │   ├── vendor/
+│   │   │   └── htmx.min.js
+│   │   ├── core/
+│   │   │   ├── modal.js            (modal show/hide/focus logic)
+│   │   │   └── utils.js            (getCookie, common utilities)
+│   │   ├── features/
+│   │   │   ├── rollover-editor.js  (rollover input handling)
+│   │   │   ├── purchase-form.js    (dynamic form adding)
+│   │   │   └── navigation.js       (mobile menu toggle)
+│   │   └── main.js                 (initialization)
+│   │
+│   └── images/
+│       └── icons/
+│           ├── carrots_logo.svg
+│           ├── edit.svg            (renamed from edit-pencil.svg)
+│           └── delete.svg          (renamed from trash.svg)
+│
+└── templates/
+    ├── _base.html                  (no more inline JS!)
+    ├── _partials/
+    │   ├── action-buttons.html     ({% include 'action-buttons' %})
+    │   ├── edit-delete-buttons.html
+    │   ├── table-header.html
+    │   ├── modal-wrapper.html
+    │   └── card-wrapper.html
+    ├── home.html
+    ├── account/
+    ├── budgets/
+    └── purchases/
+                </pre>
+            </div>
+
+            <h3>Benefits of This Structure</h3>
+            <ul>
+                <li><strong>Scalability:</strong> Easy to add new components and pages</li>
+                <li><strong>Maintainability:</strong> Clear separation of concerns</li>
+                <li><strong>Performance:</strong> Can load only needed CSS/JS per page type</li>
+                <li><strong>Developer Experience:</strong> Easy to find and modify specific styles</li>
+                <li><strong>Reusability:</strong> Template partials eliminate duplication</li>
+                <li><strong>Caching:</strong> Static JS files can be cached by browser</li>
+            </ul>
+        </div>
+
+        <div class="section" id="css-refactoring">
+            <h2>4. CSS Refactoring Plan</h2>
+
+            <h3>Phase 1: Establish CSS Architecture</h3>
+
+            <div class="recommendation-box">
+                <h4>Step 1.1: Create variables.css</h4>
+                <p>Extract all magic values and colors into CSS custom properties:</p>
+                <div class="code-block">
+/* variables.css */
+:root {
+    /* Colors */
+    --color-primary: hsl(144deg 100% 26% / 70%);
+    --color-white: #FFFFFF;
+    --color-background: #fdfdfd;
+    --color-gray-light: #F1F1F1;
+    --color-border: #e2e8f0;
+    --color-error: #b42318;
+    --color-success: #28a745;
+
+    /* Spacing */
+    --spacing-xs: 5px;
+    --spacing-sm: 10px;
+    --spacing-md: 20px;
+    --spacing-lg: 40px;
+
+    /* Border Radius */
+    --radius-sm: 5px;
+    --radius-md: 10px;
+    --radius-lg: 20px;
+
+    /* Shadows */
+    --shadow-card: 2px 2px 10px rgba(0, 0, 0, 0.1);
+
+    /* Breakpoints */
+    --breakpoint-mobile: 768px;
+}
+                </div>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Step 1.2: Split base.css into Modules</h4>
+                <p>Distribute the current 785 lines as follows:</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>New File</th>
+                            <th>Lines</th>
+                            <th>Content from base.css</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>reset.css</td>
+                            <td>~55</td>
+                            <td>Lines 1-54 (Josh's CSS Reset)</td>
+                        </tr>
+                        <tr>
+                            <td>variables.css</td>
+                            <td>~30</td>
+                            <td>Extracted from hardcoded values</td>
+                        </tr>
+                        <tr>
+                            <td>typography.css</td>
+                            <td>~30</td>
+                            <td>Lines 61-63, 450-459 (fonts, headings)</td>
+                        </tr>
+                        <tr>
+                            <td>containers.css</td>
+                            <td>~80</td>
+                            <td>Lines 71-166 (main-container, content, wrappers)</td>
+                        </tr>
+                        <tr>
+                            <td>navigation.css</td>
+                            <td>~100</td>
+                            <td>Lines 98-124, 712-775 (nav, menu, mobile)</td>
+                        </tr>
+                        <tr>
+                            <td>grid.css</td>
+                            <td>~150</td>
+                            <td>Lines 168-421 (all grid layouts)</td>
+                        </tr>
+                        <tr>
+                            <td>buttons.css</td>
+                            <td>~60</td>
+                            <td>Lines 650-687 (all button styles)</td>
+                        </tr>
+                        <tr>
+                            <td>cards.css</td>
+                            <td>~120</td>
+                            <td>Lines 477-573 (card components)</td>
+                        </tr>
+                        <tr>
+                            <td>forms.css</td>
+                            <td>~80</td>
+                            <td>Lines 418-466, 579-596 (form layouts)</td>
+                        </tr>
+                        <tr>
+                            <td>modals.css</td>
+                            <td>~40</td>
+                            <td>Lines 689-718, 313-320 (modal, overlay)</td>
+                        </tr>
+                        <tr>
+                            <td>tables.css</td>
+                            <td>~60</td>
+                            <td>Lines 526-573 (table headers, cells)</td>
+                        </tr>
+                        <tr>
+                            <td>alerts.css</td>
+                            <td>~40</td>
+                            <td>Lines 289-320 (alert boxes, status)</td>
+                        </tr>
+                        <tr>
+                            <td>utilities.css</td>
+                            <td>~30</td>
+                            <td>Lines 93-96, 716-718 (flex, hidden, etc.)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Phase 2: Refactor Grid System</h3>
+
+            <div class="recommendation-box">
+                <h4>Step 2.1: Create Flexible Grid Utilities</h4>
+                <p>Instead of 15+ specific grid classes, create a flexible system:</p>
+                <div class="code-block">
+/* grid.css - New approach */
+
+/* Base grid */
+.grid {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+/* Column variations */
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
+.grid-cols-6 { grid-template-columns: repeat(6, 1fr); }
+
+/* Specific layouts (when needed) */
+.grid-purchase {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.75fr;
+    gap: var(--spacing-sm);
+}
+
+.grid-budget-monthly {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) 100px;
+    gap: var(--spacing-sm);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .grid-cols-6 { grid-template-columns: repeat(3, 1fr); }
+}
+                </div>
+                <p><strong>Impact:</strong> Reduces specific grid classes from 15+ to ~8</p>
+            </div>
+
+            <h3>Phase 3: Standardize Naming Convention</h3>
+
+            <div class="recommendation-box">
+                <h4>Step 3.1: Adopt BEM Methodology</h4>
+                <p>Use Block-Element-Modifier consistently:</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Current</th>
+                            <th>Proposed (BEM)</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>card-base</td>
+                            <td>card</td>
+                            <td>Block</td>
+                        </tr>
+                        <tr>
+                            <td>card-header</td>
+                            <td>card__header</td>
+                            <td>Element</td>
+                        </tr>
+                        <tr>
+                            <td>card-table-header</td>
+                            <td>card__table-header</td>
+                            <td>Element</td>
+                        </tr>
+                        <tr>
+                            <td>button-create</td>
+                            <td>btn btn--primary</td>
+                            <td>Block + Modifier</td>
+                        </tr>
+                        <tr>
+                            <td>button-delete</td>
+                            <td>btn btn--danger</td>
+                            <td>Block + Modifier</td>
+                        </tr>
+                        <tr>
+                            <td>button-blank</td>
+                            <td>btn btn--ghost</td>
+                            <td>Block + Modifier</td>
+                        </tr>
+                        <tr>
+                            <td>modal</td>
+                            <td>modal</td>
+                            <td>Block (keep)</td>
+                        </tr>
+                        <tr>
+                            <td>overlay</td>
+                            <td>modal__overlay</td>
+                            <td>Element</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Phase 4: Clean Up Technical Debt</h3>
+
+            <div class="recommendation-box">
+                <h4>Actions Required:</h4>
+                <ol>
+                    <li>Remove all commented-out CSS code</li>
+                    <li>Remove unused/obsolete selectors (e.g., #root, #__next from reset)</li>
+                    <li>Consolidate duplicate styles (e.g., multiple .budget-horizontal-grid variants)</li>
+                    <li>Fix inconsistent patterns (e.g., some grids use padding-left, others don't)</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="section" id="js-refactoring">
+            <h2>5. JavaScript Refactoring Plan</h2>
+
+            <h3>Phase 1: Extract Base JavaScript</h3>
+
+            <div class="recommendation-box">
+                <h4>Step 1.1: Create core/modal.js</h4>
+                <p>Extract modal functionality from _base.html (lines 65-118):</p>
+                <div class="code-block">
+// static/js/core/modal.js
+
+export class Modal {
+    constructor() {
+        this.modal = document.querySelector("#modal");
+        this.modalContent = document.querySelector("#modal-content");
+        this.overlay = document.querySelector(".overlay");
+        this.init();
+    }
+
+    init() {
+        // HTMX integration
+        htmx.on("htmx:afterSwap", (e) => {
+            if (e.detail.target.id === "modal-content") {
+                this.show();
+                this.focusFirstElement();
+            }
+        });
+
+        // Close on overlay click
+        this.overlay.addEventListener("click", (event) => {
+            if (!event.target.closest(".modal")) {
+                this.close();
+            }
+        });
+
+        // Close on Escape key
+        window.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                this.close();
+            }
+        });
+    }
+
+    show() {
+        this.modal.classList.remove("hidden");
+        this.overlay.classList.remove("hidden");
+        this.modal.scrollTo(0, 0);
+    }
+
+    close() {
+        this.modal.classList.add("hidden");
+        this.overlay.classList.add("hidden");
+    }
+
+    focusFirstElement() {
+        const firstInteractive = this.modalContent.querySelector(
+            'input:not([type="hidden"]):not([disabled]), ' +
+            'select:not([disabled]), textarea:not([disabled]), ' +
+            'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+        );
+        firstInteractive?.focus();
+    }
+}
+                </div>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Step 1.2: Create core/utils.js</h4>
+                <p>Centralize utility functions:</p>
+                <div class="code-block">
+// static/js/core/utils.js
+
+/**
+ * Get CSRF token from cookies
+ */
+export function getCsrfToken() {
+    const name = 'csrftoken';
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                return decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Format currency values
+ */
+export function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(amount);
+}
+                </div>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Step 1.3: Create features/navigation.js</h4>
+                <p>Extract mobile menu toggle from _base.html (lines 112-116):</p>
+                <div class="code-block">
+// static/js/features/navigation.js
+
+export class MobileNav {
+    constructor() {
+        this.menuToggle = document.getElementById('menu-toggle');
+        this.nav = document.getElementById('primary-nav');
+        this.init();
+    }
+
+    init() {
+        if (this.menuToggle && this.nav) {
+            this.menuToggle.addEventListener('click', () => {
+                this.nav.classList.toggle('nav-open');
+            });
+        }
+    }
+}
+                </div>
+            </div>
+
+            <h3>Phase 2: Extract Feature JavaScript</h3>
+
+            <div class="recommendation-box">
+                <h4>Step 2.1: Create features/rollover-editor.js</h4>
+                <p>Extract rollover editing from yearly_budget_detail.html (lines 312-365):</p>
+                <div class="code-block">
+// static/js/features/rollover-editor.js
+
+import { getCsrfToken } from '../core/utils.js';
+
+export class RolloverEditor {
+    constructor(year) {
+        this.year = year;
+        this.csrfToken = getCsrfToken();
+        this.inputs = document.querySelectorAll(".rollover-edit");
+        this.init();
+    }
+
+    init() {
+        this.inputs.forEach((input) => {
+            input.addEventListener('keydown', (e) => this.handleKeydown(e));
+            input.addEventListener('blur', (e) => this.save(e));
+        });
+    }
+
+    handleKeydown(event) {
+        if (event.key === "Enter" || event.type === 'blur') {
+            this.save(event);
+        }
+    }
+
+    async save(event) {
+        event.preventDefault();
+        const amount = event.currentTarget.value;
+        const category = event.currentTarget.dataset.category;
+
+        try {
+            const response = await fetch('/budgets/rollover/update/', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': this.csrfToken,
+                },
+                body: JSON.stringify({ amount, category, year: this.year })
+            });
+
+            if (!response.ok) {
+                console.error('Failed to save rollover');
+            }
+        } catch (error) {
+            console.error('Error saving rollover:', error);
+        }
+    }
+}
+                </div>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Step 2.2: Create features/purchase-form.js</h4>
+                <p>Extract dynamic form management from purchase_create.html (lines 24-80):</p>
+                <div class="code-block">
+// static/js/features/purchase-form.js
+
+export class PurchaseFormManager {
+    constructor() {
+        this.container = document.querySelector("#purchase-form-container");
+        this.purchaseForms = document.querySelectorAll(".purchase-form");
+        this.addButton = document.querySelector("#add-form");
+        this.submitButton = document.querySelector("#submit-button");
+        this.totalFormsInput = document.querySelector("#id_form-TOTAL_FORMS");
+        this.totalDisplay = document.querySelector('#total');
+        this.formNum = this.purchaseForms.length - 1;
+        this.init();
+    }
+
+    init() {
+        this.addButton.addEventListener('click', (e) => this.addForm(e));
+
+        const amountInputs = document.querySelectorAll("[id$='-amount']");
+        amountInputs.forEach(input => {
+            input.addEventListener('change', (e) => this.calculateTotal(e));
+        });
+    }
+
+    addForm(e) {
+        e.preventDefault();
+
+        const newForm = this.purchaseForms[0].cloneNode(true);
+        const formRegex = /form-(\d){1}-/g;
+
+        this.formNum++;
+        newForm.innerHTML = newForm.innerHTML.replace(
+            formRegex,
+            `form-${this.formNum}-`
+        );
+
+        this.container.insertBefore(newForm, this.submitButton);
+        this.totalFormsInput.setAttribute('value', `${this.formNum + 1}`);
+
+        const newAmountInput = document.querySelector(
+            `#id_form-${this.formNum}-amount`
+        );
+        newAmountInput.addEventListener('change', (e) => this.calculateTotal(e));
+
+        document.querySelector(`#id_form-${this.formNum}-item`).focus();
+    }
+
+    calculateTotal(e) {
+        e.preventDefault();
+        const amounts = document.querySelectorAll("[id$='-amount']");
+
+        const total = [...amounts].reduce((sum, input) => {
+            const value = parseFloat(input.value) || 0;
+            return sum + value;
+        }, 0);
+
+        this.totalDisplay.textContent = `Total: $${total.toFixed(2)}`;
+    }
+}
+                </div>
+                <p><strong>Note:</strong> Removed console.log statements and improved error handling.</p>
+            </div>
+
+            <h3>Phase 3: Create Main Entry Point</h3>
+
+            <div class="recommendation-box">
+                <h4>Step 3.1: Create main.js</h4>
+                <p>Initialize all features based on page context:</p>
+                <div class="code-block">
+// static/js/main.js
+
+import { Modal } from './core/modal.js';
+import { MobileNav } from './features/navigation.js';
+import { RolloverEditor } from './features/rollover-editor.js';
+import { PurchaseFormManager } from './features/purchase-form.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize core features (on every page)
+    new Modal();
+    new MobileNav();
+
+    // Initialize page-specific features
+    if (document.querySelector('.rollover-edit')) {
+        const year = document.querySelector('[data-year]')?.dataset.year;
+        new RolloverEditor(year);
+    }
+
+    if (document.querySelector('#purchase-form-container')) {
+        new PurchaseFormManager();
+    }
+
+    // Initialize YTD month selector (if present)
+    const monthSelect = document.querySelector('.month-select');
+    if (monthSelect) {
+        initYtdSelector(monthSelect);
+    }
+});
+
+function initYtdSelector(select) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const ytd = urlParams.get('ytd');
+
+    if (ytd) {
+        select.selectedIndex = parseInt(ytd) - 1;
+    }
+
+    select.addEventListener('change', function() {
+        const currentPath = window.location.pathname;
+        window.location.href = `${currentPath}?ytd=${this.value}`;
+    });
+}
+                </div>
+            </div>
+
+            <h3>Phase 4: Update Template References</h3>
+
+            <div class="recommendation-box">
+                <h4>Update _base.html</h4>
+                <p>Remove inline JavaScript and add module script:</p>
+                <div class="code-block">
+&lt;!-- In &lt;head&gt; section --&gt;
+&lt;script src="{% static 'js/htmx.min.js' %}"&gt;&lt;/script&gt;
+&lt;script type="module" src="{% static 'js/main.js' %}"&gt;&lt;/script&gt;
+
+&lt;!-- Remove all &lt;script&gt; blocks from bottom of file --&gt;
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="html-refactoring">
+            <h2>6. HTML/Template Refactoring Plan</h2>
+
+            <h3>Phase 1: Create Reusable Template Partials</h3>
+
+            <div class="recommendation-box">
+                <h4>Step 1.1: Create _partials/edit-delete-buttons.html</h4>
+                <div class="code-block">
+{# templates/_partials/edit-delete-buttons.html #}
+{# Usage: {% include '_partials/edit-delete-buttons.html' with edit_url='...' delete_url='...' %} #}
+{% load static %}
+
+&lt;div class="edit-links-container"&gt;
+    &lt;button class="button-blank"
+            hx-get="{{ edit_url }}"
+            hx-target="#modal-content"
+            aria-label="Edit"&gt;
+        &lt;img class="icon icon--sm"
+             src="{% static 'images/icons/edit.svg' %}"
+             alt="Edit"&gt;
+    &lt;/button&gt;
+    &lt;button class="button-blank"
+            hx-get="{{ delete_url }}"
+            hx-target="#modal-content"
+            aria-label="Delete"&gt;
+        &lt;img class="icon icon--sm"
+             src="{% static 'images/icons/delete.svg' %}"
+             alt="Delete"&gt;
+    &lt;/button&gt;
+&lt;/div&gt;
+                </div>
+                <p><strong>Usage in templates:</strong></p>
+                <div class="code-block">
+{% include '_partials/edit-delete-buttons.html' with
+   edit_url=purchase_edit_url
+   delete_url=purchase_delete_url %}
+                </div>
+                <p><strong>Impact:</strong> Eliminates 10+ repetitions of this pattern</p>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Step 1.2: Create _partials/table-header.html</h4>
+                <div class="code-block">
+{# templates/_partials/table-header.html #}
+{# Usage: {% include '_partials/table-header.html' with headers=header_list %} #}
+
+&lt;div class="{{ grid_class|default:'grid' }} card-table-header"&gt;
+    {% for header in headers %}
+    &lt;div class="card-table-heading"&gt;{{ header }}&lt;/div&gt;
+    {% endfor %}
+&lt;/div&gt;
+                </div>
+                <p><strong>Usage example:</strong></p>
+                <div class="code-block">
+{% include '_partials/table-header.html' with
+   grid_class='grid-purchase'
+   headers=purchase_headers %}
+                </div>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Step 1.3: Create _partials/action-button.html</h4>
+                <div class="code-block">
+{# templates/_partials/action-button.html #}
+{# For HTMX-enabled action buttons #}
+
+&lt;button class="btn btn--{{ style|default:'primary' }}"
+        hx-get="{{ url }}"
+        hx-target="{{ target|default:'#modal-content' }}"&gt;
+    {{ icon|default:'+' }} {{ text }}
+&lt;/button&gt;
+                </div>
+                <p><strong>Usage example:</strong></p>
+                <div class="code-block">
+{% include '_partials/action-button.html' with
+   url=budgetitem_create_url
+   text='Add Budget Item'
+   icon='+' %}
+                </div>
+            </div>
+
+            <h3>Phase 2: Consolidate Modal Templates</h3>
+
+            <div class="recommendation-box">
+                <h4>Step 2.1: Analyze Current Modal Structure</h4>
+                <p>All 11 modal templates follow a similar pattern:</p>
+                <ul>
+                    <li>Simple form wrapper</li>
+                    <li>Django form rendering with {% csrf_token %}</li>
+                    <li>Hidden "next" field for redirect</li>
+                    <li>Submit button</li>
+                </ul>
+                <p><strong>Recommendation:</strong> Most modals don't need separate templates. The form can be rendered directly in the view or use a single <code>_partials/form-modal.html</code></p>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Step 2.2: Create _partials/form-modal.html</h4>
+                <div class="code-block">
+{# templates/_partials/form-modal.html #}
+{# Generic modal form wrapper #}
+
+{% if modal_title %}
+&lt;h2&gt;{{ modal_title }}&lt;/h2&gt;
+{% endif %}
+
+&lt;form hx-post="{{ form_action }}"
+      class="form-grid"
+      method="POST"
+      {% if hx_target %}hx-target="{{ hx_target }}"{% endif %}
+      {% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}&gt;
+    {% csrf_token %}
+    {{ form }}
+    &lt;input type="hidden" name="next" value="{{ next }}"&gt;
+    &lt;button type="submit" class="btn btn--primary"&gt;
+        {{ submit_text|default:"Save" }}
+    &lt;/button&gt;
+&lt;/form&gt;
+                </div>
+                <p><strong>Impact:</strong> Could replace 6-7 simple modal templates</p>
+            </div>
+
+            <h3>Phase 3: Improve Accessibility</h3>
+
+            <div class="recommendation-box">
+                <h4>Accessibility Improvements Needed:</h4>
+                <ul>
+                    <li><strong>Add aria-labels</strong> to icon-only buttons</li>
+                    <li><strong>Add alt text</strong> to SVG icons</li>
+                    <li><strong>Improve modal accessibility:</strong>
+                        <ul>
+                            <li>Add role="dialog"</li>
+                            <li>Add aria-modal="true"</li>
+                            <li>Add aria-labelledby for modal title</li>
+                            <li>Trap focus within modal when open</li>
+                        </ul>
+                    </li>
+                    <li><strong>Semantic HTML:</strong> Use &lt;nav&gt; for navigation, &lt;main&gt; for content</li>
+                    <li><strong>Form labels:</strong> Ensure all form inputs have associated labels</li>
+                </ul>
+            </div>
+
+            <h3>Phase 4: Remove Inline Styles</h3>
+
+            <div class="recommendation-box">
+                <h4>Actions:</h4>
+                <ol>
+                    <li>Replace <code>style="flex-grow:1;"</code> with CSS class <code>flex-grow</code></li>
+                    <li>Move icon widths (width="17px") to CSS class <code>.icon--sm</code></li>
+                    <li>Audit all templates to ensure no other inline styles exist</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="section" id="implementation">
+            <h2>7. Implementation Roadmap</h2>
+
+            <h3>Suggested Implementation Order</h3>
+
+            <div class="recommendation-box">
+                <h4>Sprint 1: Foundation Setup (Priority: <span class="priority-high">HIGH</span>)</h4>
+                <p><strong>Goal:</strong> Establish new structure without breaking existing functionality</p>
+                <ol>
+                    <li>Create new directory structure (static/css/{1-base, 2-layout, etc.}, static/js/{core, features})</li>
+                    <li>Extract and create variables.css</li>
+                    <li>Split base.css into modules:
+                        <ul>
+                            <li>reset.css</li>
+                            <li>typography.css</li>
+                            <li>containers.css</li>
+                            <li>navigation.css</li>
+                        </ul>
+                    </li>
+                    <li>Create main.css that imports all modules</li>
+                    <li>Update _base.html to load new main.css</li>
+                    <li>Test thoroughly - nothing should break visually</li>
+                </ol>
+                <p><strong>Time Estimate:</strong> 4-6 hours</p>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Sprint 2: JavaScript Extraction (Priority: <span class="priority-high">HIGH</span>)</h4>
+                <p><strong>Goal:</strong> Extract all inline JavaScript to separate files</p>
+                <ol>
+                    <li>Create core/modal.js and test modal functionality</li>
+                    <li>Create core/utils.js with getCsrfToken</li>
+                    <li>Create features/navigation.js for mobile menu</li>
+                    <li>Create features/rollover-editor.js</li>
+                    <li>Create features/purchase-form.js</li>
+                    <li>Create main.js entry point</li>
+                    <li>Update _base.html to load main.js as module</li>
+                    <li>Remove all &lt;script&gt; blocks from templates</li>
+                    <li>Test all interactive features</li>
+                </ol>
+                <p><strong>Time Estimate:</strong> 6-8 hours</p>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Sprint 3: CSS Refactoring (Priority: <span class="priority-medium">MEDIUM</span>)</h4>
+                <p><strong>Goal:</strong> Complete CSS modularization and clean up</p>
+                <ol>
+                    <li>Split remaining CSS:
+                        <ul>
+                            <li>grid.css</li>
+                            <li>buttons.css</li>
+                            <li>cards.css</li>
+                            <li>forms.css</li>
+                            <li>modals.css</li>
+                            <li>tables.css</li>
+                            <li>alerts.css</li>
+                            <li>utilities.css</li>
+                        </ul>
+                    </li>
+                    <li>Remove all commented-out code</li>
+                    <li>Update imports in main.css</li>
+                    <li>Test all pages for visual consistency</li>
+                </ol>
+                <p><strong>Time Estimate:</strong> 4-6 hours</p>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Sprint 4: Grid System Refactor (Priority: <span class="priority-medium">MEDIUM</span>)</h4>
+                <p><strong>Goal:</strong> Simplify grid classes</p>
+                <ol>
+                    <li>Design new flexible grid utility system</li>
+                    <li>Create new grid classes in grid.css</li>
+                    <li>Update templates to use new grid classes</li>
+                    <li>Remove old specific grid classes</li>
+                    <li>Test responsive behavior</li>
+                </ol>
+                <p><strong>Time Estimate:</strong> 6-8 hours</p>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Sprint 5: Template Partials (Priority: <span class="priority-medium">MEDIUM</span>)</h4>
+                <p><strong>Goal:</strong> Create reusable components</p>
+                <ol>
+                    <li>Create templates/_partials/ directory</li>
+                    <li>Create edit-delete-buttons.html partial</li>
+                    <li>Create table-header.html partial</li>
+                    <li>Create action-button.html partial</li>
+                    <li>Create form-modal.html partial</li>
+                    <li>Update existing templates to use partials</li>
+                    <li>Remove duplicate modal templates (if appropriate)</li>
+                    <li>Test all affected pages</li>
+                </ol>
+                <p><strong>Time Estimate:</strong> 6-8 hours</p>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Sprint 6: BEM Naming & Polish (Priority: <span class="priority-low">LOW</span>)</h4>
+                <p><strong>Goal:</strong> Standardize naming and improve maintainability</p>
+                <ol>
+                    <li>Create CSS class naming guide document</li>
+                    <li>Gradually rename classes to BEM convention:
+                        <ul>
+                            <li>Start with button classes</li>
+                            <li>Then card classes</li>
+                            <li>Then modal classes</li>
+                        </ul>
+                    </li>
+                    <li>Update all template references</li>
+                    <li>Remove inline styles from templates</li>
+                    <li>Add icon utility classes</li>
+                    <li>Test thoroughly</li>
+                </ol>
+                <p><strong>Time Estimate:</strong> 8-10 hours</p>
+                <p><strong>Note:</strong> This can be done incrementally over time</p>
+            </div>
+
+            <div class="recommendation-box">
+                <h4>Sprint 7: Accessibility & Final Polish (Priority: <span class="priority-medium">MEDIUM</span>)</h4>
+                <p><strong>Goal:</strong> Ensure WCAG compliance</p>
+                <ol>
+                    <li>Add aria-labels to all icon buttons</li>
+                    <li>Add alt text to all images</li>
+                    <li>Improve modal accessibility (role, aria-modal, focus trap)</li>
+                    <li>Add semantic HTML elements</li>
+                    <li>Test with screen reader</li>
+                    <li>Run accessibility audit (Lighthouse, axe)</li>
+                    <li>Fix any issues found</li>
+                </ol>
+                <p><strong>Time Estimate:</strong> 4-6 hours</p>
+            </div>
+
+            <h3>Total Estimated Time: 38-52 hours</h3>
+
+            <h3>Testing Checklist</h3>
+            <div class="issue-box">
+                <h4>After Each Sprint, Verify:</h4>
+                <ul>
+                    <li>✅ All pages render correctly</li>
+                    <li>✅ No console errors</li>
+                    <li>✅ Modal open/close works</li>
+                    <li>✅ HTMX interactions work (edit, delete, create)</li>
+                    <li>✅ Mobile menu toggles correctly</li>
+                    <li>✅ Forms submit successfully</li>
+                    <li>✅ Responsive design works on mobile</li>
+                    <li>✅ All buttons and links work</li>
+                    <li>✅ Rollover editing works (yearly budget page)</li>
+                    <li>✅ Dynamic purchase form works (add/remove items)</li>
+                </ul>
+            </div>
+
+            <h3>Success Metrics</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Current</th>
+                        <th>Target</th>
+                        <th>Improvement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CSS Files</td>
+                        <td>1 (785 lines)</td>
+                        <td>13 modular files</td>
+                        <td>Better organization</td>
+                    </tr>
+                    <tr>
+                        <td>Custom JS Files</td>
+                        <td>0 (all inline)</td>
+                        <td>6 separate modules</td>
+                        <td>Cacheable, testable</td>
+                    </tr>
+                    <tr>
+                        <td>Inline JS Lines</td>
+                        <td>166 lines</td>
+                        <td>0 lines</td>
+                        <td>-100%</td>
+                    </tr>
+                    <tr>
+                        <td>Template Repetition</td>
+                        <td>High (10+ duplicates)</td>
+                        <td>Low (using partials)</td>
+                        <td>DRY code</td>
+                    </tr>
+                    <tr>
+                        <td>CSS Grid Classes</td>
+                        <td>15+ specific classes</td>
+                        <td>~8 flexible classes</td>
+                        <td>-47% classes</td>
+                    </tr>
+                    <tr>
+                        <td>Inline Styles</td>
+                        <td>1+ instances</td>
+                        <td>0 instances</td>
+                        <td>Clean separation</td>
+                    </tr>
+                    <tr>
+                        <td>Accessibility Score</td>
+                        <td>Unknown</td>
+                        <td>95+</td>
+                        <td>WCAG compliant</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Summary</h2>
+            <p>This refactoring plan addresses the core issues in the Carrots Budget frontend:</p>
+            <ul>
+                <li>✅ <strong>Modularizes</strong> a monolithic 785-line CSS file into 13 focused modules</li>
+                <li>✅ <strong>Extracts</strong> 166 lines of inline JavaScript into 6 separate, cacheable modules</li>
+                <li>✅ <strong>Eliminates</strong> repetitive HTML patterns through Django template partials</li>
+                <li>✅ <strong>Simplifies</strong> the grid system from 15+ specific classes to ~8 flexible utilities</li>
+                <li>✅ <strong>Improves</strong> maintainability with clear file organization and BEM naming</li>
+                <li>✅ <strong>Enhances</strong> accessibility with proper ARIA attributes and semantic HTML</li>
+            </ul>
+
+            <p>The incremental, sprint-based approach ensures:</p>
+            <ul>
+                <li>🔒 <strong>Safety:</strong> Each sprint is fully tested before moving forward</li>
+                <li>📈 <strong>Progressive improvement:</strong> Value delivered at each stage</li>
+                <li>🔄 <strong>Flexibility:</strong> Sprints can be prioritized based on business needs</li>
+                <li>⚡ <strong>Performance gains:</strong> Cached JavaScript and optimized CSS</li>
+            </ul>
+
+            <p style="margin-top: 30px; padding: 20px; background: #edf2f7; border-radius: 8px; text-align: center; font-size: 1.1em;">
+                <strong>Estimated Total Implementation Time: 38-52 hours</strong><br>
+                <span style="color: #718096;">Can be completed in 1-2 weeks with dedicated development time</span>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
