@@ -172,7 +172,8 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
         budget_context = service.get_monthly_budget_context(
             user=self.request.user,
             year=self.object.date.year,
-            month=self.object.date.month
+            month=self.object.date.month,
+            monthly_budget=self.object,
         )
 
         kwargs.update(budget_context)

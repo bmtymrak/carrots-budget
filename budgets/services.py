@@ -23,14 +23,17 @@ class BudgetService:
     def year_bounds(year: int):
         return datetime.date(year, 1, 1), datetime.date(year + 1, 1, 1)
 
-    def get_monthly_budget_context(self, user, year: int, month: int) -> dict:
+    def get_monthly_budget_context(
+        self, user, year: int, month: int, monthly_budget=None
+    ) -> dict:
         month_start, next_month_start = self.month_bounds(year, month)
 
-        monthly_budget = MonthlyBudget.objects.get(
-            date__gte=month_start,
-            date__lt=next_month_start,
-            user=user,
-        )
+        if monthly_budget is None:
+            monthly_budget = MonthlyBudget.objects.get(
+                date__gte=month_start,
+                date__lt=next_month_start,
+                user=user,
+            )
 
         category_purchases = Purchase.objects.filter(
             date__gte=month_start,
