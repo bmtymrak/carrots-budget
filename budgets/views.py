@@ -61,8 +61,11 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
     template_name = "budgets/yearly_budget_detail.html"
 
     def get_object(self):
+        year_start, next_year_start = BudgetService.year_bounds(self.kwargs["year"])
         obj = self.model.objects.get(
-            user=self.request.user, date__year=self.kwargs["year"]
+            user=self.request.user,
+            date__gte=year_start,
+            date__lt=next_year_start,
         )
 
         return obj
@@ -108,13 +111,19 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
     form_class = PurchaseForm
     template_name = "budgets/monthly_budget_detail.html"
 
-    def get(self, request, *args, **kwargs):
-
-        self.object = MonthlyBudget.objects.get(
-            date__year=self.kwargs.get("year"),
-            date__month=self.kwargs.get("month"),
+    def _get_monthly_budget(self):
+        month_start, next_month_start = BudgetService.month_bounds(
+            self.kwargs["year"], self.kwargs["month"]
+        )
+        return MonthlyBudget.objects.get(
+            date__gte=month_start,
+            date__lt=next_month_start,
             user=self.request.user,
         )
+
+    def get(self, request, *args, **kwargs):
+
+        self.object = self._get_monthly_budget()
 
         purchase_formset = PurchaseFormSetReceipt(
             queryset=Purchase.objects.none(), form_kwargs={"user": self.request.user}
@@ -125,11 +134,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
         )
 
     def post(self, request, *arg, **kwargs):
-        self.object = MonthlyBudget.objects.get(
-            date__year=self.kwargs.get("year"),
-            date__month=self.kwargs.get("month"),
-            user=self.request.user,
-        )
+        self.object = self._get_monthly_budget()
 
         formset_data = self.request.POST.copy()  # Makes Querydict mutable
         formset_date = formset_data["form-0-date"]
