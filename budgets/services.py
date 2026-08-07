@@ -125,7 +125,7 @@ class BudgetService:
             user=user,
             date__month=month,
             date__year=year,
-        ).order_by("date", "source").prefetch_related("category")
+        ).order_by("date", "source").select_related("category")
         
         total_income_val = incomes_query.filter(category=None).aggregate(amount=Sum("amount"))["amount"] or 0
         free_income = total_income_val - total_spent_saved
@@ -135,7 +135,7 @@ class BudgetService:
             user=user,
             date__year=year,
             date__month=month,
-        ).order_by("date", "source").prefetch_related("category")
+        ).order_by("date", "source").select_related("category")
 
         return {
             "budget_items": budget_items_list,
@@ -175,7 +175,7 @@ class BudgetService:
         incomes = Income.objects.filter(
             user=user,
             date__year=year,
-        )
+        ).select_related("category")
 
         purchases_data = {
             item['category']: {'total': item['total'], 'total_ytd': item['total_ytd']}
@@ -226,7 +226,7 @@ class BudgetService:
 
         rollovers = (
             Rollover.objects.filter(user=user, yearly_budget__date__year=year)
-            .prefetch_related("category")
+            .select_related("category", "yearly_budget")
             .order_by("category__name")
         )
         
