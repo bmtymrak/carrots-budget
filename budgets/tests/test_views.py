@@ -563,6 +563,14 @@ class YearlyBudgetViewTests(TestCase):
         self.assertTemplateUsed(response, 'budgets/yearly_budget_detail.html')
         self.assertContains(response, category.name)
 
+    def test_yearly_budget_detail_ignores_invalid_ytd_month(self):
+        response = self.client.get(
+            reverse('yearly_detail', kwargs={'year': self.year}),
+            {'ytd': '13'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+
     def test_yearly_budget_create_view(self):
         next_year = self.year + 1
         response = self.client.post(
