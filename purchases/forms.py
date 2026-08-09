@@ -19,6 +19,7 @@ class PurchaseForm(ModelForm):
         category_queryset = Category.objects.filter(user=self.user)
 
         yearly_budget = None
+        budget_scope_requested = self.yearly_budget is not None
         if self.yearly_budget is not None:
             if isinstance(self.yearly_budget, YearlyBudget):
                 if self.yearly_budget.user_id == self.user.id:
@@ -28,7 +29,12 @@ class PurchaseForm(ModelForm):
                     yearly_budget = YearlyBudget.objects.get(
                         user=self.user, pk=self.yearly_budget
                     )
-                except (YearlyBudget.DoesNotExist, TypeError, ValueError):
+                except (
+                    YearlyBudget.DoesNotExist,
+                    OverflowError,
+                    TypeError,
+                    ValueError,
+                ):
                     yearly_budget = None
         elif self.date:
             yearly_budgets = list(
@@ -37,7 +43,9 @@ class PurchaseForm(ModelForm):
             if len(yearly_budgets) == 1:
                 yearly_budget = yearly_budgets[0]
 
-        if yearly_budget is not None:
+        if budget_scope_requested and yearly_budget is None:
+            category_queryset = category_queryset.none()
+        elif yearly_budget is not None:
             budget_item_category_ids = (
                 BudgetItem.objects.filter(user=self.user, yearly_budget=yearly_budget)
                 .values_list("category_id", flat=True)

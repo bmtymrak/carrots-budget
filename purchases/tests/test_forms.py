@@ -114,6 +114,35 @@ class TestPurchaseForm(TestCase):
         self.assertFalse(bound_form.is_valid())
         self.assertIn("category", bound_form.errors)
 
+        invalid_budget_form = PurchaseForm(
+            user=self.user1,
+            date=datetime.date(2024, 1, 15),
+            yearly_budget="not-a-budget",
+        )
+        self.assertEqual(list(invalid_budget_form.fields["category"].queryset), [])
+
+        invalid_budget_bound_form = PurchaseForm(
+            user=self.user1,
+            date=datetime.date(2024, 1, 15),
+            yearly_budget="not-a-budget",
+            data={
+                "date": "2024-01-15",
+                "category": str(unbudgeted_category.pk),
+            },
+        )
+        self.assertFalse(invalid_budget_bound_form.is_valid())
+        self.assertIn("category", invalid_budget_bound_form.errors)
+
+        foreign_yearly_budget = YearlyBudget.objects.create(
+            user=self.user2, date=datetime.date(2024, 1, 1)
+        )
+        foreign_budget_form = PurchaseForm(
+            user=self.user1,
+            date=datetime.date(2024, 1, 15),
+            yearly_budget=foreign_yearly_budget.pk,
+        )
+        self.assertEqual(list(foreign_budget_form.fields["category"].queryset), [])
+
 
 class TestRecurringPurchaseAddToMonthFormSet(TestCase):
     @classmethod
