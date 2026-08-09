@@ -698,6 +698,49 @@ class BudgetItemViewTests(TestCase):
             Decimal('0.00')
         )
 
+    def test_bulk_edit_cannot_update_another_users_budget_item(self):
+        other_user = get_user_model().objects.create_user(
+            username="otheruser",
+            email="other@example.com",
+            password="testpass123",
+        )
+        other_yearly_budget = YearlyBudgetFactory(
+            user=other_user,
+            date=datetime.date(self.year, 1, 1),
+        )
+        other_monthly_budget = MonthlyBudget.objects.get(
+            yearly_budget=other_yearly_budget,
+            date=self.monthly_budget.date,
+        )
+        other_category = CategoryFactory(user=other_user, name=self.category.name)
+        foreign_budget_item = BudgetItemFactory(
+            user=other_user,
+            category=other_category,
+            monthly_budget=other_monthly_budget,
+            yearly_budget=other_yearly_budget,
+            amount=Decimal("25.00"),
+        )
+
+        response = self.client.post(
+            reverse(
+                "budgetitem_bulk_edit_htmx",
+                kwargs={"year": self.year, "category": self.category.name},
+            ),
+            {
+                "form-TOTAL_FORMS": "1",
+                "form-INITIAL_FORMS": "1",
+                "form-MIN_NUM_FORMS": "0",
+                "form-MAX_NUM_FORMS": "1000",
+                "form-0-id": str(foreign_budget_item.pk),
+                "form-0-amount": "9999.99",
+                "next": reverse("yearly_list"),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        foreign_budget_item.refresh_from_db()
+        self.assertEqual(foreign_budget_item.amount, Decimal("25.00"))
+
 
 
 class RolloverViewTests(TestCase):
