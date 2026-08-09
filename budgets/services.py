@@ -10,22 +10,40 @@ from purchases.models import Purchase, Income
 
 
 class BudgetService:
-    def get_monthly_budget_context(self, user, year: int, month: int) -> dict:
-        monthly_budget = MonthlyBudget.objects.get(
-            date__year=year,
-            date__month=month,
-            user=user,
-        )
+    @staticmethod
+    def month_bounds(year: int, month: int):
+        month_start = datetime.date(year, month, 1)
+        if month == 12:
+            next_month_start = datetime.date(year + 1, 1, 1)
+        else:
+            next_month_start = datetime.date(year, month + 1, 1)
+        return month_start, next_month_start
+
+    @staticmethod
+    def year_bounds(year: int):
+        return datetime.date(year, 1, 1), datetime.date(year + 1, 1, 1)
+
+    def get_monthly_budget_context(
+        self, user, year: int, month: int, monthly_budget=None
+    ) -> dict:
+        month_start, next_month_start = self.month_bounds(year, month)
+
+        if monthly_budget is None:
+            monthly_budget = MonthlyBudget.objects.get(
+                date__gte=month_start,
+                date__lt=next_month_start,
+                user=user,
+            )
 
         category_purchases = Purchase.objects.filter(
-            date__year=year,
-            date__month=month,
+            date__gte=month_start,
+            date__lt=next_month_start,
             user=user,
         ).values("category").annotate(total=Sum("amount"))
 
         category_incomes = Income.objects.filter(
-            date__year=year,
-            date__month=month,
+            date__gte=month_start,
+            date__lt=next_month_start,
             user=user,
         ).values("category").annotate(total=Sum("amount"))
 
@@ -102,8 +120,8 @@ class BudgetService:
         uncategorized_amount = Purchase.objects.filter(
             user=user,
             category__name=None,
-            date__month=month,
-            date__year=year,
+            date__gte=month_start,
+            date__lt=next_month_start,
         ).aggregate(amount=Sum("amount"))["amount"] or 0
 
         uncategorized_purchases = {
@@ -123,9 +141,9 @@ class BudgetService:
         # Income Processing
         incomes_query = Income.objects.filter(
             user=user,
-            date__month=month,
-            date__year=year,
-        ).order_by("date", "source").prefetch_related("category")
+            date__gte=month_start,
+            date__lt=next_month_start,
+        ).order_by("date", "source").select_related("category")
         
         total_income_val = incomes_query.filter(category=None).aggregate(amount=Sum("amount"))["amount"] or 0
         free_income = total_income_val - total_spent_saved
@@ -133,9 +151,9 @@ class BudgetService:
 
         purchases_list = Purchase.objects.filter(
             user=user,
-            date__year=year,
-            date__month=month,
-        ).order_by("date", "source").prefetch_related("category")
+            date__gte=month_start,
+            date__lt=next_month_start,
+        ).order_by("date", "source").select_related("category")
 
         return {
             "budget_items": budget_items_list,
@@ -165,23 +183,28 @@ class BudgetService:
         Orchestrates the gathering of all budget data for the YearlyBudgetDetailView.
         """
         
+        year_start, next_year_start = self.year_bounds(year)
+        _, ytd_end = self.month_bounds(year, ytd_month)
+
         purchases = Purchase.objects.filter(
             user=user,
-            date__year=year,
+            date__gte=year_start,
+            date__lt=next_year_start,
         )
 
         purchases_uncategorized = purchases.filter(category=None)
 
         incomes = Income.objects.filter(
             user=user,
-            date__year=year,
-        )
+            date__gte=year_start,
+            date__lt=next_year_start,
+        ).select_related("category")
 
         purchases_data = {
             item['category']: {'total': item['total'], 'total_ytd': item['total_ytd']}
             for item in purchases.values('category').annotate(
                 total=Sum('amount'),
-                total_ytd=Sum('amount', filter=Q(date__month__lte=ytd_month))
+                total_ytd=Sum('amount', filter=Q(date__lt=ytd_end))
             )
         }
         
@@ -189,14 +212,15 @@ class BudgetService:
             item['category']: {'total': item['total'], 'total_ytd': item['total_ytd']}
             for item in incomes.values('category').annotate(
                 total=Sum('amount'),
-                total_ytd=Sum('amount', filter=Q(date__month__lte=ytd_month))
+                total_ytd=Sum('amount', filter=Q(date__lt=ytd_end))
             )
         }
         
         rollovers_by_category = dict(
             Rollover.objects.filter(
                 user=user,
-                yearly_budget__date__year=year - 1,
+                yearly_budget__date__gte=datetime.date(year - 1, 1, 1),
+                yearly_budget__date__lt=year_start,
             ).values_list('category', 'amount')
         )
 
@@ -220,13 +244,17 @@ class BudgetService:
         total_spent_saved_ytd = budget_items_context['total_spending_spent_ytd'] + savings_items_context['total_saved_ytd']
         total_remaining_ytd = budget_items_context['total_spending_remaining_ytd'] + savings_items_context['total_savings_remaining_ytd']
 
-        income_context = self._process_income_totals(incomes, ytd_month, total_spent_saved, total_spent_saved_ytd, total_budgeted, total_budgeted_ytd)
+        income_context = self._process_income_totals(incomes, ytd_end, total_spent_saved, total_spent_saved_ytd, total_budgeted, total_budgeted_ytd)
         
         free_income = budget_items_context['free_income_spending'] + savings_items_context['free_income_savings']
 
         rollovers = (
-            Rollover.objects.filter(user=user, yearly_budget__date__year=year)
-            .prefetch_related("category")
+            Rollover.objects.filter(
+                user=user,
+                yearly_budget__date__gte=year_start,
+                yearly_budget__date__lt=next_year_start,
+            )
+            .select_related("category", "yearly_budget")
             .order_by("category__name")
         )
         
@@ -274,16 +302,20 @@ class BudgetService:
         return context
 
     def _process_spending_items(self, user, year, ytd_month, purchases_data, incomes_data, rollovers_by_category):
+        year_start, next_year_start = self.year_bounds(year)
+        _, ytd_end = self.month_bounds(year, ytd_month)
+
         budgetitems = (
             BudgetItem.objects.filter(user=user)
             .filter(
-                monthly_budget__date__year=year,
+                monthly_budget__date__gte=year_start,
+                monthly_budget__date__lt=next_year_start,
                 savings=False,
             )
             .values("category", "category__name")
             .annotate(
                 amount_total=Sum("amount"),
-                amount_total_ytd=Sum("amount", filter=Q(monthly_budget__date__month__lte=ytd_month)),
+                amount_total_ytd=Sum("amount", filter=Q(monthly_budget__date__lt=ytd_end)),
             )
             .order_by("category__name")
         )
@@ -380,16 +412,20 @@ class BudgetService:
         }
 
     def _process_savings_items(self, user, year, ytd_month, purchases_data, incomes_data, rollovers_by_category):
+        year_start, next_year_start = self.year_bounds(year)
+        _, ytd_end = self.month_bounds(year, ytd_month)
+
         savings_items = (
             BudgetItem.objects.filter(
                 user=user,
-                monthly_budget__date__year=year,
+                monthly_budget__date__gte=year_start,
+                monthly_budget__date__lt=next_year_start,
                 savings=True,
             )
             .values("category", "category__name")
             .annotate(
                 amount_total=Sum("amount"),
-                amount_total_ytd=Sum("amount", filter=Q(monthly_budget__date__month__lte=ytd_month)),
+                amount_total_ytd=Sum("amount", filter=Q(monthly_budget__date__lt=ytd_end)),
             )
             .order_by("category__name")
         )
@@ -488,13 +524,13 @@ class BudgetService:
             "savings_category_ids": savings_category_ids,
         }
 
-    def _process_income_totals(self, incomes, ytd_month, total_spent_saved, total_spent_saved_ytd, total_budgeted, total_budgeted_ytd):
+    def _process_income_totals(self, incomes, ytd_end, total_spent_saved, total_spent_saved_ytd, total_budgeted, total_budgeted_ytd):
         income_aggregates = incomes.aggregate(
             total_income=ExpressionWrapper(
                 Coalesce(Sum("amount"), Value(0)), output_field=DecimalField()
             ),
             total_income_ytd=ExpressionWrapper(
-                Coalesce(Sum("amount", filter=Q(date__month__lte=ytd_month)), Value(0)), 
+                Coalesce(Sum("amount", filter=Q(date__lt=ytd_end)), Value(0)),
                 output_field=DecimalField()
             ),
             total_income_budgeted=ExpressionWrapper(
@@ -502,7 +538,7 @@ class BudgetService:
                 output_field=DecimalField()
             ),
             total_income_budgeted_ytd=ExpressionWrapper(
-                Coalesce(Sum("amount", filter=Q(category=None, date__month__lte=ytd_month)), Value(0)), 
+                Coalesce(Sum("amount", filter=Q(category=None, date__lt=ytd_end)), Value(0)),
                 output_field=DecimalField()
             ),
             total_income_category=ExpressionWrapper(
@@ -510,7 +546,7 @@ class BudgetService:
                 output_field=DecimalField()
             ),
             total_income_category_ytd=ExpressionWrapper(
-                Coalesce(Sum("amount", filter=Q(~Q(category=None), date__month__lte=ytd_month)), Value(0)), 
+                Coalesce(Sum("amount", filter=Q(~Q(category=None), date__lt=ytd_end)), Value(0)),
                 output_field=DecimalField()
             ),
         )

@@ -1,21 +1,35 @@
 import datetime
 import unittest
+from urllib.parse import quote
 
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.utils import timezone
+from django.test import override_settings
 from decimal import Decimal
 
 from purchases.models import Category, Purchase, Income, RecurringPurchase
 from budgets.models import YearlyBudget
 from .factories import (
     CategoryFactory,
+    PurchaseFactory,
     SubcategoryFactory,
     RecurringPurchaseFactory,
 )
 
 
 User = get_user_model()
+
+TEST_STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    # Avoid manifest-based static file lookups when rendering templates in tests.
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 
 class PurchaseViewTests(TestCase):
@@ -88,7 +102,292 @@ class PurchaseViewTests(TestCase):
         )
 
 
+@override_settings(STORAGES=TEST_STORAGES)
+class PurchaseListViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.password = "testpass123"
+        self.user = get_user_model().objects.create_user(
+            username="purchase_list_user",
+            email="purchase-list@example.com",
+        )
+        self.user.set_password(self.password)
+        self.user.save()
+        self.client.force_login(self.user)
+        self.category = CategoryFactory(user=self.user)
 
+    def test_purchase_list_orders_by_date_descending(self):
+        older_purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            date=datetime.date(2024, 1, 1),
+            item="Older purchase",
+        )
+        newer_purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            date=datetime.date(2024, 2, 1),
+            item="Newer purchase",
+        )
+        other_user = get_user_model().objects.create_user(
+            username="other_purchase_list_user",
+            email="other-purchase-list@example.com",
+        )
+        other_category = CategoryFactory(user=other_user)
+        PurchaseFactory(
+            user=other_user,
+            category=other_category,
+            date=datetime.date(2024, 3, 1),
+        )
+
+        response = self.client.get(reverse("purchase_list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "purchases/purchase_list.html")
+        self.assertEqual(
+            list(response.context["purchases"]),
+            [newer_purchase, older_purchase],
+        )
+
+    def test_purchase_list_paginates_to_100_items_per_page(self):
+        for index in range(101):
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                subcategory=None,
+                item=f"Purchase {index}",
+                date=datetime.date(2024, 1, 1) + datetime.timedelta(days=index),
+            )
+
+        first_page_response = self.client.get(reverse("purchase_list"))
+        second_page_response = self.client.get(reverse("purchase_list"), {"page": 2})
+
+        self.assertEqual(first_page_response.status_code, 200)
+        self.assertTrue(first_page_response.context["is_paginated"])
+        self.assertEqual(first_page_response.context["paginator"].per_page, 100)
+        self.assertEqual(len(first_page_response.context["purchases"]), 100)
+        self.assertEqual(second_page_response.status_code, 200)
+        self.assertEqual(len(second_page_response.context["purchases"]), 1)
+
+    def test_purchase_list_pagination_links_preserve_filters(self):
+        for index in range(101):
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                subcategory=None,
+                item=f"Needle purchase {index}",
+                date=datetime.date(2024, 2, 1),
+            )
+
+        response = self.client.get(
+            reverse("purchase_list"),
+            {"search": "needle", "category": str(self.category.pk)},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["next_page_url"],
+            f"?search=needle&category={self.category.pk}&page=2",
+        )
+        self.assertIsNone(response.context["previous_page_url"])
+        self.assertContains(
+            response,
+            f'href="?search=needle&amp;category={self.category.pk}&amp;page=2"',
+            html=False,
+        )
+
+    def test_purchase_delete_from_last_page_redirects_to_valid_page(self):
+        for index in range(101):
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                subcategory=None,
+                item=f"Purchase {index}",
+                date=datetime.date(2024, 1, 1) + datetime.timedelta(days=index),
+            )
+
+        page_two_url = f'{reverse("purchase_list")}?search=purchase&page=2'
+        page_two_response = self.client.get(page_two_url)
+        purchase = page_two_response.context["purchases"][0]
+        return_url = f'{reverse("purchase_list")}?search=purchase'
+
+        self.assertContains(
+            page_two_response,
+            f'hx-get=\'{reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk})}'
+            f'?next={quote(return_url, safe="")}\'',
+            html=False,
+        )
+
+        delete_url = (
+            f'{reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk})}'
+            f'?next={quote(return_url, safe="")}'
+        )
+        response = self.client.delete(delete_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["HX-Redirect"], return_url)
+
+        redirected_response = self.client.get(response["HX-Redirect"])
+
+        self.assertEqual(redirected_response.status_code, 200)
+        self.assertEqual(redirected_response.context["page_obj"].number, 1)
+        self.assertEqual(len(redirected_response.context["purchases"]), 100)
+
+    def test_purchase_list_filters_by_dates_and_search(self):
+        filtered_purchases = [
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                item="Needle item",
+                source="Regular source",
+                location="Regular location",
+                date=datetime.date(2024, 2, 10),
+            ),
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                item="Other item",
+                source="Needle source",
+                location="Regular location",
+                date=datetime.date(2024, 2, 11),
+            ),
+            PurchaseFactory(
+                user=self.user,
+                category=self.category,
+                item="Other item",
+                source="Regular source",
+                location="Needle location",
+                date=datetime.date(2024, 2, 12),
+            ),
+        ]
+        out_of_range_purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Needle item outside range",
+            source="Needle source outside range",
+            location="Needle location outside range",
+            date=datetime.date(2024, 1, 15),
+        )
+
+        matching_purchase_ids = [purchase.pk for purchase in filtered_purchases]
+        Purchase.objects.filter(pk__in=matching_purchase_ids).update(
+            created_at=timezone.make_aware(datetime.datetime(2024, 3, 31, 23, 59, 59))
+        )
+        Purchase.objects.filter(pk=out_of_range_purchase.pk).update(
+            created_at=timezone.make_aware(datetime.datetime(2024, 4, 1, 0, 0, 0))
+        )
+
+        response = self.client.get(
+            reverse("purchase_list"),
+            {
+                "purchase_date_from": "2024-02-01",
+                "purchase_date_to": "2024-02-29",
+                "date_added_from": "2024-03-01",
+                "date_added_to": "2024-03-31",
+                "search": "needle",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context["purchases"]),
+            list(reversed(filtered_purchases)),
+        )
+
+    def test_purchase_list_filters_by_category_with_used_category_options(self):
+        other_category = CategoryFactory(user=self.user, name="Other category")
+        unused_category = CategoryFactory(user=self.user, name="Unused category")
+        matching_purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Matching purchase",
+            date=datetime.date(2024, 2, 10),
+        )
+        non_matching_purchase = PurchaseFactory(
+            user=self.user,
+            category=other_category,
+            item="Non matching purchase",
+            date=datetime.date(2024, 2, 11),
+        )
+
+        response = self.client.get(
+            reverse("purchase_list"),
+            {"category": str(self.category.pk)},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context["purchases"]),
+            [matching_purchase],
+        )
+        self.assertEqual(
+            list(response.context["filter_categories"]),
+            [self.category, other_category],
+        )
+        self.assertNotIn(unused_category, response.context["filter_categories"])
+        self.assertContains(
+            response,
+            f'<option value="{self.category.pk}" selected>{self.category.name}</option>',
+            html=True,
+        )
+        self.assertContains(
+            response,
+            f'<option value="{other_category.pk}">{other_category.name}</option>',
+            html=True,
+        )
+        self.assertNotContains(response, unused_category.name)
+        self.assertNotIn(non_matching_purchase, response.context["purchases"])
+
+    def test_purchase_list_modal_links_preserve_filters(self):
+        purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Needle purchase",
+            date=datetime.date(2024, 2, 10),
+        )
+        filtered_url = (
+            f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
+            f"&purchase_date_to=2024-02-29&search=needle&category={self.category.pk}"
+        )
+        encoded_next = quote(filtered_url, safe="")
+
+        response = self.client.get(filtered_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'hx-get=\'{reverse("purchase_edit_htmx", kwargs={"pk": purchase.pk})}?next={encoded_next}\'',
+            html=False,
+        )
+        self.assertContains(
+            response,
+            f'hx-get=\'{reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk})}?next={encoded_next}\'',
+            html=False,
+        )
+
+    def test_purchase_delete_modal_preserves_filtered_redirect(self):
+        purchase = PurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Delete me",
+        )
+        filtered_url = (
+            f'{reverse("purchase_list")}?purchase_date_from=2024-02-01'
+            f"&purchase_date_to=2024-02-29&search=needle&category={self.category.pk}"
+        )
+        encoded_next = quote(filtered_url, safe="")
+
+        response = self.client.get(
+            reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk}),
+            {"next": filtered_url},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'hx-delete=\'{reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk})}?next={encoded_next}\'',
+            html=False,
+        )
 
 class IncomeViewTests(TestCase):
     def setUp(self):
