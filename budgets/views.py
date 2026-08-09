@@ -400,17 +400,16 @@ def budgetitem_edit(request, year, month, category):
 @login_required
 def budgetitem_bulk_edit(request, year, category):
 
-    formset = BudgetItemFormset(
-        queryset=BudgetItem.objects.filter(
-            user=request.user,
-            yearly_budget=YearlyBudget.objects.get(user=request.user, date__year=year),
-            category__name=category,
-        )
+    budget_items = BudgetItem.objects.filter(
+        user=request.user,
+        yearly_budget=YearlyBudget.objects.get(user=request.user, date__year=year),
+        category__name=category,
     )
+    formset = BudgetItemFormset(queryset=budget_items)
 
     if request.method == "POST":
         next = request.POST.get("next")
-        formset = BudgetItemFormset(data=request.POST)
+        formset = BudgetItemFormset(data=request.POST, queryset=budget_items)
 
         if formset.is_valid():
             instances = formset.save(commit=False)
