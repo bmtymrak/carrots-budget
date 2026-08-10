@@ -1,5 +1,8 @@
+from django.db.models import Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy, reverse
+from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.views.generic import (
     ListView,
     CreateView,
@@ -30,12 +33,107 @@ class AddUserMixin:
 class PurchaseListView(LoginRequiredMixin, ListView):
     model = Purchase
     context_object_name = "purchases"
-    template_name = "purchase_list.html"
-    ordering = "date"
+    template_name = "purchases/purchase_list.html"
+    ordering = ["-date", "-created_at", "-pk"]
+    paginate_by = 100
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.filter(user=self.request.user).prefetch_related("category")
+        def parse_request_date_param(name):
+            return parse_date(self.request.GET.get(name, ""))
+
+        qs = (
+            super()
+            .get_queryset()
+            .filter(user=self.request.user)
+            .select_related("category")
+        )
+
+        purchase_date_from = parse_request_date_param("purchase_date_from")
+        purchase_date_to = parse_request_date_param("purchase_date_to")
+        date_added_from = parse_request_date_param("date_added_from")
+        date_added_to = parse_request_date_param("date_added_to")
+        search = self.request.GET.get("search", "").strip()
+        category = self.request.GET.get("category", "").strip()
+        try:
+            category_id = int(category)
+        except ValueError:
+            category_id = None
+
+        if purchase_date_from:
+            qs = qs.filter(date__gte=purchase_date_from)
+        if purchase_date_to:
+            qs = qs.filter(date__lte=purchase_date_to)
+
+        current_timezone = timezone.get_current_timezone()
+
+        def start_of_date(value):
+            return timezone.make_aware(
+                datetime.datetime.combine(value, datetime.time.min),
+                current_timezone,
+            )
+
+        if date_added_from:
+            qs = qs.filter(created_at__gte=start_of_date(date_added_from))
+        if date_added_to:
+            qs = qs.filter(
+                created_at__lt=start_of_date(
+                    date_added_to + datetime.timedelta(days=1)
+                )
+            )
+        if search:
+            qs = qs.filter(
+                Q(item__icontains=search)
+                | Q(location__icontains=search)
+                | Q(source__icontains=search)
+            )
+        if category_id is not None:
+            qs = qs.filter(category_id=category_id)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        query_params = self.request.GET.copy()
+        query_params.pop("page", None)
+
+        context["filters"] = {
+            "purchase_date_from": self.request.GET.get("purchase_date_from", ""),
+            "purchase_date_to": self.request.GET.get("purchase_date_to", ""),
+            "date_added_from": self.request.GET.get("date_added_from", ""),
+            "date_added_to": self.request.GET.get("date_added_to", ""),
+            "search": self.request.GET.get("search", ""),
+            "category": self.request.GET.get("category", ""),
+        }
+        used_categories = Purchase.objects.filter(
+            user=self.request.user,
+            category_id=OuterRef("pk"),
+        )
+        context["filter_categories"] = (
+            Category.objects.filter(user=self.request.user)
+            .annotate(has_purchases=Exists(used_categories))
+            .filter(has_purchases=True)
+            .only("id", "name")
+            .order_by("name")
+        )
+        filter_query_string = query_params.urlencode()
+        query_string_prefix = f"{filter_query_string}&" if filter_query_string else ""
+        context["purchase_list_return_url"] = self.request.path
+        if filter_query_string:
+            context["purchase_list_return_url"] += f"?{filter_query_string}"
+        context["previous_page_url"] = None
+        context["next_page_url"] = None
+
+        if context["page_obj"].has_previous():
+            context["previous_page_url"] = (
+                f"?{query_string_prefix}page="
+                f'{context["page_obj"].previous_page_number()}'
+            )
+        if context["page_obj"].has_next():
+            context["next_page_url"] = (
+                f"?{query_string_prefix}page="
+                f'{context["page_obj"].next_page_number()}'
+            )
+        return context
 
 class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
     model = Category

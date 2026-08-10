@@ -61,8 +61,11 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
     template_name = "budgets/yearly_budget_detail.html"
 
     def get_object(self):
+        year_start, next_year_start = BudgetService.year_bounds(self.kwargs["year"])
         obj = self.model.objects.get(
-            user=self.request.user, date__year=self.kwargs["year"]
+            user=self.request.user,
+            date__gte=year_start,
+            date__lt=next_year_start,
         )
 
         return obj
@@ -73,7 +76,14 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         if datetime.datetime.now().year > self.object.date.year:
             ytd_month = 12
         else:
-            ytd_month = int(self.request.GET.get("ytd", datetime.datetime.now().month))
+            current_month = datetime.datetime.now().month
+            try:
+                ytd_month = int(self.request.GET.get("ytd", current_month))
+            except (TypeError, ValueError):
+                ytd_month = current_month
+
+            if not 1 <= ytd_month <= 12:
+                ytd_month = current_month
 
 
         service = BudgetService()
@@ -108,13 +118,19 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
     form_class = PurchaseForm
     template_name = "budgets/monthly_budget_detail.html"
 
-    def get(self, request, *args, **kwargs):
-
-        self.object = MonthlyBudget.objects.get(
-            date__year=self.kwargs.get("year"),
-            date__month=self.kwargs.get("month"),
+    def _get_monthly_budget(self):
+        month_start, next_month_start = BudgetService.month_bounds(
+            self.kwargs["year"], self.kwargs["month"]
+        )
+        return MonthlyBudget.objects.get(
+            date__gte=month_start,
+            date__lt=next_month_start,
             user=self.request.user,
         )
+
+    def get(self, request, *args, **kwargs):
+
+        self.object = self._get_monthly_budget()
 
         purchase_formset = PurchaseFormSetReceipt(
             queryset=Purchase.objects.none(), form_kwargs={"user": self.request.user}
@@ -125,11 +141,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
         )
 
     def post(self, request, *arg, **kwargs):
-        self.object = MonthlyBudget.objects.get(
-            date__year=self.kwargs.get("year"),
-            date__month=self.kwargs.get("month"),
-            user=self.request.user,
-        )
+        self.object = self._get_monthly_budget()
 
         formset_data = self.request.POST.copy()  # Makes Querydict mutable
         formset_date = formset_data["form-0-date"]
@@ -178,7 +190,8 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
         budget_context = service.get_monthly_budget_context(
             user=self.request.user,
             year=self.object.date.year,
-            month=self.object.date.month
+            month=self.object.date.month,
+            monthly_budget=self.object,
         )
 
         kwargs.update(budget_context)
@@ -398,17 +411,16 @@ def budgetitem_edit(request, year, month, category):
 @login_required
 def budgetitem_bulk_edit(request, year, category):
 
-    formset = BudgetItemFormset(
-        queryset=BudgetItem.objects.filter(
-            user=request.user,
-            yearly_budget=YearlyBudget.objects.get(user=request.user, date__year=year),
-            category__name=category,
-        )
+    budget_items = BudgetItem.objects.filter(
+        user=request.user,
+        yearly_budget=YearlyBudget.objects.get(user=request.user, date__year=year),
+        category__name=category,
     )
+    formset = BudgetItemFormset(queryset=budget_items)
 
     if request.method == "POST":
         next = request.POST.get("next")
-        formset = BudgetItemFormset(data=request.POST)
+        formset = BudgetItemFormset(data=request.POST, queryset=budget_items)
 
         if formset.is_valid():
             instances = formset.save(commit=False)
