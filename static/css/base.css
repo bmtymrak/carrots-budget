@@ -82,8 +82,7 @@ a {
 }
 
 .main-container> :first-child {
-    flex-basis: 175px;
-    flex-grow: 1;
+    flex: 0 0 175px;
     background-color: var(--main-color);
     padding-right: 20px;
     padding-left: 20px;
@@ -1026,7 +1025,7 @@ h2 {
     font-size: 0.8rem;
 }
 
-.receipt-purchase__details span + span::before {
+.receipt-purchase__details span+span::before {
     content: "·";
     margin-right: 0.45rem;
 }
