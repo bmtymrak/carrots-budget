@@ -22,8 +22,8 @@
         <div>
             <div class="logo-sidebar-container">
                 <span class="logo-sidebar-text">Carrots</span>
-                <img src='{% static "images/carrots_logo.svg" %}' height="50">
-                <button id="menu-toggle" class="menu-toggle">☰</button>
+                <img src='{% static "images/carrots_logo.svg" %}' alt="Carrots Budget logo" height="50">
+                <button id="menu-toggle" class="menu-toggle" type="button" aria-controls="primary-nav" aria-expanded="false" aria-label="Toggle navigation">☰</button>
             </div>
             <ul class="nav-list" id="primary-nav">
                 {% if user.is_authenticated %}
@@ -112,7 +112,8 @@
     // Mobile menu toggle
     document.getElementById('menu-toggle').addEventListener('click', function() {
         const nav = document.getElementById('primary-nav');
-        nav.classList.toggle('nav-open');
+        const isOpen = nav.classList.toggle('nav-open');
+        this.setAttribute('aria-expanded', String(isOpen));
     });
 
 </script>

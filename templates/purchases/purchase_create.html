@@ -66,27 +66,13 @@
 
     function calculateTotal(e){
         e.preventDefault()
-        let amounts = document.querySelectorAll("[id$='-amount'")
-        let totalAmount
+        let amounts = document.querySelectorAll("[id$='-amount']")
+        let totalAmount = [...amounts].reduce((previous, current) => {
+            const currentValue = parseFloat(current.value)
+            return previous + (Number.isNaN(currentValue) ? 0 : currentValue)
+        }, 0)
 
-        if (amounts.length === 1){
-            totalAmount = amounts[0].value
-        }
-        else{
-            console.log(`Amounts = ${[...amounts]}`)
-            totalAmount = [...amounts].reduce((prev, curr) =>{
-                console.log(`Curr.value = ${parseFloat(curr.value)}`)
-                if (isNaN(parseFloat(curr.value))){
-                    currValue = 0
-                }
-                else{
-                    currValue = curr.value
-                }
-                return Math.round((prev + parseFloat(currValue))*100)/100}, 0)
-                console.log(`Total amount = ${totalAmount}`)
-        }
-
-        total.innerHTML = `Total: ${totalAmount}`
+        total.textContent = `Total: ${Math.round(totalAmount * 100) / 100}`
     }
     })()
 </script>
