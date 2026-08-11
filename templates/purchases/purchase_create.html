@@ -7,11 +7,15 @@
         {{hidden}}
         {% endfor %}
         {% for field in form.visible_fields %}
+        {% if forloop.parentloop.first or field.name != "source" and field.name != "location" %}
         <div>
         {{field.errors}}
         {{field.label_tag}}
         {{field}}
         </div>
+        {% else %}
+        <div class="purchase-field-spacer" aria-hidden="true"></div>
+        {% endif %}
         {% endfor %}
     </div>
     {% endfor %}
@@ -41,6 +45,12 @@
         let newForm = purchaseForm[0].cloneNode(true)
         let formRegex = RegExp(`form-(\\d){1}-`,'g')
 
+        newForm.querySelectorAll("[name$='-source'], [name$='-location']").forEach(input => {
+            let fieldContainer = input.closest("div")
+            fieldContainer.replaceChildren()
+            fieldContainer.classList.add("purchase-field-spacer")
+            fieldContainer.setAttribute("aria-hidden", "true")
+        })
         formNum++
         newForm.innerHTML = newForm.innerHTML.replace(formRegex, `form-${formNum}-`)
         container.insertBefore(newForm, submitButton)
