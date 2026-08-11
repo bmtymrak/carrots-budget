@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.db.models.fields.related import ForeignKey
+from django.core.exceptions import ValidationError
 
 
 class Category(models.Model):
@@ -44,6 +45,30 @@ class Subcategory(models.Model):
         ]
 
 
+class Receipt(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="receipts",
+        null=False,
+    )
+    date = models.DateField(db_index=True, null=True, default=None)
+    source = models.CharField(max_length=250, blank=True)
+    location = models.CharField(max_length=250, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        date_part = self.date.isoformat() if self.date else "No date"
+        merchant_part = self.source or "No source"
+        return f"{date_part} - {merchant_part}"
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user", "date"], name="idx_receipt_user_date"),
+        ]
+
+
 class Purchase(models.Model):
     item = models.CharField(max_length=250, blank=True)
     date = models.DateField(db_index=True, null=True, default=None)
@@ -52,6 +77,13 @@ class Purchase(models.Model):
         on_delete=models.CASCADE,
         related_name="purchases",
         null=False,
+    )
+    receipt = models.ForeignKey(
+        Receipt,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="purchases",
     )
     amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     source = models.CharField(max_length=250, blank=True)
@@ -84,6 +116,24 @@ class Purchase(models.Model):
 
     def __str__(self):
         return self.item
+
+    def _validate_receipt_owner(self):
+        if not self.receipt_id or not self.user_id:
+            return
+
+        receipt_user_id = Receipt.objects.filter(pk=self.receipt_id).values_list(
+            "user_id", flat=True
+        ).first()
+        if receipt_user_id != self.user_id:
+            raise ValidationError({"receipt": "Receipt must belong to the purchase user."})
+
+    def clean(self):
+        super().clean()
+        self._validate_receipt_owner()
+
+    def save(self, *args, **kwargs):
+        self._validate_receipt_owner()
+        return super().save(*args, **kwargs)
     
     class Meta:
         indexes = [

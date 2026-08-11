@@ -2,14 +2,14 @@ import datetime
 import unittest
 from urllib.parse import quote
 
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 from django.test import override_settings
 from decimal import Decimal
 
-from purchases.models import Category, Purchase, Income, RecurringPurchase
+from purchases.models import Category, Purchase, Income, RecurringPurchase, Receipt
 from budgets.models import YearlyBudget
 from .factories import (
     CategoryFactory,
@@ -17,6 +17,11 @@ from .factories import (
     SubcategoryFactory,
     RecurringPurchaseFactory,
 )
+
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
 
 
 User = get_user_model()
@@ -32,6 +37,7 @@ TEST_STORAGES = {
 }
 
 
+@override_settings(STORAGES=TEST_STORAGES)
 class PurchaseViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -48,7 +54,7 @@ class PurchaseViewTests(TestCase):
         response = self.client.post(
             reverse('purchase_create'),
             {
-                'form-TOTAL_FORMS': '1',
+                'form-TOTAL_FORMS': '2',
                 'form-INITIAL_FORMS': '0',
                 'form-MIN_NUM_FORMS': '0',
                 'form-MAX_NUM_FORMS': '1000',
@@ -61,16 +67,174 @@ class PurchaseViewTests(TestCase):
                 'form-0-subcategory': self.subcategory.id,
                 'form-0-notes': 'Test notes',
                 'form-0-savings': False,
+                'form-1-item': 'Test Purchase 2',
+                'form-1-date': datetime.date.today(),
+                'form-1-amount': '50.00',
+                'form-1-source': '',
+                'form-1-location': '',
+                'form-1-category': self.category.id,
+                'form-1-subcategory': self.subcategory.id,
+                'form-1-notes': 'More notes',
+                'form-1-savings': False,
                 'next': '/'
             }
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            Purchase.objects.filter(
-                user=self.user,
-                item='Test Purchase'
-            ).exists()
+        purchases = list(
+            Purchase.objects.filter(user=self.user).order_by("item")
         )
+        self.assertEqual(len(purchases), 2)
+        self.assertEqual(purchases[0].receipt_id, purchases[1].receipt_id)
+        self.assertEqual(purchases[0].source, "Test Store")
+        self.assertEqual(purchases[0].location, "Test Location")
+        self.assertEqual(purchases[1].source, "Test Store")
+        self.assertEqual(purchases[1].location, "Test Location")
+        self.assertEqual(Receipt.objects.filter(user=self.user).count(), 1)
+
+    def test_purchase_edit_shows_other_purchases_from_same_receipt(self):
+        receipt = Receipt.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1),
+            source="Old Store",
+            location="Old Location",
+        )
+        first = Purchase.objects.create(
+            user=self.user,
+            receipt=receipt,
+            item="First",
+            date=datetime.date(2024, 1, 1),
+            amount=Decimal("10.00"),
+            source="Old Store",
+            location="Old Location",
+            category=self.category,
+            subcategory=self.subcategory,
+        )
+        second = Purchase.objects.create(
+            user=self.user,
+            receipt=receipt,
+            item="Second",
+            date=datetime.date(2024, 1, 1),
+            amount=Decimal("20.00"),
+            source="Old Store",
+            location="Old Location",
+            category=self.category,
+            subcategory=self.subcategory,
+            notes="Sibling notes",
+        )
+
+        response = self.client.get(
+            reverse("purchase_edit_htmx", kwargs={"pk": first.pk}),
+            {"next": "/"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["receipt"], receipt)
+        self.assertEqual(
+            list(response.context["receipt_purchases"]),
+            [first, second],
+        )
+        self.assertEqual(
+            list(response.context["purchase_formset"].queryset),
+            [first, second],
+        )
+        self.assertContains(response, "Purchases on this receipt")
+        self.assertContains(response, "First")
+        self.assertContains(response, "Second")
+        self.assertContains(response, "Sibling notes")
+
+    def test_purchase_edit_keeps_receipt_metadata_in_sync(self):
+        receipt = Receipt.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1),
+            source="Old Store",
+            location="Old Location",
+        )
+        first = Purchase.objects.create(
+            user=self.user,
+            receipt=receipt,
+            item="First",
+            date=datetime.date(2024, 1, 1),
+            amount=Decimal("10.00"),
+            source="Old Store",
+            location="Old Location",
+            category=self.category,
+            subcategory=self.subcategory,
+        )
+        second = Purchase.objects.create(
+            user=self.user,
+            receipt=receipt,
+            item="Second",
+            date=datetime.date(2024, 1, 1),
+            amount=Decimal("20.00"),
+            source="Old Store",
+            location="Old Location",
+            category=self.category,
+            subcategory=self.subcategory,
+        )
+
+        response = self.client.post(
+            reverse("purchase_edit_htmx", kwargs={"pk": first.pk}),
+            {
+                "date": "2024-02-01",
+                "source": "New Store",
+                "location": "New Location",
+                "form-TOTAL_FORMS": "2",
+                "form-INITIAL_FORMS": "2",
+                "form-MIN_NUM_FORMS": "0",
+                "form-MAX_NUM_FORMS": "1000",
+                "form-0-id": str(first.pk),
+                "form-0-item": "First updated",
+                "form-0-amount": "12.00",
+                "form-0-category": self.category.pk,
+                "form-0-subcategory": self.subcategory.pk,
+                "form-0-notes": "Updated",
+                "form-0-savings": False,
+                "form-1-id": str(second.pk),
+                "form-1-item": "Second",
+                "form-1-amount": "20.00",
+                "form-1-category": self.category.pk,
+                "form-1-subcategory": self.subcategory.pk,
+                "form-1-notes": "",
+                "form-1-savings": False,
+                "next": "/",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        receipt.refresh_from_db()
+        self.assertEqual(first.item, "First updated")
+        self.assertEqual(first.amount, Decimal("12.00"))
+        self.assertEqual(first.date, datetime.date(2024, 2, 1))
+        self.assertEqual(second.item, "Second")
+        self.assertEqual(second.amount, Decimal("20.00"))
+        self.assertEqual(second.notes, "")
+        self.assertFalse(second.savings)
+        self.assertEqual(second.date, datetime.date(2024, 2, 1))
+        self.assertEqual(second.source, "New Store")
+        self.assertEqual(second.location, "New Location")
+        self.assertEqual(receipt.date, datetime.date(2024, 2, 1))
+        self.assertEqual(receipt.source, "New Store")
+        self.assertEqual(receipt.location, "New Location")
+
+    def test_deleting_last_purchase_removes_orphaned_receipt(self):
+        receipt = Receipt.objects.create(user=self.user, date=datetime.date(2024, 1, 1))
+        purchase = Purchase.objects.create(
+            user=self.user,
+            receipt=receipt,
+            item="Delete me",
+            date=datetime.date(2024, 1, 1),
+            category=self.category,
+            subcategory=self.subcategory,
+        )
+
+        response = self.client.delete(
+            reverse("purchase_delete_htmx", kwargs={"pk": purchase.pk}) + "?next=/"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Receipt.objects.filter(pk=receipt.pk).exists())
 
     @unittest.skip("Feature 'new_category' is not implemented in Purchase backend")
     def test_purchase_create_with_new_category(self):
@@ -389,6 +553,7 @@ class PurchaseListViewTests(TestCase):
             html=False,
         )
 
+@override_settings(STORAGES=TEST_STORAGES)
 class IncomeViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -445,6 +610,7 @@ class IncomeViewTests(TestCase):
 
 
 
+@override_settings(STORAGES=TEST_STORAGES)
 class CategoryViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -473,6 +639,7 @@ class CategoryViewTests(TestCase):
         )
 
 
+@override_settings(STORAGES=TEST_STORAGES)
 class RecurringPurchaseViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -664,6 +831,9 @@ class RecurringPurchaseViewTests(TestCase):
         self.assertEqual(purchase.category, self.category)
         self.assertEqual(purchase.date, datetime.date(2024, 1, 1))
         self.assertEqual(purchase.recurring_purchase, recurring)
+        self.assertIsNotNone(purchase.receipt_id)
+        self.assertEqual(purchase.receipt.source, "Netflix Inc")
+        self.assertEqual(purchase.receipt.location, "Online")
 
     def test_recurring_purchase_already_added_detected_by_fk(self):
         """Test that recurring purchases are detected as already added via FK."""
@@ -809,6 +979,44 @@ class RecurringPurchaseViewTests(TestCase):
             ).count(),
             1,
         )
+
+    def test_recurring_purchase_selected_rows_get_distinct_receipts(self):
+        """Test each selected recurring purchase is grouped under its own receipt."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1),
+        )
+        recurring1 = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Netflix",
+            amount=Decimal("15.99"),
+        )
+        recurring2 = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Spotify",
+            amount=Decimal("9.99"),
+        )
+
+        response = self.client.post(
+            reverse("recurring_purchase_add_to_month", kwargs={"year": 2024, "month": 1}),
+            self._build_add_to_month_post_data(
+                [
+                    {"recurring": recurring1, "category": str(self.category.id)},
+                    {"recurring": recurring2, "category": str(self.category.id)},
+                ]
+            ),
+        )
+        self.assertEqual(response.status_code, 200)
+
+        purchases = list(
+            Purchase.objects.filter(user=self.user, item__in=["Netflix", "Spotify"]).order_by("item")
+        )
+        self.assertEqual(len(purchases), 2)
+        self.assertIsNotNone(purchases[0].receipt_id)
+        self.assertIsNotNone(purchases[1].receipt_id)
+        self.assertNotEqual(purchases[0].receipt_id, purchases[1].receipt_id)
 
     def test_recurring_purchase_post_rejects_tampered_recurring_purchase_id(self):
         """Test tampering with a row recurring_purchase_id re-renders with validation errors."""

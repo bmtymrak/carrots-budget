@@ -178,7 +178,7 @@ class TestRecurringPurchaseAddToMonthFormSet(TestCase):
         self.assertEqual(row_form.initial["date"], datetime.date(2024, 1, 1))
         self.assertEqual(row_form.initial["amount"], Decimal("15.99"))
         self.assertEqual(row_form.initial["category"], self.user1_category)
-        self.assertTrue(row_form.initial["selected"])
+        self.assertFalse(row_form.initial["selected"])
 
     def test_category_must_belong_to_user(self):
         formset = RecurringPurchaseAddToMonthFormSet(

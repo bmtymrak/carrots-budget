@@ -1,7 +1,75 @@
+<h2>{% if receipt %}Edit Receipt{% else %}Edit Purchase{% endif %}</h2>
 
+{% if receipt %}
+<form hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="receipt-edit-form" method="POST">
+    {% csrf_token %}
+    {{receipt_form.non_field_errors}}
+    <fieldset class="receipt-details">
+        <legend>Receipt details</legend>
+        {% for field in receipt_form.visible_fields %}
+        <div>
+            {{field.errors}}
+            {{field.label_tag}}
+            {{field}}
+        </div>
+        {% endfor %}
+    </fieldset>
 
+    {{purchase_formset.management_form}}
+    {{purchase_formset.non_form_errors}}
+    <section class="receipt-items" aria-labelledby="receipt-items-heading">
+        <h3 id="receipt-items-heading">Purchases on this receipt</h3>
+        {% for purchase_form in purchase_formset %}
+        <fieldset class="receipt-purchase-editor">
+            <legend>Purchase {{forloop.counter}}</legend>
+            {% for hidden in purchase_form.hidden_fields %}{{hidden}}{% endfor %}
+            {% for field in purchase_form.visible_fields %}
+            <div>
+                {{field.errors}}
+                {{field.label_tag}}
+                {{field}}
+            </div>
+            {% endfor %}
+        </fieldset>
+        {% endfor %}
+    </section>
+
+    <p id="receipt-total" class="receipt-total">
+        Total: $<span>{{receipt_total|floatformat:2}}</span>
+    </p>
+
+    <input type="hidden" name="next" value="{{next}}">
+    <button type="submit">Save receipt</button>
+</form>
+<script>
+    (() => {
+        const receiptEditForm = document.querySelector(".receipt-edit-form")
+        if (!receiptEditForm) return
+
+        const receiptAmountInputs = receiptEditForm.querySelectorAll(
+            ".receipt-purchase-editor input[id$='-amount']"
+        )
+        const receiptTotal = receiptEditForm.querySelector("#receipt-total span")
+
+        function updateReceiptTotal() {
+            const total = [...receiptAmountInputs].reduce((sum, input) => {
+                const amount = parseFloat(input.value)
+                return sum + (Number.isNaN(amount) ? 0 : amount)
+            }, 0)
+
+            receiptTotal.textContent = total.toFixed(2)
+        }
+
+        receiptAmountInputs.forEach(input => {
+            input.addEventListener("input", updateReceiptTotal)
+        })
+    })()
+</script>
+{% else %}
 <form hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="form-grid" method="POST">
+    {% csrf_token %}
     {{form}}
     <input type="hidden" name="next" value="{{next}}">
     <button type="submit">Save</button>
 </form>
+{% endif %}

@@ -37,6 +37,7 @@ from purchases.models import Category, Purchase, Income
 from budgets.forms import BudgetItemForm, BudgetItemFormset, YearlyBudgetForm
 from budgets.services import BudgetService
 from django_htmx.http import HttpResponseClientRedirect
+from purchases.services import save_purchases_with_receipts
 
 
 class AddUserMixin:
@@ -156,13 +157,10 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
 
         if purchase_formset.is_valid():
             instances = purchase_formset.save(commit=False)
-            source = instances[0].source
-            location = instances[0].location
-            for instance in instances:
-                instance.user = self.request.user
-                instance.source = source
-                instance.location = location
-                instance.save()
+            if not instances:
+                return HttpResponseRedirect(self.get_success_url())
+
+            save_purchases_with_receipts(self.request.user, instances)
 
             return HttpResponseRedirect(self.get_success_url())
 
