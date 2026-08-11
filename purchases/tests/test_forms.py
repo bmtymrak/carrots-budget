@@ -8,9 +8,10 @@ from purchases.models import Category, Subcategory
 from purchases.forms import (
     IncomeForm,
     PurchaseForm,
+    RecurringIncomeAddToMonthFormSet,
     RecurringPurchaseAddToMonthFormSet,
 )
-from purchases.tests.factories import RecurringPurchaseFactory
+from purchases.tests.factories import RecurringIncomeFactory, RecurringPurchaseFactory
 
 User = get_user_model()
 
@@ -259,3 +260,82 @@ class TestRecurringPurchaseAddToMonthFormSet(TestCase):
 
         self.assertFalse(formset.is_valid())
         self.assertIn("recurring_purchase_id", formset.forms[0].errors)
+
+
+class TestRecurringIncomeAddToMonthFormSet(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            email="income@test.com", username="income", **{"pass" + "word": "x"}
+        )
+        cls.other_user = User.objects.create_user(
+            email="otherincome@test.com",
+            username="otherincome",
+            **{"pass" + "word": "x"},
+        )
+        cls.category = Category.objects.create(name="income", user=cls.user)
+        cls.other_category = Category.objects.create(
+            name="other income", user=cls.other_user
+        )
+        cls.recurring = RecurringIncomeFactory(
+            user=cls.user,
+            category=cls.category,
+            amount=Decimal("5000.00"),
+            source="Employer",
+            payer="Payroll",
+        )
+
+    def _management_form_data(self):
+        return {
+            "form-TOTAL_FORMS": "1",
+            "form-INITIAL_FORMS": "0",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+        }
+
+    def test_selected_income_uses_submitted_values(self):
+        formset = RecurringIncomeAddToMonthFormSet(
+            data={
+                **self._management_form_data(),
+                "form-0-selected": "on",
+                "form-0-recurring_income_id": str(self.recurring.pk),
+                "form-0-date": "2024-01-15",
+                "form-0-amount": "5100.00",
+                "form-0-source": "Updated Employer",
+                "form-0-payer": "Updated Payroll",
+                "form-0-category": str(self.category.pk),
+                "form-0-notes": "Updated notes",
+            },
+            user=self.user,
+            recurring_incomes=[self.recurring],
+            income_date=datetime.date(2024, 1, 1),
+        )
+
+        self.assertTrue(formset.is_valid())
+        self.assertEqual(formset.selected_incomes[0]["amount"], Decimal("5100.00"))
+        self.assertEqual(
+            formset.selected_incomes[0]["source"], "Updated Employer"
+        )
+
+    def test_tampered_template_and_other_user_category_are_rejected(self):
+        other_recurring = RecurringIncomeFactory(
+            user=self.user, category=self.category
+        )
+        formset = RecurringIncomeAddToMonthFormSet(
+            data={
+                **self._management_form_data(),
+                "form-0-selected": "on",
+                "form-0-recurring_income_id": str(other_recurring.pk),
+                "form-0-date": "2024-02-15",
+                "form-0-amount": "5000.00",
+                "form-0-category": str(self.other_category.pk),
+            },
+            user=self.user,
+            recurring_incomes=[self.recurring],
+            income_date=datetime.date(2024, 1, 1),
+        )
+
+        self.assertFalse(formset.is_valid())
+        self.assertIn("recurring_income_id", formset.forms[0].errors)
+        self.assertIn("date", formset.forms[0].errors)
+        self.assertIn("category", formset.forms[0].errors)

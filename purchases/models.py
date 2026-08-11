@@ -113,6 +113,13 @@ class Income(models.Model):
         related_name="incomes",
     )
     notes = models.TextField(blank=True)
+    recurring_income = models.ForeignKey(
+        "RecurringIncome",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="incomes",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -151,4 +158,33 @@ class RecurringPurchase(models.Model):
         ordering = ["item"]
         indexes = [
             models.Index(fields=["user", "is_active"], name="idx_recurring_user_active"),
+        ]
+
+
+class RecurringIncome(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="recurring_incomes",
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    source = models.CharField(max_length=250, blank=True)
+    payer = models.CharField(max_length=250, blank=True)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.PROTECT,
+        related_name="recurring_incomes",
+    )
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.source} ({self.category.name})"
+
+    class Meta:
+        ordering = ["source"]
+        indexes = [
+            models.Index(fields=["user", "is_active"], name="idx_rec_income_user_active"),
         ]

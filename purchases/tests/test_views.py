@@ -9,12 +9,19 @@ from django.utils import timezone
 from django.test import override_settings
 from decimal import Decimal
 
-from purchases.models import Category, Purchase, Income, RecurringPurchase
+from purchases.models import (
+    Category,
+    Purchase,
+    Income,
+    RecurringIncome,
+    RecurringPurchase,
+)
 from budgets.models import YearlyBudget
 from .factories import (
     CategoryFactory,
     PurchaseFactory,
     SubcategoryFactory,
+    RecurringIncomeFactory,
     RecurringPurchaseFactory,
 )
 
@@ -966,3 +973,101 @@ class RecurringPurchaseViewTests(TestCase):
             count=1,
         )
         self.assertContains(response, 'This field is required.')
+
+
+class RecurringIncomeViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = get_user_model().objects.create_user(
+            username="incomeuser",
+            email="income@example.com",
+            **{"pass" + "word": "x"},
+        )
+        self.client.login(username="incomeuser", **{"pass" + "word": "x"})
+        self.category = CategoryFactory(user=self.user)
+        YearlyBudget.objects.create(user=self.user, date=datetime.date(2024, 1, 1))
+
+    def _post_data(self, recurring, **overrides):
+        return {
+            "form-TOTAL_FORMS": "1",
+            "form-INITIAL_FORMS": "0",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-selected": "on",
+            "form-0-recurring_income_id": str(recurring.pk),
+            "form-0-date": overrides.get("date", "2024-01-01"),
+            "form-0-amount": overrides.get("amount", str(recurring.amount)),
+            "form-0-source": overrides.get("source", recurring.source),
+            "form-0-payer": overrides.get("payer", recurring.payer),
+            "form-0-category": overrides.get("category", str(recurring.category_id)),
+            "form-0-notes": overrides.get("notes", recurring.notes),
+            "next": "/",
+        }
+
+    def test_recurring_income_management_creates_user_template(self):
+        response = self.client.post(
+            reverse("recurring_income_list"),
+            {
+                "amount": "5000.00",
+                "source": "Employer",
+                "payer": "Payroll",
+                "category": self.category.pk,
+                "notes": "Monthly salary",
+                "is_active": True,
+                "next": "/",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            RecurringIncome.objects.filter(
+                user=self.user, source="Employer"
+            ).exists()
+        )
+
+    def test_recurring_income_add_to_month_creates_linked_income(self):
+        recurring = RecurringIncomeFactory(
+            user=self.user,
+            category=self.category,
+            amount=Decimal("5000.00"),
+            source="Employer",
+            payer="Payroll",
+        )
+        response = self.client.post(
+            reverse(
+                "recurring_income_add_to_month", kwargs={"year": 2024, "month": 1}
+            ),
+            self._post_data(recurring, amount="5100.00"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        income = Income.objects.get(user=self.user, recurring_income=recurring)
+        self.assertEqual(income.amount, Decimal("5100.00"))
+        self.assertEqual(income.date, datetime.date(2024, 1, 1))
+
+    def test_recurring_income_is_not_duplicated_in_same_month(self):
+        recurring = RecurringIncomeFactory(user=self.user, category=self.category)
+        Income.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 15),
+            amount=recurring.amount,
+            category=self.category,
+            recurring_income=recurring,
+        )
+        response = self.client.post(
+            reverse(
+                "recurring_income_add_to_month", kwargs={"year": 2024, "month": 1}
+            ),
+            self._post_data(recurring),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Income.objects.filter(
+                user=self.user,
+                recurring_income=recurring,
+                date__year=2024,
+                date__month=1,
+            ).count(),
+            1,
+        )

@@ -1,0 +1,10 @@
+<h2>Delete Recurring Income?</h2>
+<div class="card-base">
+    <div class="recurring-income-delete-grid">
+        <div>${{recurring_income.amount|floatformat:"-2"}}</div>
+        <div>{{recurring_income.source}}</div>
+        <div>{{recurring_income.payer}}</div>
+        <div>{{recurring_income.category}}</div>
+    </div>
+</div>
+<button hx-delete='{% url "recurring_income_delete" pk=recurring_income.id %}?next={{next|urlencode}}' class="button-delete button-delete-standalone">Delete</button>

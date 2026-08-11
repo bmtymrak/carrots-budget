@@ -1,7 +1,14 @@
 from django import forms
 from django.forms import BaseFormSet, ModelForm, formset_factory, modelformset_factory
 
-from .models import Purchase, Category, Subcategory, Income, RecurringPurchase
+from .models import (
+    Purchase,
+    Category,
+    Subcategory,
+    Income,
+    RecurringIncome,
+    RecurringPurchase,
+)
 from budgets.models import BudgetItem, YearlyBudget
 
 
@@ -286,5 +293,171 @@ class BaseRecurringPurchaseAddToMonthFormSet(BaseFormSet):
 RecurringPurchaseAddToMonthFormSet = formset_factory(
     RecurringPurchaseAddRowForm,
     formset=BaseRecurringPurchaseAddToMonthFormSet,
+    extra=0,
+)
+
+
+class RecurringIncomeForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(user=self.user)
+        self.fields["category"].empty_label = "Category"
+        self.fields["amount"].widget.attrs.update(placeholder="Amount")
+        self.fields["source"].widget.attrs.update(placeholder="Source", size="20")
+        self.fields["payer"].widget.attrs.update(placeholder="Payer", size="20")
+        self.fields["notes"].widget.attrs.update(
+            placeholder="Notes", rows="2", cols="30"
+        )
+
+    class Meta:
+        model = RecurringIncome
+        fields = ["amount", "source", "payer", "category", "notes", "is_active"]
+
+
+class RecurringIncomeAddRowForm(forms.Form):
+    selected = forms.BooleanField(required=False)
+    recurring_income_id = forms.IntegerField(widget=forms.HiddenInput)
+    date = forms.DateField(required=False)
+    amount = forms.DecimalField(
+        required=False,
+        min_value=0,
+        max_digits=12,
+        decimal_places=2,
+    )
+    source = forms.CharField(required=False, max_length=250)
+    payer = forms.CharField(required=False, max_length=250)
+    category = forms.ModelChoiceField(queryset=Category.objects.none(), required=False)
+    notes = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user")
+        self.recurring_income = kwargs.pop("recurring_income")
+        self.income_date = kwargs.pop("income_date")
+        self.already_added = kwargs.pop("already_added", False)
+        self.existing_details = kwargs.pop("existing_details", None)
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = Category.objects.filter(user=self.user)
+        self.fields["date"].widget = date_picker_widget(
+            {"class": "recurring-input-date"}
+        )
+        for field_name in ["amount", "source", "payer", "category", "notes"]:
+            self.fields[field_name].widget.attrs.update(
+                {"class": f"recurring-input-{field_name}"}
+            )
+        self._set_initial_values()
+
+        if self.already_added:
+            for field_name in [
+                "selected",
+                "date",
+                "amount",
+                "source",
+                "payer",
+                "category",
+                "notes",
+            ]:
+                self.fields[field_name].disabled = True
+
+    def _set_initial_values(self):
+        row_values = self.existing_details or {
+            "date": self.income_date,
+            "amount": self.recurring_income.amount,
+            "source": self.recurring_income.source,
+            "payer": self.recurring_income.payer,
+            "category": self.recurring_income.category,
+            "notes": self.recurring_income.notes,
+        }
+        self.initial.setdefault("selected", False)
+        self.initial.setdefault("recurring_income_id", self.recurring_income.id)
+        for field_name, value in row_values.items():
+            self.initial.setdefault(field_name, value)
+
+    def clean_recurring_income_id(self):
+        recurring_income_id = self.cleaned_data["recurring_income_id"]
+        if recurring_income_id != self.recurring_income.id:
+            raise forms.ValidationError("Recurring income does not match this row.")
+        return recurring_income_id
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get("selected"):
+            return cleaned_data
+        for field_name in ["date", "category"]:
+            if cleaned_data.get(field_name) in (None, ""):
+                self.add_error(field_name, "This field is required.")
+        submitted_date = cleaned_data.get("date")
+        if submitted_date and (
+            submitted_date.year != self.income_date.year
+            or submitted_date.month != self.income_date.month
+        ):
+            self.add_error(
+                "date", "Date must be within this budget's month and year."
+            )
+        return cleaned_data
+
+    def is_selected(self):
+        return bool(self.cleaned_data.get("selected")) and not self.already_added
+
+    def to_income_payload(self):
+        return {
+            "recurring_income": self.recurring_income,
+            **{
+                field_name: self.cleaned_data[field_name]
+                for field_name in ["date", "amount", "source", "payer", "category", "notes"]
+            },
+        }
+
+
+class BaseRecurringIncomeAddToMonthFormSet(BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user")
+        self.recurring_incomes = list(kwargs.pop("recurring_incomes"))
+        self.income_date = kwargs.pop("income_date")
+        self.already_added_details = kwargs.pop("already_added_details", {})
+        kwargs.setdefault("initial", [{} for _ in self.recurring_incomes])
+        super().__init__(*args, **kwargs)
+
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        if index is not None:
+            recurring_income = self.recurring_incomes[index]
+            kwargs.update(
+                {
+                    "user": self.user,
+                    "recurring_income": recurring_income,
+                    "income_date": self.income_date,
+                    "already_added": recurring_income.id in self.already_added_details,
+                    "existing_details": self.already_added_details.get(recurring_income.id),
+                }
+            )
+        return kwargs
+
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        seen_recurring_ids = set()
+        for form in self.forms:
+            if form.is_selected():
+                recurring_income_id = form.cleaned_data["recurring_income_id"]
+                if recurring_income_id in seen_recurring_ids:
+                    raise forms.ValidationError(
+                        "Recurring incomes can only be added once per submission."
+                    )
+                seen_recurring_ids.add(recurring_income_id)
+
+    @property
+    def selected_incomes(self):
+        return [
+            form.to_income_payload()
+            for form in self.forms
+            if form.is_selected()
+        ]
+
+
+RecurringIncomeAddToMonthFormSet = formset_factory(
+    RecurringIncomeAddRowForm,
+    formset=BaseRecurringIncomeAddToMonthFormSet,
     extra=0,
 )

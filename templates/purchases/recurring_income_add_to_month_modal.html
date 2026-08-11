@@ -1,0 +1,52 @@
+<h2>Add Recurring Income for {{monthly_budget.date|date:"F Y"}}</h2>
+
+<form hx-post='{% url "recurring_income_add_to_month" year=monthly_budget.date.year month=monthly_budget.date.month %}' hx-target="#modal-content" hx-swap="innerHTML" method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{next}}">
+    {{ formset.management_form }}
+    {% if formset.forms %}
+    <div class="card-base">
+        {% if has_form_errors %}
+        <p class="alert-danger-box">Please correct the highlighted recurring income values and try again.</p>
+        {% endif %}
+        {% if formset.non_form_errors %}
+        <div class="alert-danger-box">{% for error in formset.non_form_errors %}<div>{{ error }}</div>{% endfor %}</div>
+        {% endif %}
+        {% if all_already_added %}
+        <p class="alert-success-box">All recurring income has already been added for this month.</p>
+        {% else %}
+        <p>Select recurring income to add for this month. You can edit values before adding.</p>
+        {% endif %}
+        <div class="recurring-income-add-grid-full grid-cell-truncate card-table-header">
+            <div class="card-table-heading">Select</div>
+            <div class="card-table-heading">Date</div>
+            <div class="card-table-heading">Amount</div>
+            <div class="card-table-heading">Source</div>
+            <div class="card-table-heading">Payer</div>
+            <div class="card-table-heading">Category</div>
+            <div class="card-table-heading">Notes</div>
+            <div class="card-table-heading">Status</div>
+        </div>
+        {% for row_form in formset %}
+        <div class="recurring-income-add-grid-full grid-cell-truncate {% if row_form.already_added %}already-added{% endif %}">
+            {{ row_form.recurring_income_id }}
+            <div class="recurring-add-cell">{{ row_form.selected }}{% for error in row_form.selected.errors %}<div class="field-error-text">{{ error }}</div>{% endfor %}</div>
+            {% for field in row_form.visible_fields %}
+                {% if field.name != "selected" %}
+                <div class="recurring-add-cell">{{ field }}{% for error in field.errors %}<div class="field-error-text">{{ error }}</div>{% endfor %}</div>
+                {% endif %}
+            {% endfor %}
+            <div class="recurring-add-cell recurring-add-status-cell">{% if row_form.already_added %}<span class="status-added">✓ Added</span>{% else %}<span class="status-pending">Pending</span>{% endif %}</div>
+        </div>
+        {% if row_form.non_field_errors %}<div class="alert-danger-box">{% for error in row_form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>{% endif %}
+        {% endfor %}
+    </div>
+    {% if all_already_added %}
+    <button type="submit" class="button-create modal-submit-spacing" disabled>All Income Already Added</button>
+    {% else %}
+    <button type="submit" class="button-create modal-submit-spacing">Add Selected Income</button>
+    {% endif %}
+    {% else %}
+    <div class="card-base"><p>No active recurring income found. <a href='{% url "recurring_income_list" %}?next={{next|urlencode}}' hx-get='{% url "recurring_income_list" %}?next={{next|urlencode}}' hx-target="#modal-content">Create some recurring income first.</a></p></div>
+    {% endif %}
+</form>
