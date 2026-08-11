@@ -1,0 +1,134 @@
+/* Application and public page regions. */
+
+.main-container {
+    display: flex;
+    flex-wrap: wrap;
+    min-height: 100vh;
+}
+
+.app-sidebar {
+    flex: 0 0 175px;
+    background-color: var(--main-color);
+    padding-right: 20px;
+    padding-left: 20px;
+    padding-top: 15px;
+}
+
+.app-main {
+    flex-basis: 0;
+    flex-grow: 999;
+    min-width: 50%;
+    background-color: var(--color-page);
+}
+
+.flex {
+    display: flex;
+    justify-content: center;
+}
+
+.nav-list {
+    list-style-type: none;
+    padding-left: 0px;
+}
+
+.nav-list>li {
+    padding: 5px 5px 5px 0;
+}
+
+.nav-list>li>a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+.nav-list>li>a:focus-visible {
+    outline-color: white;
+    outline-offset: 4px;
+}
+
+.logo-sidebar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.logo-sidebar-text {
+    color: white;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+
+.month-nav-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: auto;
+}
+
+.month-nav-container {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    width: 100%;
+    max-width: 1050px;
+    overflow-x: auto;
+}
+
+.content-container {
+    /* display: grid;
+    grid-template-columns: 1fr;
+    place-items: center;
+    margin-left: 10px; */
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    align-items: center;
+    padding-left: 10px;
+
+}
+
+.content {
+    max-width: 1050px;
+    width: 100%;
+    padding: 0 10px;
+}
+
+@media (max-width: 768px) {
+    .content {
+        max-width: 100%;
+        padding: 0 5px;
+    }
+}
+
+.public-main {
+    flex-basis: 0;
+    flex-grow: 999;
+    min-width: 50%;
+    padding: 15px 20px 0;
+    background-color: var(--color-page);
+}
+
+@media (max-width: 768px) {
+    .public-main {
+        padding: 10px 20px;
+    }
+}
+
+.page-header {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 10px;
+
+}
+
+.page-header-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    margin-bottom: 5px;
+    border-radius: 10px;
+    margin-top: 20px;
+}

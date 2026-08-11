@@ -30,7 +30,7 @@
     </div>
 <div class="card-base">
     <h2>Summary</h2>
-    <div class="summary-horizontal-grid-monthly card-table-header">
+    <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted</div>
         <div class="card-table-heading">Spent</div>
         <div class="card-table-heading">Saved</div>
@@ -38,7 +38,7 @@
         <div class="card-table-heading">Remaining</div>
         <div class="card-table-heading">Free</div>
     </div>
-    <div class="summary-horizontal-grid-monthly">
+    <div class="data-grid data-grid--summary">
         <div>${{total_budgeted}}</div>
         <div class="">${{total_spent|floatformat:"-2"}}</div>
         <div class="">${{total_saved.amount|floatformat:"-2"}}</div>
@@ -56,7 +56,7 @@
             </div>
         </div>
         
-        <div class="budget-horizontal-grid-monthly card-table-header">
+        <div class="data-grid data-grid--budget-monthly card-table-header">
             <div class="card-table-heading">Category</div>
             <div class="card-table-heading">Budgeted</div>
             <div class="card-table-heading">Spent</div>
@@ -64,7 +64,7 @@
             <div></div>
         </div>
 
-        <div class="budget-horizontal-grid-monthly">
+        <div class="data-grid data-grid--budget-monthly">
             {% for budget_item in budget_items%}
             <div><a data-tooltip="{{budget_item.category}}" href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>{{budget_item.category}}</a></div>
             <div>${{budget_item.amount|floatformat:"-2"}}</div>
@@ -80,7 +80,7 @@
             {% endfor %}
         </div>
     {% if uncategorized_purchases.amount %}
-        <div class="budget-horizontal-grid-monthly">
+        <div class="data-grid data-grid--budget-monthly">
             <div><a data-tooltip="Uncategorized" href=''>{{Uncategorized}}</a>Uncategorized</div>
             <div>${{uncategorized_purchases.budgeted|floatformat:"-2"}}</div>
             <div>${{uncategorized_purchases.amount|floatformat:"-2"}}</div>
@@ -89,21 +89,21 @@
         </div>
     {% endif %}
 
-        <div class="budget-horizontal-grid-monthly budget-subtotal">
+        <div class="data-grid data-grid--budget-monthly budget-subtotal">
             <div class="card-table-subtotal">Spending Totals</div>
             <div class="card-table-subtotal">${{total_spending_budgeted.amount|floatformat:"-2"}}</div>
             <div class="card-table-subtotal">${{total_spending_spent.amount|floatformat:"-2"}}</div>
             <div class="card-table-subtotal">${{total_spending_remaining.amount|floatformat:"-2"}}</div>
             <div class="card-table-subtotal"></div>
         </div>
-        <div class="budget-horizontal-grid-monthly card-table-header">
+        <div class="data-grid data-grid--budget-monthly card-table-header">
             <div class="card-table-heading">Category</div>
             <div class="card-table-heading">Budgeted</div>
             <div class="card-table-heading">Saved</div>
             <div class="card-table-heading">Remaining</div>
             <div></div>
         </div>
-    <div class="budget-horizontal-grid-monthly">
+    <div class="data-grid data-grid--budget-monthly">
         {% for savings_item in savings_items %}
         <div><a href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=savings_item.category.name %}'>{{savings_item.category}}</a></div>
         <div>${{savings_item.amount|floatformat:"-2"}}</div>
@@ -118,14 +118,14 @@
         {% endfor %}
     </div>
 
-    <div class="budget-horizontal-grid-monthly budget-subtotal">
+    <div class="data-grid data-grid--budget-monthly budget-subtotal">
         <div class="card-table-subtotal">Savings Totals</div>
         <div class="card-table-subtotal">${{total_savings_budgeted.amount|floatformat:"-2"}}</div>
         <div class="card-table-subtotal">${{total_saved.amount|floatformat:"-2"}}</div>
         <div class="card-table-subtotal">${{total_savings_remaining.amount|floatformat:"-2"}}</div>
         <div></div>
     </div>
-    <div class="budget-horizontal-grid-monthly card-table-header budget-totals">
+    <div class="data-grid data-grid--budget-monthly card-table-header budget-totals">
         <div class="card-table-heading">Totals</div>
         <div class="card-table-heading">${{total_budgeted|floatformat:"-2"}}</div>
         <div class="card-table-heading">${{total_spent_saved|floatformat:"-2"}}</div>
@@ -141,7 +141,7 @@
             </div>
         </div>
         
-        <div class="income-horizontal-grid-monthly card-table-header">
+        <div class="data-grid data-grid--income card-table-header">
             <div class="card-table-heading">Amount</div>
             <div class="card-table-heading">Source</div>
             <div class="card-table-heading">Category</div>
@@ -149,7 +149,7 @@
             <div class="card-table-heading">Notes</div>
             <div></div>
         </div>
-        <div class="income-horizontal-grid-monthly">
+        <div class="data-grid data-grid--income">
             {% for income in incomes %}
             <div>${{income.amount|floatformat:"-2"}}</div>
             <div>{{income.source}}</div>
@@ -169,7 +169,7 @@
 
 <div class="card-base">
     <h2>Purchases</h2>
-    <div class="purchase-horizontal-grid purchase-horizontal-grid-categories card-table-header">
+    <div class="data-grid data-grid--purchase data-grid--purchase-categories card-table-header">
         <div class="card-table-heading">Date</div>
         <div class="card-table-heading">Item</div>
         <div class="card-table-heading">Amount</div>
@@ -179,7 +179,7 @@
         <div class="card-table-heading"></div>
     </div>
 
-    <div class="purchase-horizontal-grid purchase-horizontal-grid-categories">
+    <div class="data-grid data-grid--purchase data-grid--purchase-categories">
         {% for purchase in purchases %}
         <div>{{purchase.date}}</div>
         <div>{{purchase.item}}</div>

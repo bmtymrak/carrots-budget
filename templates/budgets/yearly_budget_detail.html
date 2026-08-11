@@ -27,7 +27,7 @@
 
 <div class="card-base">
     <h2>Summary</h2>
-    <div class="summary-horizontal-grid-monthly card-table-header">
+    <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted</div>
         <div class="card-table-heading">Spent</div>
         <div class="card-table-heading">Saved</div>
@@ -35,7 +35,7 @@
         <div class="card-table-heading">Budgeted Income</div>
         <div class="card-table-heading">Category Income</div>
     </div>
-    <div class="summary-horizontal-grid-monthly">
+    <div class="data-grid data-grid--summary">
         <div>${{total_budgeted|floatformat:"-2"}}</div>
         <div class="">${{total_spending_spent|floatformat:"-2"}}</div>
         <div class="">${{total_saved|floatformat:"-2"}}</div>
@@ -43,7 +43,7 @@
         <div class="">${{total_income_budgeted.amount|floatformat:"-2"}}</div>
         <div class="">${{total_income_category.amount|floatformat:"-2"}}</div>
     </div>
-    <div class="summary-horizontal-grid-monthly card-table-header">
+    <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted Income-Budgeted</div>
         <div class="card-table-heading">Spent + Saved</div>
         <div class="card-table-heading">Budgeted Income - (Spent + Saved)</div>
@@ -51,7 +51,7 @@
         <div class="card-table-heading"></div>
         <div class="card-table-heading"></div>
     </div>
-    <div class="summary-horizontal-grid-monthly">
+    <div class="data-grid data-grid--summary">
         <div class="">${{budgeted_income_diff|floatformat:"-2"}}</div>
         <div class="">${{total_spent_saved|floatformat:"-2"}}</div>
         <div class="">${{budgeted_income_spent_diff|floatformat:"-2"}}</div>
@@ -77,7 +77,7 @@
             <option value="12">December</option>
         </select>
     </div>
-    <div class="summary-horizontal-grid-monthly card-table-header">
+    <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted YTD</div>
         <div class="card-table-heading">Spent YTD</div>
         <div class="card-table-heading">Saved YTD</div>
@@ -85,7 +85,7 @@
         <div class="card-table-heading">Budgeted Income YTD</div>
         <div class="card-table-heading">Category Income YTD</div>
     </div>
-    <div class="summary-horizontal-grid-monthly">
+    <div class="data-grid data-grid--summary">
         <div class="">${{total_budgeted_ytd|floatformat:"-2"}}</div>
         <div class="">${{total_spending_spent_ytd|floatformat:"-2"}}</div>
         <div class="">${{total_saved_ytd|floatformat:"-2"}}</div>
@@ -93,7 +93,7 @@
         <div class="">${{total_income_budgeted_ytd.amount|floatformat:"-2"}}</div>
         <div class="">${{total_income_category_ytd.amount|floatformat:"-2"}}</div>
     </div>
-    <div class="summary-horizontal-grid-monthly card-table-header">
+    <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted Income-Budgeted YTD</div>
         <div class="card-table-heading">Spent + Saved</div>
         <div class="card-table-heading">Budgeted Income - (Spent + Saved)</div>
@@ -101,7 +101,7 @@
         <div class="card-table-heading"></div>
         <div class="card-table-heading"></div>
     </div>
-    <div class="summary-horizontal-grid-monthly">
+    <div class="data-grid data-grid--summary">
         <div class="">${{budgeted_income_diff_ytd|floatformat:"-2"}}</div>
         <div class="">${{total_spent_saved_ytd|floatformat:"-2"}}</div>
         <div class="">${{budgeted_income_spent_diff_ytd|floatformat:"-2"}}</div>
@@ -120,7 +120,7 @@
         </div>
         <div class="card-main">
             <div>
-                <div class="budget-horizontal-grid-yearly card-table-header">
+                <div class="data-grid data-grid--budget-yearly card-table-header">
                     <div class="card-table-heading">Category</div>
                     <div class="card-table-heading">Budgeted YTD</div>
                     <div class="card-table-heading">Spent YTD</div>
@@ -131,7 +131,7 @@
                     <div></div>
                 </div>
 
-                <div class="budget-horizontal-grid-yearly">
+                <div class="data-grid data-grid--budget-yearly">
                     {% for budget_item in budget_items_combined %}
                     {% comment %}
                     <!-- <div data-tooltip="{{budget_item.category__name}}"><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div> -->
@@ -149,7 +149,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                <div class="budget-horizontal-grid-yearly budget-subtotal">
+                <div class="data-grid data-grid--budget-yearly budget-subtotal">
                     <div class="card-table-subtotal">Spending Total</div>
                     <div class="card-table-subtotal">${{total_spending_budgeted_ytd|floatformat:"-2"}}</div>
                     <div class="card-table-subtotal">${{total_spending_spent_ytd|floatformat:"-2"}}</div>
@@ -177,7 +177,7 @@
         </div>
         <div class="card-main">
             <div style="flex-grow:1;">
-                <div class="budget-horizontal-grid-yearly card-table-header">
+                <div class="data-grid data-grid--budget-yearly card-table-header">
                     <div class="card-table-heading">Category</div>
                     <div class="card-table-heading">Budgeted YTD</div>
                     <div class="card-table-heading">Saved YTD</div>
@@ -187,7 +187,7 @@
                     <div class="card-table-heading">+/-</div>
                     <div class="card-table-heading"></div>
                 </div>
-                <div class="budget-horizontal-grid-yearly">
+                <div class="data-grid data-grid--budget-yearly">
                     {% for savings_item in savings_items_combined %}
                     <!-- <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div> -->
                     <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=savings_item.category__name %}'>{{savings_item.category__name}}</a></div>
@@ -203,7 +203,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                <div class="budget-horizontal-grid-yearly budget-subtotal">
+                <div class="data-grid data-grid--budget-yearly budget-subtotal">
                     <div class="card-table-subtotal">Savings Total</div>
                     <div class="card-table-subtotal">${{total_savings_budgeted_ytd|floatformat:"-2"}}</div>
                     <div class="card-table-subtotal">${{total_saved_ytd|floatformat:"-2"}}</div>
@@ -213,7 +213,7 @@
                     <div class="card-table-subtotal">${{total_savings_remaining|floatformat:"-2"}}</div>
                     <div class="card-table-subtotal"></div>
                 </div>
-                <div class="budget-horizontal-grid-yearly card-table-header budget-totals">
+                <div class="data-grid data-grid--budget-yearly card-table-header budget-totals">
                     <div class="card-table-heading">Total</div>
                     <div class="card-table-heading">${{total_budgeted_ytd|floatformat:"-2"}}</div>
                     <div class="card-table-heading">${{total_spent_saved_ytd|floatformat:"-2"}}</div>
@@ -249,7 +249,7 @@
         </div>
     </div>
     
-    <div class="income-horizontal-grid-monthly card-table-header">
+    <div class="data-grid data-grid--income card-table-header">
         <div class="card-table-heading">Amount</div>
         <div class="card-table-heading">Source</div>
         <div class="card-table-heading">Category</div>
@@ -257,7 +257,7 @@
         <div class="card-table-heading">Notes</div>
         <div></div>
     </div>
-    <div class="income-horizontal-grid-monthly">
+    <div class="data-grid data-grid--income">
     {% for income in incomes %}
         <div>${{income.amount|floatformat:"-2"}}</div>
         <div>{{income.source}}</div>
@@ -275,7 +275,7 @@
 </div>
 <div class="card-base">
     <h2>Uncategorized Purchases</h2>
-    <div class="purchase-horizontal-grid purchase-horizontal-grid-categories card-table-header">
+    <div class="data-grid data-grid--purchase data-grid--purchase-categories card-table-header">
         <div class="card-table-heading">Date</div>
         <div class="card-table-heading">Item</div>
         <div class="card-table-heading">Amount</div>
@@ -286,7 +286,7 @@
     </div>
     {% for purchase in purchases_uncategorized %}
 
-    <div class="purchase-horizontal-grid purchase-horizontal-grid-categories">
+    <div class="data-grid data-grid--purchase data-grid--purchase-categories">
         <div>{{purchase.date}}</div>
         <div>{{purchase.item}}</div>
         <div>${{purchase.amount|floatformat:"-2"}}</div>

@@ -14,7 +14,7 @@
 
 <div class="card-base">
     <h2>Purchases</h2>
-    <div class="purchase-horizontal-grid card-table-header">
+    <div class="data-grid data-grid--purchase card-table-header">
         <div class="card-table-heading">Date</div>
         <div class="card-table-heading">Item</div>
         <div class="card-table-heading">Amount</div>
@@ -24,7 +24,7 @@
     </div>
     {% for purchase in purchases %}
 
-    <div class="purchase-horizontal-grid">
+    <div class="data-grid data-grid--purchase">
         <div>{{purchase.date}}</div>
         <div>{{purchase.item}}</div>
         <div>${{purchase.amount}}</div>

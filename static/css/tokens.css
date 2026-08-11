@@ -1,0 +1,17 @@
+:root {
+    --color-brand: hsl(144deg 100% 26% / 70%);
+    --color-focus: hsl(144deg 100% 35%);
+    --color-page: #fdfdfd;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f1f1f1;
+    --color-text: #000000;
+    --color-muted: #607169;
+    --color-border: #d1d5db;
+    --color-danger: #b9413d;
+    --color-success: #237654;
+
+    /* Legacy aliases retained while feature styles migrate. */
+    --main-color: var(--color-brand);
+    --focus-color: var(--color-focus);
+    --focus-outline-width: 3px;
+}
