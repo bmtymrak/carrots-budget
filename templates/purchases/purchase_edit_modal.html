@@ -42,23 +42,28 @@
     <button type="submit">Save receipt</button>
 </form>
 <script>
-    const receiptAmountInputs = document.querySelectorAll(
-        ".receipt-purchase-editor input[id$='-amount']"
-    )
-    const receiptTotal = document.querySelector("#receipt-total span")
+    (() => {
+        const receiptEditForm = document.querySelector(".receipt-edit-form")
+        if (!receiptEditForm) return
 
-    function updateReceiptTotal() {
-        const total = [...receiptAmountInputs].reduce((sum, input) => {
-            const amount = parseFloat(input.value)
-            return sum + (Number.isNaN(amount) ? 0 : amount)
-        }, 0)
+        const receiptAmountInputs = receiptEditForm.querySelectorAll(
+            ".receipt-purchase-editor input[id$='-amount']"
+        )
+        const receiptTotal = receiptEditForm.querySelector("#receipt-total span")
 
-        receiptTotal.textContent = total.toFixed(2)
-    }
+        function updateReceiptTotal() {
+            const total = [...receiptAmountInputs].reduce((sum, input) => {
+                const amount = parseFloat(input.value)
+                return sum + (Number.isNaN(amount) ? 0 : amount)
+            }, 0)
 
-    receiptAmountInputs.forEach(input => {
-        input.addEventListener("input", updateReceiptTotal)
-    })
+            receiptTotal.textContent = total.toFixed(2)
+        }
+
+        receiptAmountInputs.forEach(input => {
+            input.addEventListener("input", updateReceiptTotal)
+        })
+    })()
 </script>
 {% else %}
 <form hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="form-grid" method="POST">

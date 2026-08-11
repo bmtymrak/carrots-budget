@@ -26,6 +26,7 @@
 </form>
 
 <script>
+    (() => {
     let purchaseForm = document.querySelectorAll(".purchase-form")
     let container = document.querySelector("#purchase-form-container")
     let addButton = document.querySelector("#add-form")
@@ -87,4 +88,5 @@
 
         total.innerHTML = `Total: ${totalAmount}`
     }
+    })()
 </script>
