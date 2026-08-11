@@ -1,13 +1,13 @@
 import datetime
 from urllib.parse import quote
 
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
 
 from budgets.models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
-from purchases.models import Category, Purchase
+from purchases.models import Category, Purchase, Receipt, Subcategory
 from budgets.forms import BudgetItemForm
 from .factories import (
     YearlyBudgetFactory,
@@ -19,6 +19,12 @@ from purchases.tests.factories import CategoryFactory, PurchaseFactory, IncomeFa
 
 
 User = get_user_model()
+
+
+TEST_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
 
 
 class TestYearlyBudgetDetailView(TestCase):
@@ -190,6 +196,7 @@ class TestYearlyBudgetListView(TestCase):
         self.assertFalse(yearly_budget_user2 in response.context["yearly_budgets"])
 
 
+@override_settings(STORAGES=TEST_STORAGES)
 class TestMonthlyBudgetDetailView(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -238,6 +245,39 @@ class TestMonthlyBudgetDetailView(TestCase):
         )
 
         self.assertEqual(monthly_budget, response.context["object"])
+
+    def test_post_groups_purchases_by_receipt_metadata(self):
+        category = Category.objects.create(user=self.user1, name="Monthly category")
+        subcategory = Subcategory.objects.create(user=self.user1, name="Monthly subcategory")
+        year = self.yearly_budget_user1.date.year
+        self.client.login(email="testuser1@test.com", password="testpass123")
+
+        response = self.client.post(
+            reverse("monthly_detail", kwargs={"year": year, "month": 1}),
+            {
+                "form-TOTAL_FORMS": "1",
+                "form-INITIAL_FORMS": "0",
+                "form-MIN_NUM_FORMS": "0",
+                "form-MAX_NUM_FORMS": "1000",
+                "form-0-date": f"{year}-01-01",
+                "form-0-item": "Monthly purchase",
+                "form-0-amount": "25.00",
+                "form-0-source": "Monthly store",
+                "form-0-location": "Monthly location",
+                "form-0-category": category.pk,
+                "form-0-subcategory": subcategory.pk,
+                "form-0-notes": "Created from budget",
+                "form-0-savings": False,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        purchase = Purchase.objects.get(user=self.user1, item="Monthly purchase")
+        self.assertIsNotNone(purchase.receipt_id)
+        receipt = Receipt.objects.get(pk=purchase.receipt_id)
+        self.assertEqual(receipt.user, self.user1)
+        self.assertEqual(receipt.source, "Monthly store")
+        self.assertEqual(receipt.location, "Monthly location")
 
     def test_formset_in_response_context(self):
         self.client.login(email="testuser1@test.com", password="testpass123")

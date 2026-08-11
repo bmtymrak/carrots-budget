@@ -1,7 +1,7 @@
 from django import forms
-from django.forms import BaseFormSet, ModelForm, formset_factory, modelformset_factory
+from django.forms import BaseFormSet, BaseModelFormSet, ModelForm, formset_factory, modelformset_factory
 
-from .models import Purchase, Category, Subcategory, Income, RecurringPurchase
+from .models import Purchase, Category, Subcategory, Income, RecurringPurchase, Receipt
 from budgets.models import BudgetItem, YearlyBudget
 
 
@@ -43,18 +43,24 @@ class PurchaseForm(ModelForm):
         self.fields["subcategory"].queryset = Subcategory.objects.filter(user=self.user)
         self.fields["subcategory"].empty_label = "Sub-category"
 
-        self.fields["item"].widget.attrs.update(placeholder="Item", size="12")
-        self.fields["amount"].widget.attrs.update(
-            placeholder="Price",
-        )
-        self.fields["source"].widget.attrs.update(placeholder="Source", size="12")
-        self.fields["location"].widget.attrs.update(placeholder="Location", size="12")
-        self.fields["notes"].widget.attrs.update(
-            placeholder="Notes", rows="1", cols="15"
-        )
-        self.fields["date"].widget = date_picker_widget(
-            {"placeholder": "Date", "size": "10"}
-        )
+        if "item" in self.fields:
+            self.fields["item"].widget.attrs.update(placeholder="Item", size="12")
+        if "amount" in self.fields:
+            self.fields["amount"].widget.attrs.update(
+                placeholder="Price",
+            )
+        if "source" in self.fields:
+            self.fields["source"].widget.attrs.update(placeholder="Source", size="12")
+        if "location" in self.fields:
+            self.fields["location"].widget.attrs.update(placeholder="Location", size="12")
+        if "notes" in self.fields:
+            self.fields["notes"].widget.attrs.update(
+                placeholder="Notes", rows="1", cols="15"
+            )
+        if "date" in self.fields:
+            self.fields["date"].widget = date_picker_widget(
+                {"placeholder": "Date", "size": "10"}
+            )
         self.fields["savings"].label = "Savings"
 
     class Meta:
@@ -70,6 +76,44 @@ class PurchaseForm(ModelForm):
             "notes",
             "savings",
         ]
+
+
+class ReceiptForm(ModelForm):
+    class Meta:
+        model = Receipt
+        fields = ["date", "source", "location"]
+
+
+class ReceiptPurchaseForm(PurchaseForm):
+    class Meta:
+        model = Purchase
+        fields = ["item", "amount", "category", "subcategory", "notes", "savings"]
+
+
+class BaseReceiptPurchaseFormSet(BaseModelFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+
+        expected_ids = set(self.get_queryset().values_list("pk", flat=True))
+        submitted_ids = {
+            form.cleaned_data["id"].pk
+            for form in self.forms
+            if form.cleaned_data.get("id") is not None
+        }
+        if submitted_ids != expected_ids or len(submitted_ids) != len(self.forms):
+            raise forms.ValidationError(
+                "All purchases on this receipt must be submitted together."
+            )
+
+
+ReceiptPurchaseFormSet = modelformset_factory(
+    Purchase,
+    form=ReceiptPurchaseForm,
+    formset=BaseReceiptPurchaseFormSet,
+    extra=0,
+)
 
 
 PurchaseFormSet = modelformset_factory(Purchase, form=PurchaseForm, extra=10)

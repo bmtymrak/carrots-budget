@@ -1,4 +1,4 @@
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Exists, OuterRef, Q, Sum
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
@@ -9,19 +9,26 @@ from django.views.generic import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
 import datetime
 
-from .models import Purchase, Category, Income, RecurringPurchase, Receipt
+from .models import Purchase, Category, Income, RecurringPurchase
 from .forms import (
     PurchaseForm,
     PurchaseFormSetReceipt,
+    ReceiptForm,
+    ReceiptPurchaseFormSet,
     IncomeForm,
     RecurringPurchaseForm,
     RecurringPurchaseAddToMonthFormSet,
 )
 from django_htmx.http import HttpResponseClientRedirect
 from budgets.models import MonthlyBudget
+from .services import (
+    save_purchase_with_receipt,
+    save_receipt_with_purchases,
+    save_purchases_with_individual_receipts,
+    save_purchases_with_receipts,
+)
 
 
 class AddUserMixin:
@@ -213,21 +220,7 @@ def purchase_create(request):
             if not instances:
                 return HttpResponseClientRedirect(next)
 
-            with transaction.atomic():
-                source = instances[0].source
-                location = instances[0].location
-                receipt = Receipt.objects.create(
-                    user=request.user,
-                    date=instances[0].date,
-                    source=source,
-                    location=location,
-                )
-                for instance in instances:
-                    instance.user = request.user
-                    instance.receipt = receipt
-                    instance.source = source
-                    instance.location = location
-                    instance.save()
+            save_purchases_with_receipts(request.user, instances)
             return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
@@ -258,16 +251,53 @@ def purchase_create(request):
 
 @login_required
 def purchase_edit(request, pk):
-    purchase = Purchase.objects.get(user=request.user, pk=pk)
+    purchase = get_object_or_404(
+        Purchase.objects.select_related("receipt"),
+        user=request.user,
+        pk=pk,
+    )
+    receipt = purchase.receipt
+    receipt_purchases = Purchase.objects.none()
+    receipt_total = None
+    receipt_form = None
+    purchase_formset = None
 
-    form = PurchaseForm(instance=purchase, user=request.user)
+    if receipt:
+        receipt_purchases = (
+            Purchase.objects.filter(user=request.user, receipt_id=receipt.pk)
+            .select_related("category", "subcategory")
+            .order_by("date", "pk")
+        )
+        receipt_total = receipt_purchases.aggregate(total=Sum("amount"))["total"] or 0
+        receipt_form = ReceiptForm(instance=receipt)
+        purchase_formset = ReceiptPurchaseFormSet(
+            queryset=receipt_purchases,
+            form_kwargs={"user": request.user},
+        )
+    else:
+        form = PurchaseForm(instance=purchase, user=request.user)
 
     if request.method == "POST":
         next = request.POST.get("next")
-        form = PurchaseForm(instance=purchase, data=request.POST, user=request.user)
-        if form.is_valid():
-            form.save()
-            return HttpResponseClientRedirect(next)
+        if receipt:
+            receipt_form = ReceiptForm(request.POST, instance=receipt)
+            purchase_formset = ReceiptPurchaseFormSet(
+                request.POST,
+                queryset=receipt_purchases,
+                form_kwargs={"user": request.user},
+            )
+            if receipt_form.is_valid() and purchase_formset.is_valid():
+                purchase_formset.save(commit=False)
+                save_receipt_with_purchases(
+                    receipt_form.save(commit=False),
+                    [form.instance for form in purchase_formset.forms],
+                )
+                return HttpResponseClientRedirect(next)
+        else:
+            form = PurchaseForm(instance=purchase, data=request.POST, user=request.user)
+            if form.is_valid():
+                save_purchase_with_receipt(form.save(commit=False))
+                return HttpResponseClientRedirect(next)
 
     if request.method == "GET":
         next = request.GET["next"]
@@ -275,7 +305,16 @@ def purchase_edit(request, pk):
     return render(
         request,
         "purchases/purchase_edit_modal.html",
-        {"form": form, "purchase": purchase, "next": next},
+        {
+            "form": locals().get("form"),
+            "purchase": purchase,
+            "receipt": receipt,
+            "receipt_form": receipt_form,
+            "receipt_purchases": receipt_purchases,
+            "receipt_total": receipt_total,
+            "purchase_formset": purchase_formset,
+            "next": next,
+        },
     )
 
 
@@ -450,21 +489,15 @@ def recurring_purchase_add_to_month(request, year, month):
         )
 
         if formset.is_valid():
+            purchases_to_create = []
             for selected_purchase in formset.selected_purchases:
                 recurring = selected_purchase["recurring_purchase"]
                 if recurring.id in already_added:
                     continue
 
-                with transaction.atomic():
-                    receipt = Receipt.objects.create(
+                purchases_to_create.append(
+                    Purchase(
                         user=request.user,
-                        date=selected_purchase["date"],
-                        source=selected_purchase["source"],
-                        location=selected_purchase["location"],
-                    )
-                    Purchase.objects.create(
-                        user=request.user,
-                        receipt=receipt,
                         item=recurring.item,
                         date=selected_purchase["date"],
                         amount=selected_purchase["amount"],
@@ -475,7 +508,10 @@ def recurring_purchase_add_to_month(request, year, month):
                         savings=False,
                         recurring_purchase=recurring,
                     )
+                )
                 already_added.add(recurring.id)
+
+            save_purchases_with_individual_receipts(request.user, purchases_to_create)
 
             return HttpResponseClientRedirect(next_url)
     else:

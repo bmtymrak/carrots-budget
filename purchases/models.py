@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.db.models.fields.related import ForeignKey
+from django.core.exceptions import ValidationError
 
 
 class Category(models.Model):
@@ -115,6 +116,24 @@ class Purchase(models.Model):
 
     def __str__(self):
         return self.item
+
+    def _validate_receipt_owner(self):
+        if not self.receipt_id or not self.user_id:
+            return
+
+        receipt_user_id = Receipt.objects.filter(pk=self.receipt_id).values_list(
+            "user_id", flat=True
+        ).first()
+        if receipt_user_id != self.user_id:
+            raise ValidationError({"receipt": "Receipt must belong to the purchase user."})
+
+    def clean(self):
+        super().clean()
+        self._validate_receipt_owner()
+
+    def save(self, *args, **kwargs):
+        self._validate_receipt_owner()
+        return super().save(*args, **kwargs)
     
     class Meta:
         indexes = [

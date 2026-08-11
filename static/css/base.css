@@ -974,3 +974,128 @@ h2 {
         overflow-x: hidden;
     } */
 }
+
+.receipt-context {
+    max-width: 400px;
+    margin: 0 auto 1.25rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid #d8e0e3;
+    border-bottom: 1px solid #d8e0e3;
+}
+
+.receipt-context h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+}
+
+.receipt-context__meta,
+.receipt-context__empty,
+.receipt-purchase__notes {
+    margin: 0;
+    color: #5f6b72;
+    font-size: 0.875rem;
+}
+
+.receipt-purchases {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.receipt-purchase {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #d8e0e3;
+    border-radius: 8px;
+    background: #f8faf9;
+}
+
+.receipt-purchase__topline,
+.receipt-purchase__details {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.receipt-purchase__details {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-top: 0.2rem;
+    color: #5f6b72;
+    font-size: 0.8rem;
+}
+
+.receipt-purchase__details span + span::before {
+    content: "·";
+    margin-right: 0.45rem;
+}
+
+.receipt-purchase__notes {
+    margin-top: 0.35rem;
+}
+
+.receipt-purchase__badge {
+    display: inline-block;
+    margin-top: 0.35rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    background: #e8f4ed;
+    color: #216e4e;
+    font-size: 0.75rem;
+}
+
+.receipt-edit-form {
+    display: grid;
+    gap: 1rem;
+    width: 1000px;
+    max-width: 100%;
+    margin: auto;
+}
+
+.receipt-details,
+.receipt-purchase-editor {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0.9rem;
+    border: 1px solid #d8e0e3;
+    border-radius: 8px;
+}
+
+.receipt-details legend,
+.receipt-purchase-editor legend {
+    padding: 0 0.35rem;
+    font-weight: 700;
+}
+
+.receipt-details input,
+.receipt-details select,
+.receipt-details textarea,
+.receipt-purchase-editor input,
+.receipt-purchase-editor select,
+.receipt-purchase-editor textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.receipt-items {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.receipt-items h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.receipt-purchase-editor {
+    background: #f8faf9;
+}
+
+.receipt-total {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: right;
+}

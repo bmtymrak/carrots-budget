@@ -4,7 +4,7 @@ import calendar
 import time
 
 from django.db.models.fields import DecimalField, BooleanField
-from django.db import connection, transaction
+from django.db import connection
 from django.http.response import HttpResponseRedirect
 from django.http import JsonResponse, QueryDict
 from django.views.generic.edit import DeleteView
@@ -33,10 +33,11 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 
 from budgets.models import MonthlyBudget, YearlyBudget, BudgetItem, Rollover
-from purchases.models import Category, Purchase, Income, Receipt
+from purchases.models import Category, Purchase, Income
 from budgets.forms import BudgetItemForm, BudgetItemFormset, YearlyBudgetForm
 from budgets.services import BudgetService
 from django_htmx.http import HttpResponseClientRedirect
+from purchases.services import save_purchases_with_receipts
 
 
 class AddUserMixin:
@@ -159,21 +160,7 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
             if not instances:
                 return HttpResponseRedirect(self.get_success_url())
 
-            with transaction.atomic():
-                source = instances[0].source
-                location = instances[0].location
-                receipt = Receipt.objects.create(
-                    user=self.request.user,
-                    date=instances[0].date,
-                    source=source,
-                    location=location,
-                )
-                for instance in instances:
-                    instance.user = self.request.user
-                    instance.receipt = receipt
-                    instance.source = source
-                    instance.location = location
-                    instance.save()
+            save_purchases_with_receipts(self.request.user, instances)
 
             return HttpResponseRedirect(self.get_success_url())
 
