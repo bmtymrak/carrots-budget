@@ -1,0 +1,91 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include "_includes/head.html" %}
+    <title>{% block title %}Carrots Budgeting{% endblock title %}</title>
+    <script src="{% static 'js/htmx.min.js' %}"></script>
+    {% block extra_head %}{% endblock extra_head %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <div class="main-container">
+        <aside class="app-sidebar">
+            {% include "_includes/sidebar.html" %}
+        </aside>
+
+        <main class="app-main">
+            <div class="page-header">
+                {% block header %}
+                {% endblock header %}
+            </div>
+            {% block heading_nav %}
+            {% endblock heading_nav %}
+            <div class="content-container">
+                <div class="content">
+                    {% block body %}
+                    {% endblock body %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    {% include "_includes/modal_shell.html" %}
+
+    <script>
+        const modal = document.querySelector("#modal")
+        const modalContent = document.querySelector("#modal-content")
+        const overlay = document.querySelector(".overlay")
+
+        function focusFirstModalElement(){
+            const firstInteractiveElement = modalContent.querySelector(
+                'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+            )
+
+            if (firstInteractiveElement){
+                firstInteractiveElement.focus()
+            }
+        }
+
+        function showModal(){
+            modal.classList.remove("hidden")
+            overlay.classList.remove("hidden")
+            modal.scrollTo(0, 0)
+        }
+
+        function closeModal(){
+            modal.classList.add("hidden")
+            overlay.classList.add("hidden")
+        }
+
+        htmx.on("htmx:afterSwap", (e) => {
+            if (e.detail.target.id == "modal-content") {
+                showModal()
+                focusFirstModalElement()
+            }
+        })
+
+        overlay.addEventListener("click", (event) => {
+            const clickedOutside = !event.target.closest(".modal")
+            if (clickedOutside){
+                closeModal()
+            }
+        })
+
+        window.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Mobile menu toggle
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            const nav = document.getElementById('primary-nav');
+            const isOpen = nav.classList.toggle('nav-open');
+            this.setAttribute('aria-expanded', String(isOpen));
+        });
+    </script>
+
+    {% block extra_js %}{% endblock extra_js %}
+</body>
+</html>

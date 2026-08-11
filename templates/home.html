@@ -1,42 +1,21 @@
+{% extends "_layouts/public.html" %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Carrots Budgeting{% endblock title %}</title>
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@100;300;400;700;900&display=swap" rel="stylesheet">
-</head>
-<body>
-
-    <div class="main-container">
-        <div>
-            <div class="content-container flex">
-                <div class="content">
-                    <div class="home-container">
-                        <div class="home-header-container">
-                            <div class="home-header-info">
-                                <h1>Carrots Budgeting</h1>
-                                <div class="home-link-container">
-                                    <a class="home-link" href="{% url 'account_login' %}">Login</a>
-                                    <a class="home-link" href="{% url 'account_signup' %}">Sign Up</a>
-                                </div>
-                            </div>
-                            <img src='{% static "images/carrots_logo.svg" %}' alt="Carrots Budget logo" height="200">
-                        </div>
+{% block body %}
+<div class="content-container flex">
+    <div class="content">
+        <div class="home-container">
+            <div class="home-header-container">
+                <div class="home-header-info">
+                    <h1>Carrots Budgeting</h1>
+                    <div class="home-link-container">
+                        <a class="home-link" href="{% url 'account_login' %}">Login</a>
+                        <a class="home-link" href="{% url 'account_signup' %}">Sign Up</a>
                     </div>
                 </div>
+                <img src='{% static "images/carrots_logo.svg" %}' alt="Carrots Budget logo" height="200">
             </div>
         </div>
     </div>
-    
-</body>
-</html>
-
-
-
+</div>
+{% endblock body %}
