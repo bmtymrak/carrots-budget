@@ -25,6 +25,7 @@
     <button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
     <button class="button-create" hx-get='{% url "recurring_purchase_list" %}?next={{request.path|urlencode}}' hx-target="#modal-content">Manage Recurring Purchases</button>
 </div>
+<p id="rollover-save-error" class="rollover-save-error" role="alert" hidden></p>
 
 <div class="card-base">
     <h2>Summary</h2>
@@ -167,9 +168,7 @@
                     </div>
                     <div class="rollover-items-grid">
                         {% for rollover in rollovers_spending %}
-                        <div>
-                            <input class="rollover-edit" data-category="{{rollover.category}}" type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
-                        </div>
+                        <div><input id="rollover-{{ rollover.pk }}" class="rollover-edit" data-category="{{ rollover.category }}" type="number" step="0.01" value="{{ rollover.amount|floatformat:"-2" }}" aria-label="Rollover amount for {{ rollover.category }}" aria-describedby="rollover-save-error"></div>
                         {% endfor %}
                     </div>
                 </div>
@@ -228,12 +227,11 @@
                     <div class="budget-monthly-single-col card-table-header">
                         <div class="card-table-heading">Rollover</div>
                     </div>
-                    {% for rollover in rollovers_savings %}
-                    <div>
-                        <input class="rollover-edit" data-category='{{rollover.category}}' type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
+                    <div class="rollover-items-grid">
+                        {% for rollover in rollovers_savings %}
+                        <div><input id="rollover-{{ rollover.pk }}" class="rollover-edit" data-category="{{ rollover.category }}" type="number" step="0.01" value="{{ rollover.amount|floatformat:"-2" }}" aria-label="Rollover amount for {{ rollover.category }}" aria-describedby="rollover-save-error"></div>
+                        {% endfor %}
                     </div>
-                    
-                    {% endfor %}
                 </div>
             </div>
         </div>

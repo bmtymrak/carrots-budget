@@ -362,6 +362,21 @@
     font-size: 16px;
 }
 
+.rollover-save-error {
+    margin: 0 0 10px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-danger);
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+    color: var(--color-danger);
+    font-weight: 700;
+}
+
+.rollover-edit[data-save-state="error"] {
+    outline: 2px solid var(--color-danger);
+    outline-offset: 2px;
+}
+
 .month-select-container {
     display: flex;
     margin-bottom: 5px;
