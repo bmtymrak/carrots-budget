@@ -50,6 +50,64 @@ class PurchaseViewTests(TestCase):
         self.category = CategoryFactory(user=self.user)
         self.subcategory = SubcategoryFactory(user=self.user)
 
+    def test_purchase_create_get_without_next_uses_purchase_list(self):
+        response = self.client.get(reverse("purchase_create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["next"], reverse("purchase_list"))
+
+    def test_purchase_create_rejects_external_next_url(self):
+        response = self.client.get(
+            reverse("purchase_create"),
+            {"next": "https://example.com/collect"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["next"], reverse("purchase_list"))
+
+    def test_purchase_create_post_without_next_redirects_to_purchase_list(self):
+        response = self.client.post(
+            reverse("purchase_create"),
+            {
+                "form-TOTAL_FORMS": "1",
+                "form-INITIAL_FORMS": "0",
+                "form-MIN_NUM_FORMS": "0",
+                "form-MAX_NUM_FORMS": "1000",
+                "form-0-item": "Test Purchase",
+                "form-0-date": datetime.date.today(),
+                "form-0-amount": "10.00",
+                "form-0-source": "Test Store",
+                "form-0-location": "Test Location",
+                "form-0-category": self.category.id,
+                "form-0-subcategory": self.subcategory.id,
+                "form-0-notes": "",
+                "form-0-savings": False,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["HX-Redirect"], reverse("purchase_list"))
+
+    def test_sidebar_purchase_button_opens_modal_with_return_path(self):
+        response = self.client.get(reverse("purchase_list"))
+        return_path = quote(reverse("purchase_list"), safe="")
+        purchase_url = f'{reverse("purchase_create")}?next={return_path}'
+
+        self.assertContains(
+            response,
+            (
+                f'<button class="sidebar-action" type="button" '
+                f'hx-get="{purchase_url}" hx-target="#modal-content">'
+                "Add a Purchase</button>"
+            ),
+            html=True,
+        )
+        self.assertNotContains(response, f"href='{purchase_url}'", html=False)
+
+        content = response.content.decode()
+        self.assertLess(content.index("Purchase List</a>"), content.index("Add a Purchase</button>"))
+        self.assertLess(content.index("Add a Purchase</button>"), content.index("Logout</a>"))
+
     def test_purchase_create_view(self):
         response = self.client.post(
             reverse('purchase_create'),

@@ -47,6 +47,32 @@
     outline-offset: 4px;
 }
 
+.nav-list-action {
+    margin-top: 12px;
+}
+
+.sidebar-action {
+    width: fit-content;
+    padding: 5px 8px;
+    border: 2px solid white;
+    border-radius: 6px;
+    background-color: white;
+    color: var(--color-success);
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.sidebar-action:hover {
+    background-color: var(--color-surface-muted);
+}
+
+.sidebar-action:focus-visible {
+    outline-color: white;
+    outline-offset: 4px;
+}
+
 .logo-sidebar-container {
     display: flex;
     align-items: center;

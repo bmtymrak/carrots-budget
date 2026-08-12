@@ -8,8 +8,8 @@
 <ul class="nav-list" id="primary-nav">
     {% if user.is_authenticated %}
     <li><a href='{% url "yearly_list" %}'>Budgets</a></li>
-    <li><a href='{% url "purchase_create" %}'>Add a Purchase</a></li>
     <li><a href='{% url "purchase_list" %}'>Purchase List</a></li>
+    <li class="nav-list-action"><button class="sidebar-action" type="button" hx-get='{% url "purchase_create" %}?next={{ request.path|urlencode:"" }}' hx-target="#modal-content">Add a Purchase</button></li>
     <li><a href="{% url 'account_logout' %}">Logout</a></li>
     {% else %}
     <li><a href="{% url 'account_login' %}">Login</a></li>
