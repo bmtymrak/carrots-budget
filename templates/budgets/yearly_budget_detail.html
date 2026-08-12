@@ -1,4 +1,4 @@
-{% extends "_base.html" %}
+{% extends "_layouts/app.html" %}
 {% load static %}
 
 {% block header %}
@@ -135,7 +135,6 @@
                 <div class="data-grid data-grid--budget-yearly">
                     {% for budget_item in budget_items_combined %}
                     {% comment %}
-                    <!-- <div data-tooltip="{{budget_item.category__name}}"><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div> -->
                     {% endcomment %}
                     <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div>
                     <div>${{budget_item.amount_total_ytd|floatformat:"-2"}}</div>
@@ -177,7 +176,7 @@
             </div>
         </div>
         <div class="card-main">
-            <div style="flex-grow:1;">
+            <div class="grow">
                 <div class="data-grid data-grid--budget-yearly card-table-header">
                     <div class="card-table-heading">Category</div>
                     <div class="card-table-heading">Budgeted YTD</div>
@@ -190,7 +189,6 @@
                 </div>
                 <div class="data-grid data-grid--budget-yearly">
                     {% for savings_item in savings_items_combined %}
-                    <!-- <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div> -->
                     <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=savings_item.category__name %}'>{{savings_item.category__name}}</a></div>
                     <div>${{savings_item.amount_total_ytd|floatformat:"-2"}}</div>
                     <div>${{savings_item.saved_ytd|floatformat:"-2"}}</div>

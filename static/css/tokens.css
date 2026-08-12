@@ -9,9 +9,6 @@
     --color-border: #d1d5db;
     --color-danger: #b9413d;
     --color-success: #237654;
+    --focus-ring-width: 3px;
 
-    /* Legacy aliases retained while feature styles migrate. */
-    --main-color: var(--color-brand);
-    --focus-color: var(--color-focus);
-    --focus-outline-width: 3px;
 }
