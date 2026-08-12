@@ -4,5 +4,5 @@
         <h3>{{category}}    
     </div>
     </div>
-    <button hx-delete='{% url "budget_item_delete_htmx" year=year category=category %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
+    <button type="button" hx-delete='{% url "budget_item_delete_htmx" year=year category=category %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
 </div>

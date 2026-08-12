@@ -20,5 +20,5 @@
         </div>
     </div>
 
-    <button hx-delete='{% url "income_delete_htmx" pk=income.id %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
+    <button type="button" hx-delete='{% url "income_delete_htmx" pk=income.id %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
 </div>

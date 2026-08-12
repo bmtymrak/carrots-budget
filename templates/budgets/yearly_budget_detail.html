@@ -20,10 +20,10 @@
 {% block body %}
 <div id="yearly-budget-detail" data-behavior="yearly-budget-detail" data-rollover-url="{% url "rollover_update" %}" data-year="{{ yearly_budget.date.year }}" data-ytd-path="{{ request.path }}" data-ytd-month="{{ request.GET.ytd|default:"" }}">
 <div class="page-header-action">
-    <button class="button-create" hx-get='{% url "purchase_create" %}?date={{yearly_budget.date.year}}-01-01&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
-    <button class="button-create" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
-    <button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
-    <button class="button-create" hx-get='{% url "recurring_purchase_list" %}?next={{request.path|urlencode}}' hx-target="#modal-content">Manage Recurring Purchases</button>
+    <button class="button-create" type="button" hx-get='{% url "purchase_create" %}?date={{yearly_budget.date.year}}-01-01&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
+    <button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
+    <button class="button-create" type="button" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
+    <button class="button-create" type="button" hx-get='{% url "recurring_purchase_list" %}?next={{request.path|urlencode}}' hx-target="#modal-content">Manage Recurring Purchases</button>
 </div>
 <p id="rollover-save-error" class="rollover-save-error" role="alert" hidden></p>
 
@@ -117,7 +117,7 @@
     <div class="card-base">
         <div class="card-header">
             <h2>Budget</h2>
-            <div class="card-header-action"><button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
+            <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
             </div>
         </div>
         <div class="card-main">
@@ -145,8 +145,8 @@
                     <div>${{budget_item.spent|floatformat:"-2"}}</div>
                     <div>${{budget_item.diff|floatformat:"-2"}}</div>
                     <div>
-                        <button class="button-blank" aria-label="Edit budget item" hx-get='{% url "budgetitem_bulk_edit_htmx" category=budget_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                        <button class="button-blank" aria-label="Delete budget item" hx-get='{% url "budget_item_delete_htmx" category=budget_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/trash.svg' %}" width="17px"></button>
+                        <button class="button-blank" type="button" aria-label="Edit budget item" hx-get='{% url "budgetitem_bulk_edit_htmx" category=budget_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/edit-pencil.svg' %}" width="17"></button>
+                        <button class="button-blank" type="button" aria-label="Delete budget item" hx-get='{% url "budget_item_delete_htmx" category=budget_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/trash.svg' %}" width="17"></button>
                     </div>
                     {% endfor %}
                 </div>
@@ -196,8 +196,8 @@
                     <div>${{savings_item.saved|floatformat:"-2"}}</div>
                     <div>{{savings_item.diff|floatformat:"-2"}}</div>
                     <div>
-                        <button class="button-blank" aria-label="Edit budget item" hx-get='{% url "budgetitem_bulk_edit_htmx" category=savings_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                        <button class="button-blank" aria-label="Delete budget item" hx-get='{% url "budget_item_delete_htmx" category=savings_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/trash.svg' %}" width="17px"></button>
+                        <button class="button-blank" type="button" aria-label="Edit budget item" hx-get='{% url "budgetitem_bulk_edit_htmx" category=savings_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/edit-pencil.svg' %}" width="17"></button>
+                        <button class="button-blank" type="button" aria-label="Delete budget item" hx-get='{% url "budget_item_delete_htmx" category=savings_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/trash.svg' %}" width="17"></button>
                     </div>
                     {% endfor %}
                 </div>
@@ -242,7 +242,7 @@
 <div class="card-base">
     <div class="card-header">
         <h2>Income</h2>
-        <div class="card-header-action"><button class="button-create" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
+        <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
         </div>
     </div>
     
@@ -263,8 +263,8 @@
         <div>{{income.notes}}</div>
         <div>
             <div class="edit-links-container">
-                <button class="button-blank" aria-label="Edit income" hx-get='{% url "income_edit_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                <button class="button-blank" aria-label="Delete income" hx-get='{% url "income_delete_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/trash.svg' %}" width="17px"></button>
+                <button class="button-blank" type="button" aria-label="Edit income" hx-get='{% url "income_edit_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/edit-pencil.svg' %}" width="17"></button>
+                <button class="button-blank" type="button" aria-label="Delete income" hx-get='{% url "income_delete_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/trash.svg' %}" width="17"></button>
             </div>
         </div>
     {% endfor %}
@@ -292,8 +292,8 @@
         <div>{{purchase.category}}</div>
         <div>
             <div class="edit-links-container">
-                <button class="button-blank" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                <button class="button-blank" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/trash.svg' %}" width="17px"></button>
+                <button class="button-blank" type="button" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/edit-pencil.svg' %}" width="17"></button>
+                <button class="button-blank" type="button" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" alt="" aria-hidden="true" src="{% static 'images/trash.svg' %}" width="17"></button>
             </div>
         </div>
     </div>

@@ -32,8 +32,8 @@
         <div>{{recurring.location}}</div>
         <div>{% if recurring.is_active %}Yes{% else %}No{% endif %}</div>
         <div class="edit-links-container">
-            <button class="button-blank" hx-get='{% url "recurring_purchase_edit" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-            <button class="button-blank" hx-get='{% url "recurring_purchase_delete" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
+            <button class="button-blank" type="button" aria-label="Edit {{ recurring.item }} recurring purchase" hx-get='{% url "recurring_purchase_edit" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17"></button>
+            <button class="button-blank" type="button" aria-label="Delete {{ recurring.item }} recurring purchase" hx-get='{% url "recurring_purchase_delete" pk=recurring.id %}?next={{next|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17"></button>
         </div>
     </div>
     {% endfor %}

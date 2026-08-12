@@ -18,5 +18,5 @@
         </div>
     </div>
 
-    <button hx-delete='{% url "recurring_purchase_delete" pk=recurring_purchase.id %}?next={{next|urlencode}}' class="button-delete button-delete-standalone">Delete</button>
+    <button type="button" hx-delete='{% url "recurring_purchase_delete" pk=recurring_purchase.id %}?next={{next|urlencode}}' class="button-delete button-delete-standalone">Delete</button>
 </div>
