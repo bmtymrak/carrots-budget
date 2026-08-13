@@ -44,3 +44,15 @@ class FrontendTemplateMarkupTests(SimpleTestCase):
                     if 'class="list-nav-icon"' in line:
                         self.assertIn('alt=""', line)
                         self.assertIn('aria-hidden="true"', line)
+
+    def test_modal_shell_has_dialog_and_close_semantics(self):
+        modal_shell = (
+            settings.BASE_DIR / "templates/_includes/modal_shell.html"
+        ).read_text()
+
+        self.assertIn('<dialog id="modal"', modal_shell)
+        self.assertIn('aria-label="Dialog"', modal_shell)
+        self.assertIn('closedby="any"', modal_shell)
+        self.assertNotIn('class="overlay', modal_shell)
+        self.assertIn('method="dialog"', modal_shell)
+        self.assertIn('aria-label="Close dialog"', modal_shell)

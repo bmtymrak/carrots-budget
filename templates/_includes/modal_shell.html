@@ -1,6 +1,7 @@
-<div class="overlay hidden">
-    <div id="modal" class="modal hidden">
-        <div id="modal-content">
-        </div>
+<dialog id="modal" class="modal" aria-label="Dialog" closedby="any">
+    <div id="modal-content">
     </div>
-</div>
+    <form method="dialog">
+        <button class="modal-close" type="submit" aria-label="Close dialog"><span aria-hidden="true">&times;</span></button>
+    </form>
+</dialog>

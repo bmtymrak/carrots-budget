@@ -1,56 +1,48 @@
 (function () {
+    const focusableSelector = [
+        "a[href]",
+        "button:not([disabled])",
+        'input:not([type="hidden"]):not([disabled])',
+        "select:not([disabled])",
+        "textarea:not([disabled])",
+        '[tabindex]:not([tabindex="-1"])',
+    ].join(", ")
+
     function initializeModal() {
         const modal = document.querySelector("#modal")
         const modalContent = document.querySelector("#modal-content")
-        const overlay = document.querySelector(".overlay")
 
-        if (!modal || !modalContent || !overlay || modal.dataset.jsInitialized) {
+        if (!modal || !modalContent || modal.dataset.jsInitialized) {
             return
         }
 
         modal.dataset.jsInitialized = "true"
 
-        function focusFirstModalElement() {
-            const firstInteractiveElement = modalContent.querySelector(
-                "input:not([type=\"hidden\"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex=\"-1\"])"
-            )
+        function updateAccessibleName() {
+            const heading = modalContent.querySelector("h1, h2, h3")
+            const headingText = heading && heading.textContent.trim()
 
-            if (firstInteractiveElement) {
-                firstInteractiveElement.focus()
-            }
-        }
-
-        function showModal() {
-            modal.classList.remove("hidden")
-            overlay.classList.remove("hidden")
-            modal.scrollTo(0, 0)
-        }
-
-        function closeModal() {
-            modal.classList.add("hidden")
-            overlay.classList.add("hidden")
+            modal.setAttribute("aria-label", headingText || "Dialog")
         }
 
         document.addEventListener("htmx:afterSwap", (event) => {
             const target = event.detail && event.detail.target
 
-            if (target && target.id === "modal-content") {
-                showModal()
-                focusFirstModalElement()
+            if (!target || target.id !== "modal-content") {
+                return
             }
-        })
 
-        overlay.addEventListener("click", (event) => {
-            const clickedOutside = !event.target.closest(".modal")
+            updateAccessibleName()
+            modal.scrollTo(0, 0)
 
-            if (clickedOutside) {
-                closeModal()
+            if (!modal.open) {
+                modal.showModal()
+                return
             }
-        })
 
-        window.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") {
-                closeModal()
+            const focusTarget = modalContent.querySelector(focusableSelector)
+            if (focusTarget) {
+                focusTarget.focus()
             }
         })
     }

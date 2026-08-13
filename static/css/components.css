@@ -464,31 +464,43 @@
     outline-offset: 4px;
 }
 
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 20px;
-}
-
 .modal {
-    display: block;
+    position: relative;
+    margin: auto;
+    border: 0;
     background-color: var(--color-page);
     border-radius: 20px;
-    padding: 20px 35px;
+    padding: 20px 48px 20px 35px;
     max-height: calc(100vh - 40px);
     max-width: calc(100vw - 40px);
     overflow-y: auto;
     overscroll-behavior: contain;
+}
+
+.modal::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    display: inline-grid;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 26px;
+    line-height: 1;
+    place-items: center;
+}
+
+.modal-close:hover {
+    background: var(--color-surface-muted);
 }
 
 .hidden {
