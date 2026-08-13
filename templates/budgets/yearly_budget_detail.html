@@ -29,6 +29,7 @@
 
 <div class="card-base">
     <h2>Summary</h2>
+    <div class="data-grid-scroll data-grid-scroll--summary" role="region" aria-label="Yearly budget summary data" tabindex="0">
     <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted</div>
         <div class="card-table-heading">Spent</div>
@@ -61,6 +62,7 @@
         <div class=""></div>
         <div class=""></div>
     </div>
+    </div>
     <h3>YTD</h3>
     <div class="month-select-container">
         <p>YTD Month Select:</p>
@@ -79,6 +81,7 @@
             <option value="12">December</option>
         </select>
     </div>
+    <div class="data-grid-scroll data-grid-scroll--summary" role="region" aria-label="Year-to-date budget summary data" tabindex="0">
     <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted YTD</div>
         <div class="card-table-heading">Spent YTD</div>
@@ -111,6 +114,7 @@
         <div class=""></div>
         <div class=""></div>
     </div>
+    </div>
 </div>
 
 <div class="card-container-horz">
@@ -120,6 +124,7 @@
             <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
             </div>
         </div>
+        <div class="data-grid-scroll data-grid-scroll--budget-yearly" role="region" aria-label="Yearly budget category data" tabindex="0">
         <div class="card-main">
             <div>
                 <div class="data-grid data-grid--budget-yearly card-table-header">
@@ -235,6 +240,7 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
   
 </div>
@@ -245,7 +251,8 @@
         <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
         </div>
     </div>
-    
+
+    <div class="data-grid-scroll data-grid-scroll--income" role="region" aria-label="Yearly income data" tabindex="0">
     <div class="data-grid data-grid--income card-table-header">
         <div class="card-table-heading">Amount</div>
         <div class="card-table-heading">Source</div>
@@ -269,9 +276,11 @@
         </div>
     {% endfor %}
     </div>
+    </div>
 </div>
 <div class="card-base">
     <h2>Uncategorized Purchases</h2>
+    <div class="data-grid-scroll data-grid-scroll--purchase" role="region" aria-label="Uncategorized purchase data" tabindex="0">
     <div class="data-grid data-grid--purchase data-grid--purchase-categories card-table-header">
         <div class="card-table-heading">Date</div>
         <div class="card-table-heading">Item</div>
@@ -299,6 +308,7 @@
     </div>
 
     {% endfor %}
+    </div>
 </div>
 
 </div>

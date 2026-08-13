@@ -27,6 +27,7 @@
         <p>Select recurring purchases to add for this month. You can edit values before adding.</p>
         {% endif %}
         
+        <div class="data-grid-scroll data-grid-scroll--recurring-add" role="region" aria-label="Recurring purchases available to add" tabindex="0">
         <div class="data-grid data-grid--recurring-add grid-cell-truncate card-table-header">
             <div class="card-table-heading">Select</div>
             <div class="card-table-heading">Item</div>
@@ -101,6 +102,7 @@
         </div>
         {% endif %}
         {% endfor %}
+        </div>
     </div>
 
     {% if all_already_added %}

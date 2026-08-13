@@ -14,6 +14,7 @@
 <div class="card-base">
     <h3>Existing Recurring Purchases</h3>
     {% if recurring_purchases %}
+    <div class="data-grid-scroll data-grid-scroll--recurring" role="region" aria-label="Existing recurring purchase data" tabindex="0">
     <div class="data-grid data-grid--recurring grid-cell-truncate card-table-header">
         <div class="card-table-heading">Item</div>
         <div class="card-table-heading">Amount</div>
@@ -37,6 +38,7 @@
         </div>
     </div>
     {% endfor %}
+    </div>
     {% else %}
     <p>No recurring purchases yet. Add one above!</p>
     {% endif %}

@@ -4,6 +4,58 @@
     display: grid;
 }
 
+.data-grid-scroll {
+    --data-grid-min-width: 100%;
+
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: 4px;
+}
+
+.data-grid-scroll:focus-visible {
+    border-radius: 7px;
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+.data-grid-scroll > .data-grid {
+    min-width: var(--data-grid-min-width);
+}
+
+.data-grid-scroll--summary {
+    --data-grid-min-width: 780px;
+}
+
+.data-grid-scroll--purchase {
+    --data-grid-min-width: 840px;
+}
+
+.data-grid-scroll--income {
+    --data-grid-min-width: 760px;
+}
+
+.data-grid-scroll--recurring {
+    --data-grid-min-width: 900px;
+}
+
+.data-grid-scroll--recurring-delete {
+    --data-grid-min-width: 650px;
+}
+
+.data-grid-scroll--recurring-add {
+    --data-grid-min-width: 1150px;
+}
+
+.data-grid-scroll--budget-monthly {
+    --data-grid-min-width: 700px;
+}
+
+.data-grid-scroll--budget-yearly .card-main {
+    min-width: 1100px;
+}
+
 /* Data grids, status messages, and modal spacing. */
 
 .data-grid--summary {
@@ -31,8 +83,8 @@
 }
 
 .data-grid--purchase div {
-    white-space: nowrap;
-    overflow: hidden;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .purchase-list-table-container {
@@ -107,8 +159,8 @@
 }
 
 .grid-cell-truncate:not(.recurring-add-cell)>div {
-    white-space: nowrap;
-    overflow: hidden;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .data-grid--recurring-add.already-added {
@@ -209,8 +261,8 @@
 }
 
 .data-grid--budget-yearly>div {
-    white-space: nowrap;
-    overflow: hidden;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 [data-tooltip]:before {
@@ -239,8 +291,8 @@
 }
 
 .data-grid--budget-monthly>div {
-    white-space: nowrap;
-    overflow: hidden;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 
