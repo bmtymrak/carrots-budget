@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup 4: Visual Yearly Budget - 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #fafafa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px 20px;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .month-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .month-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .month-btn:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background-color: #2a5298;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background-color: #1e3c72;
+            transform: translateY(-2px);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #1e3c72;
+            font-weight: 600;
+        }
+
+        .donut-chart {
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .donut-chart svg {
+            transform: rotate(-90deg);
+        }
+
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .donut-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .donut-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-text {
+            flex: 1;
+            font-size: 0.95em;
+        }
+
+        .legend-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .bar-chart {
+            margin: 20px 0;
+        }
+
+        .bar-item {
+            margin-bottom: 15px;
+        }
+
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .bar-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .bar-values {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .bar-container {
+            background-color: #e0e0e0;
+            height: 25px;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50 0%, #81c784 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            color: white;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .bar-fill.overspent {
+            background: linear-gradient(90deg, #e53935 0%, #ef5350 100%);
+        }
+
+        .bar-fill.warning {
+            background: linear-gradient(90deg, #ff9800 0%, #ffb74d 100%);
+        }
+
+        .trend-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 150px;
+            padding: 10px 0;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .trend-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #2a5298 0%, #1e3c72 100%);
+            margin: 0 3px;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .trend-bar:hover {
+            opacity: 0.8;
+        }
+
+        .trend-label {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .trend-month {
+            flex: 1;
+            text-align: center;
+            margin: 0 3px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+
+        .stat-value.positive {
+            color: #4caf50;
+        }
+
+        .stat-value.negative {
+            color: #e53935;
+        }
+
+        .category-visual {
+            display: grid;
+            gap: 15px;
+        }
+
+        .category-row {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .category-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .category-amount {
+            font-size: 1.2em;
+            font-weight: 700;
+        }
+
+        .mini-bar {
+            height: 12px;
+            background-color: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .mini-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50 0%, #81c784 100%);
+            transition: width 0.3s;
+        }
+
+        .mini-bar-fill.overspent {
+            background: linear-gradient(90deg, #e53935 0%, #ef5350 100%);
+        }
+
+        .category-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .ytd-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .ytd-selector select {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        .wide-card {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>📊 2025 Budget Analysis</h1>
+            <div class="month-selector">
+                <button class="month-btn">Jan</button>
+                <button class="month-btn">Feb</button>
+                <button class="month-btn">Mar</button>
+                <button class="month-btn">Apr</button>
+                <button class="month-btn">May</button>
+                <button class="month-btn">Jun</button>
+                <button class="month-btn">Jul</button>
+                <button class="month-btn">Aug</button>
+                <button class="month-btn">Sep</button>
+                <button class="month-btn">Oct</button>
+                <button class="month-btn">Nov</button>
+                <button class="month-btn">Dec</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="action-bar">
+            <button class="action-btn">+ Add Purchase</button>
+            <button class="action-btn">+ Add Income</button>
+            <button class="action-btn">+ Add Budget Item</button>
+            <button class="action-btn">🔄 Recurring Purchases</button>
+        </div>
+
+        <div class="dashboard">
+            <div class="chart-card">
+                <div class="chart-title">Budget Overview</div>
+                <div class="donut-chart">
+                    <svg width="250" height="250">
+                        <circle cx="125" cy="125" r="100" fill="none" stroke="#e0e0e0" stroke-width="40"/>
+                        <circle cx="125" cy="125" r="100" fill="none" stroke="#4caf50" stroke-width="40"
+                                stroke-dasharray="440 628" stroke-linecap="round"/>
+                        <circle cx="125" cy="125" r="100" fill="none" stroke="#2a5298" stroke-width="40"
+                                stroke-dasharray="188 628" stroke-dashoffset="-440" stroke-linecap="round"/>
+                    </svg>
+                    <div class="donut-center">
+                        <div class="donut-value">70%</div>
+                        <div class="donut-label">Allocated</div>
+                    </div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4caf50;"></div>
+                        <div class="legend-text">Spent</div>
+                        <div class="legend-value">$42,150</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #2a5298;"></div>
+                        <div class="legend-text">Saved</div>
+                        <div class="legend-value">$8,200</div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #e0e0e0;"></div>
+                        <div class="legend-text">Remaining</div>
+                        <div class="legend-value">$14,649</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">Key Metrics</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Total Income</div>
+                        <div class="stat-value">$65,000</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Budget</div>
+                        <div class="stat-value">$48,500</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Remaining</div>
+                        <div class="stat-value positive">$14,649</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Savings Rate</div>
+                        <div class="stat-value positive">17%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card wide-card">
+                <div class="chart-title">Monthly Spending Trend</div>
+                <div class="trend-chart">
+                    <div class="trend-bar" style="height: 75%;"></div>
+                    <div class="trend-bar" style="height: 80%;"></div>
+                    <div class="trend-bar" style="height: 70%;"></div>
+                    <div class="trend-bar" style="height: 85%;"></div>
+                    <div class="trend-bar" style="height: 65%;"></div>
+                    <div class="trend-bar" style="height: 78%;"></div>
+                    <div class="trend-bar" style="height: 82%;"></div>
+                    <div class="trend-bar" style="height: 71%;"></div>
+                    <div class="trend-bar" style="height: 76%;"></div>
+                    <div class="trend-bar" style="height: 69%;"></div>
+                    <div class="trend-bar" style="height: 73%;"></div>
+                    <div class="trend-bar" style="height: 50%;"></div>
+                </div>
+                <div class="trend-label">
+                    <div class="trend-month">J</div>
+                    <div class="trend-month">F</div>
+                    <div class="trend-month">M</div>
+                    <div class="trend-month">A</div>
+                    <div class="trend-month">M</div>
+                    <div class="trend-month">J</div>
+                    <div class="trend-month">J</div>
+                    <div class="trend-month">A</div>
+                    <div class="trend-month">S</div>
+                    <div class="trend-month">O</div>
+                    <div class="trend-month">N</div>
+                    <div class="trend-month">D</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom: 30px;">
+            <div class="ytd-selector">
+                <span style="font-weight: 600; color: #1e3c72;">Year-to-Date Through:</span>
+                <select>
+                    <option>January</option>
+                    <option>February</option>
+                    <option>March</option>
+                    <option selected>April</option>
+                    <option>May</option>
+                    <option>June</option>
+                    <option>July</option>
+                    <option>August</option>
+                    <option>September</option>
+                    <option>October</option>
+                    <option>November</option>
+                    <option>December</option>
+                </select>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Budgeted YTD</div>
+                    <div class="stat-value">$16,200</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Spent YTD</div>
+                    <div class="stat-value">$14,050</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Saved YTD</div>
+                    <div class="stat-value positive">$2,800</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Income YTD</div>
+                    <div class="stat-value">$21,667</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom: 30px;">
+            <div class="chart-title">Spending Categories</div>
+            <div class="bar-chart">
+                <div class="bar-item">
+                    <div class="bar-header">
+                        <div class="bar-label">🛒 Groceries</div>
+                        <div class="bar-values">$5,536 / $6,000</div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: 92%;">92%</div>
+                    </div>
+                </div>
+
+                <div class="bar-item">
+                    <div class="bar-header">
+                        <div class="bar-label">🏠 Rent</div>
+                        <div class="bar-values">$15,600 / $15,600</div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: 100%;">100%</div>
+                    </div>
+                </div>
+
+                <div class="bar-item">
+                    <div class="bar-header">
+                        <div class="bar-label">💡 Utilities</div>
+                        <div class="bar-values">$1,628 / $1,800</div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: 90%;">90%</div>
+                    </div>
+                </div>
+
+                <div class="bar-item">
+                    <div class="bar-header">
+                        <div class="bar-label">🚗 Transportation</div>
+                        <div class="bar-values">$4,050 / $3,600</div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill overspent" style="width: 100%;">113%</div>
+                    </div>
+                </div>
+
+                <div class="bar-item">
+                    <div class="bar-header">
+                        <div class="bar-label">🎬 Entertainment</div>
+                        <div class="bar-values">$1,875 / $2,400</div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: 78%;">78%</div>
+                    </div>
+                </div>
+
+                <div class="bar-item">
+                    <div class="bar-header">
+                        <div class="bar-label">🍽️ Dining Out</div>
+                        <div class="bar-values">$2,061 / $1,800</div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill overspent" style="width: 100%;">115%</div>
+                    </div>
+                </div>
+
+                <div class="bar-item">
+                    <div class="bar-header">
+                        <div class="bar-label">⚕️ Healthcare</div>
+                        <div class="bar-values">$975 / $1,200</div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: 81%;">81%</div>
+                    </div>
+                </div>
+
+                <div class="bar-item">
+                    <div class="bar-header">
+                        <div class="bar-label">💅 Personal Care</div>
+                        <div class="bar-values">$525 / $600</div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-fill" style="width: 88%;">88%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">Savings Goals Progress</div>
+            <div class="category-visual">
+                <div class="category-row">
+                    <div class="category-header">
+                        <div class="category-name">🚨 Emergency Fund</div>
+                        <div class="category-amount" style="color: #4caf50;">$6,000</div>
+                    </div>
+                    <div class="mini-bar">
+                        <div class="mini-bar-fill" style="width: 100%;"></div>
+                    </div>
+                    <div class="category-stats">
+                        <span>Goal: $6,000</span>
+                        <span style="color: #4caf50; font-weight: 600;">Complete ✓</span>
+                    </div>
+                </div>
+
+                <div class="category-row">
+                    <div class="category-header">
+                        <div class="category-name">✈️ Vacation</div>
+                        <div class="category-amount" style="color: #4caf50;">$3,000</div>
+                    </div>
+                    <div class="mini-bar">
+                        <div class="mini-bar-fill" style="width: 100%;"></div>
+                    </div>
+                    <div class="category-stats">
+                        <span>Goal: $3,000</span>
+                        <span style="color: #4caf50; font-weight: 600;">Complete ✓</span>
+                    </div>
+                </div>
+
+                <div class="category-row">
+                    <div class="category-header">
+                        <div class="category-name">🔨 Home Improvement</div>
+                        <div class="category-amount">$2,400</div>
+                    </div>
+                    <div class="mini-bar">
+                        <div class="mini-bar-fill" style="width: 67%;"></div>
+                    </div>
+                    <div class="category-stats">
+                        <span>Goal: $3,600</span>
+                        <span style="color: #ff9800; font-weight: 600;">67% Complete</span>
+                    </div>
+                </div>
+
+                <div class="category-row">
+                    <div class="category-header">
+                        <div class="category-name">👴 Retirement</div>
+                        <div class="category-amount" style="color: #4caf50;">$6,000</div>
+                    </div>
+                    <div class="mini-bar">
+                        <div class="mini-bar-fill" style="width: 100%;"></div>
+                    </div>
+                    <div class="category-stats">
+                        <span>Goal: $6,000</span>
+                        <span style="color: #4caf50; font-weight: 600;">Complete ✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
