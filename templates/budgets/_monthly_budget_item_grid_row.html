@@ -1,0 +1,15 @@
+{% url "budget_item_detail" year=year month=month category=budget_item.category.name as detail_url %}
+{% url "budgetitem_edit_htmx" year=year month=month category=budget_item.category.name as edit_url %}
+{% url "budget_item_delete" year=year month=month category=budget_item.category.name as delete_url %}
+<div class="data-grid data-grid--budget-monthly">
+    <div><a data-tooltip="{{ budget_item.category }}" href="{{ detail_url }}">{{ budget_item.category }}</a></div>
+    <div>${{ budget_item.amount|floatformat:"-2" }}</div>
+    <div>${{ activity_amount|floatformat:"-2" }}</div>
+    <div>${{ budget_item.diff|floatformat:"-2" }}</div>
+    <div>
+        <div class="edit-links-container">
+            {% include "_includes/icon_action.html" with action_label="Edit budget item" action_url=edit_url return_url=return_url icon_path="images/edit-pencil.svg" only %}
+            {% include "_includes/icon_action.html" with element="link" action_label="Delete budget item" action_url=delete_url icon_path="images/trash.svg" only %}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,48 @@
+/* Native dialog shell and modal-specific spacing utilities. */
+
+.modal-section-spacing {
+    margin-bottom: 1rem;
+}
+
+.modal-submit-spacing {
+    margin-top: 1rem;
+}
+
+.modal {
+    position: relative;
+    max-width: calc(100vw - var(--space-2xl));
+    max-height: calc(100vh - var(--space-2xl));
+    margin: auto;
+    padding: var(--space-xl) 48px var(--space-xl) 35px;
+    overflow-y: auto;
+    border: 0;
+    border-radius: var(--radius-xl);
+    background-color: var(--color-page);
+    overscroll-behavior: contain;
+}
+
+.modal::backdrop {
+    background: var(--color-backdrop);
+}
+
+.modal-close {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    display: inline-grid;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-round);
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 26px;
+    line-height: 1;
+    place-items: center;
+}
+
+.modal-close:hover {
+    background: var(--color-surface-muted);
+}

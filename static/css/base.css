@@ -1,6 +1,6 @@
 *:focus-visible {
     outline: var(--focus-ring-width) solid var(--color-focus);
-    outline-offset: 2px;
+    outline-offset: var(--focus-offset);
 }
 
 * {
@@ -9,17 +9,22 @@
 
 a {
     color: var(--color-text);
-    border-radius: 2px;
+    border-radius: var(--space-2xs);
 }
+
 body {
     color: var(--color-text);
 }
 
+.hidden {
+    display: none;
+}
+
 /* Global headings remain here until page-specific typography is introduced. */
 .page-title {
-    margin-left: 10px;
-    margin-top: 20px;
-    margin-bottom: 10px;
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+    margin-left: var(--space-md);
 }
 
 h1 {
@@ -28,7 +33,7 @@ h1 {
 }
 
 h2 {
-    margin: 0px 0px 5px 0px;
+    margin: 0 0 var(--space-sm);
     font-size: 24px;
-    margin-left: 5px;
+    margin-left: var(--space-sm);
 }

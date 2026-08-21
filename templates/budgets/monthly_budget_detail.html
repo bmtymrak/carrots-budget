@@ -1,5 +1,4 @@
 {% extends "_layouts/app.html" %}
-{% load static %}
 
 {% block header %}
     <h1 class="page-title">{{monthly_budget.date|date:"F Y"}}</h1>
@@ -67,21 +66,9 @@
             <div></div>
         </div>
 
-        <div class="data-grid data-grid--budget-monthly">
-            {% for budget_item in budget_items%}
-            <div><a data-tooltip="{{budget_item.category}}" href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'>{{budget_item.category}}</a></div>
-            <div>${{budget_item.amount|floatformat:"-2"}}</div>
-            <div>${{budget_item.spent|floatformat:"-2"}}</div>
-            <div>${{budget_item.diff|floatformat:"-2"}}</div>
-            <div>
-                <div class="edit-links-container">
-                    <button class="button-blank" type="button" aria-label="Edit {{ budget_item.category }} budget item" hx-get='{% url "budgetitem_edit_htmx" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17"></button>
-                    <a aria-label="Delete {{ budget_item.category }} budget item" href='{% url "budget_item_delete" year=monthly_budget.date.year month=monthly_budget.date.month category=budget_item.category.name %}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17"></a>
-                </div>
-            </div>
-
-            {% endfor %}
-        </div>
+        {% for budget_item in budget_items %}
+            {% include "budgets/_monthly_budget_item_grid_row.html" with budget_item=budget_item activity_amount=budget_item.spent year=monthly_budget.date.year month=monthly_budget.date.month return_url=request.path only %}
+        {% endfor %}
     {% if uncategorized_purchases.amount %}
         <div class="data-grid data-grid--budget-monthly">
             <div>Uncategorized</div>
@@ -106,20 +93,9 @@
             <div class="card-table-heading">Remaining</div>
             <div></div>
         </div>
-    <div class="data-grid data-grid--budget-monthly">
-        {% for savings_item in savings_items %}
-        <div><a href='{% url "budget_item_detail" year=monthly_budget.date.year month=monthly_budget.date.month category=savings_item.category.name %}'>{{savings_item.category}}</a></div>
-        <div>${{savings_item.amount|floatformat:"-2"}}</div>
-        <div>${{savings_item.saved|floatformat:"-2"}}</div>
-        <div>${{savings_item.diff|floatformat:"-2"}}</div>
-        <div>
-            <div class="edit-links-container">
-                <button class="button-blank" type="button" aria-label="Edit {{ savings_item.category }} budget item" hx-get='{% url "budgetitem_edit_htmx" year=monthly_budget.date.year month=monthly_budget.date.month category=savings_item.category.name %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17"></button>
-                <a aria-label="Delete {{ savings_item.category }} budget item" href='{% url "budget_item_delete" year=monthly_budget.date.year month=monthly_budget.date.month category=savings_item.category.name %}'><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17"></a>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
+    {% for budget_item in savings_items %}
+        {% include "budgets/_monthly_budget_item_grid_row.html" with budget_item=budget_item activity_amount=budget_item.saved year=monthly_budget.date.year month=monthly_budget.date.month return_url=request.path only %}
+    {% endfor %}
 
     <div class="data-grid data-grid--budget-monthly budget-subtotal">
         <div class="card-table-subtotal">Savings Totals</div>
@@ -145,63 +121,12 @@
             </div>
         </div>
 
-        <div class="data-grid-scroll data-grid-scroll--income" role="region" aria-label="Monthly income data" tabindex="0">
-        <div class="data-grid data-grid--income card-table-header">
-            <div class="card-table-heading">Amount</div>
-            <div class="card-table-heading">Source</div>
-            <div class="card-table-heading">Category</div>
-            <div class="card-table-heading">Date</div>
-            <div class="card-table-heading">Notes</div>
-            <div></div>
-        </div>
-        <div class="data-grid data-grid--income">
-            {% for income in incomes %}
-            <div>${{income.amount|floatformat:"-2"}}</div>
-            <div>{{income.source}}</div>
-            <div>{{income.category}}</div>
-            <div>{{income.date}}</div>
-            <div>{{income.notes}}</div>
-            <div>
-                <div class="edit-links-container">
-                    <button class="button-blank" type="button" aria-label="Edit income" hx-get='{% url "income_edit_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17"></button>
-                    <button class="button-blank" type="button" aria-label="Delete income" hx-get='{% url "income_delete_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17"></button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        </div>
+        {% include "purchases/_income_table.html" with incomes=incomes return_url=request.path aria_label="Monthly income data" only %}
     </div>
 </div>
 
 <div class="card-base">
     <h2>Purchases</h2>
-    <div class="data-grid-scroll data-grid-scroll--purchase" role="region" aria-label="Monthly purchase data" tabindex="0">
-    <div class="data-grid data-grid--purchase data-grid--purchase-categories card-table-header">
-        <div class="card-table-heading">Date</div>
-        <div class="card-table-heading">Item</div>
-        <div class="card-table-heading">Amount</div>
-        <div class="card-table-heading">Source</div>
-        <div class="card-table-heading">Location</div>
-        <div class="card-table-heading">Category</div>
-        <div class="card-table-heading"></div>
-    </div>
-
-    <div class="data-grid data-grid--purchase data-grid--purchase-categories">
-        {% for purchase in purchases %}
-        <div>{{purchase.date}}</div>
-        <div>{{purchase.item}}</div>
-        <div>${{purchase.amount|floatformat:"-2"}}</div>
-        <div>{{purchase.source}}</div>
-        <div>{{purchase.location}}</div>
-        <div>{{purchase.category}}</div>
-        <div>
-            <div class="edit-links-container">
-                <button class="button-blank" type="button" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17"></button>
-                <button class="button-blank" type="button" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17"></button>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    </div>
+    {% include "purchases/_purchase_table.html" with purchases=purchases show_category=True return_url=request.path aria_label="Monthly purchase data" only %}
 </div>
 {% endblock body %}

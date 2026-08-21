@@ -1,0 +1,37 @@
+{% if incomes %}
+<div class="financial-table-scroll" role="region" aria-label="{{ aria_label|default:'Income data' }}" tabindex="0">
+    <table class="financial-table financial-table--income">
+        <thead>
+            <tr>
+                <th scope="col">Amount</th>
+                <th scope="col">Source</th>
+                <th scope="col">Category</th>
+                <th scope="col">Date</th>
+                <th scope="col">Notes</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for income in incomes %}
+            {% url "income_edit_htmx" pk=income.id as income_edit_url %}
+            {% url "income_delete_htmx" pk=income.id as income_delete_url %}
+            <tr>
+                <td>${{ income.amount|floatformat:"-2" }}</td>
+                <td>{{ income.source }}</td>
+                <td>{{ income.category }}</td>
+                <td>{{ income.date }}</td>
+                <td>{{ income.notes }}</td>
+                <td class="financial-table-actions">
+                    <div class="edit-links-container">
+                        {% include "_includes/icon_action.html" with action_label="Edit income" action_url=income_edit_url return_url=return_url icon_path="images/edit-pencil.svg" only %}
+                        {% include "_includes/icon_action.html" with action_label="Delete income" action_url=income_delete_url return_url=return_url icon_path="images/trash.svg" only %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p>{{ empty_message|default:"No income recorded." }}</p>
+{% endif %}

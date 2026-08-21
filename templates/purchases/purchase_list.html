@@ -1,5 +1,4 @@
 {% extends "_layouts/app.html" %}
-{% load static %}
 
 
 
@@ -51,39 +50,7 @@
     </div>
 </form>
 
-<div class="purchase-list-table-container">
-    <table class="purchase-list-table">
-        <thead>
-            <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Item</th>
-                <th scope="col">Amount</th>
-                <th scope="col">Source</th>
-                <th scope="col">Location</th>
-                <th scope="col">Category</th>
-                <th scope="col">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for purchase in purchases %}
-            <tr>
-                <td>{{purchase.date}}</td>
-                <td>{{purchase.item}}</td>
-                <td>{{purchase.amount}}</td>
-                <td>{{purchase.source}}</td>
-                <td>{{purchase.location}}</td>
-                <td>{{purchase.category}}</td>
-                <td class="purchase-list-actions">
-                    <div class="edit-links-container">
-                        <button class="button-blank" type="button" aria-label="Edit purchase" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{purchase_list_return_url|urlencode:""}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" alt="" aria-hidden="true" width="17"></button>
-                        <button class="button-blank" type="button" aria-label="Delete purchase" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{purchase_list_return_url|urlencode:""}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" alt="" aria-hidden="true" width="17"></button>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+{% include "purchases/_purchase_table.html" with purchases=purchases show_category=True return_url=purchase_list_return_url encode_slashes=True wide=True aria_label="Purchase list data" only %}
 
 {% if is_paginated %}
 <nav class="purchase-pagination" aria-label="Purchase list pagination">

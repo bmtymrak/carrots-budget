@@ -7,8 +7,36 @@
     --color-text: #000000;
     --color-muted: #607169;
     --color-border: #d1d5db;
+    --color-border-subtle: #d8e0e3;
     --color-danger: #b9413d;
+    --color-danger-strong: #842029;
+    --color-danger-surface: #f8d7da;
+    --color-danger-hover: rgb(149, 44, 44);
     --color-success: #237654;
+    --color-success-bright: #28a745;
+    --color-success-surface: #d4edda;
+    --color-budget-accent: #4ca971;
+    --color-disabled-surface: #f8f9fa;
+    --color-receipt-surface: #f8faf9;
+    --color-backdrop: rgb(0 0 0 / 50%);
+    --color-card-shadow: rgb(0 0 0 / 10%);
+    --space-2xs: 2px;
+    --space-xs: 4px;
+    --space-sm: 5px;
+    --space-md: 10px;
+    --space-lg: 15px;
+    --space-xl: 20px;
+    --space-2xl: 40px;
+    --radius-xs: 4px;
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 20px;
+    --radius-round: 999px;
+    --shadow-card: 2px 2px 10px var(--color-card-shadow);
+    --content-max-width: 1050px;
+    --wide-form-width: 1000px;
     --focus-ring-width: 3px;
-
+    --focus-offset: 2px;
+    --focus-offset-roomy: 4px;
 }

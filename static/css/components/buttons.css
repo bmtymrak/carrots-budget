@@ -1,0 +1,69 @@
+/* Shared action-button and icon-action treatments. */
+
+.delete-single-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: var(--space-xl);
+}
+
+.button-delete {
+    width: fit-content;
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-danger);
+    color: var(--color-surface);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.button-delete:hover {
+    border-color: var(--color-danger-hover);
+    background-color: var(--color-danger-hover);
+}
+
+.button-delete:focus-visible,
+.button-create:focus-visible {
+    outline-offset: var(--focus-offset-roomy);
+}
+
+.button-delete-standalone {
+    margin-top: var(--space-xl);
+}
+
+.button-blank {
+    display: inline-grid;
+    place-items: center;
+    padding: var(--space-2xs);
+    border: 0;
+    border-radius: var(--radius-xs);
+    background-color: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.button-blank:focus-visible {
+    outline-offset: var(--focus-offset);
+}
+
+.button-budget {
+    width: fit-content;
+    margin-left: var(--space-2xl);
+}
+
+.button-create {
+    height: 100%;
+    padding-right: var(--space-md);
+    padding-left: var(--space-md);
+    border: 0;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-brand);
+    color: var(--color-surface);
+}
+
+.edit-links-container {
+    display: flex;
+    justify-content: space-around;
+}

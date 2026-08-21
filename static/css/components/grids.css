@@ -1,0 +1,241 @@
+/* Shared financial grid/table primitives and family-specific column contracts. */
+
+.data-grid {
+    display: grid;
+}
+
+.data-grid-scroll {
+    --data-grid-min-width: 100%;
+
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: var(--space-xs);
+}
+
+.data-grid-scroll:focus-visible {
+    border-radius: var(--radius-md);
+    outline: var(--focus-ring-width) solid var(--color-focus);
+    outline-offset: var(--focus-offset);
+}
+
+.data-grid-scroll > .data-grid {
+    min-width: var(--data-grid-min-width);
+}
+
+.data-grid-scroll--summary {
+    --data-grid-min-width: 780px;
+}
+
+.data-grid-scroll--purchase {
+    --data-grid-min-width: 840px;
+}
+
+.data-grid-scroll--recurring {
+    --data-grid-min-width: 900px;
+}
+
+.data-grid-scroll--recurring-delete {
+    --data-grid-min-width: 650px;
+}
+
+.data-grid-scroll--recurring-add {
+    --data-grid-min-width: 1150px;
+}
+
+.data-grid-scroll--budget-monthly {
+    --data-grid-min-width: 700px;
+}
+
+.data-grid-scroll--budget-yearly .card-main {
+    min-width: 1100px;
+}
+
+.data-grid--summary {
+    grid-template-columns: repeat(6, 1fr);
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+}
+
+.data-grid--purchase {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr .75fr;
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+    column-gap: var(--space-md);
+    row-gap: var(--space-sm);
+}
+
+.data-grid--purchase-delete {
+    grid-template-columns: repeat(6, 1fr);
+}
+
+.data-grid--purchase > div,
+.data-grid--budget-yearly > div,
+.data-grid--budget-monthly > div,
+.grid-cell-truncate:not(.recurring-add-cell) > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.financial-table-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: var(--space-xs);
+}
+
+.financial-table-scroll:focus-visible {
+    border-radius: var(--radius-md);
+    outline: var(--focus-ring-width) solid var(--color-focus);
+    outline-offset: var(--focus-offset);
+}
+
+.financial-table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: collapse;
+}
+
+.financial-table--purchase-categories {
+    min-width: 840px;
+}
+
+.financial-table--income {
+    min-width: 760px;
+}
+
+.financial-table--wide {
+    min-width: 900px;
+}
+
+.financial-table th,
+.financial-table td {
+    padding: var(--space-sm) var(--space-md);
+    text-align: left;
+    vertical-align: top;
+}
+
+.financial-table thead th {
+    background-color: var(--color-surface-muted);
+}
+
+.financial-table thead th:first-child {
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.financial-table thead th:last-child {
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.financial-table th:first-child,
+.financial-table td:first-child {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.financial-table tbody tr {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.financial-table td {
+    overflow-wrap: anywhere;
+}
+
+.financial-table-actions {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.data-grid--recurring {
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr .75fr 100px;
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+    column-gap: var(--space-md);
+    row-gap: var(--space-sm);
+}
+
+.data-grid--recurring-delete {
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+    column-gap: var(--space-md);
+    row-gap: var(--space-sm);
+}
+
+.data-grid--recurring-add {
+    grid-template-columns: 60px 1.2fr 140px 90px 110px 110px 130px 110px 80px;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+    column-gap: var(--space-md);
+    row-gap: var(--space-sm);
+}
+
+.data-grid--recurring-add.already-added {
+    opacity: 0.6;
+    background-color: var(--color-disabled-surface);
+}
+
+.recurring-add-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+    overflow: visible;
+    white-space: normal;
+}
+
+.recurring-add-label-cell,
+.recurring-add-status-cell {
+    justify-content: center;
+}
+
+.data-grid--budget-yearly {
+    grid-template-columns: repeat(7, 1fr) 75px;
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+    row-gap: var(--space-sm);
+}
+
+.data-grid--budget-monthly {
+    grid-template-columns: repeat(4, 1fr) 100px;
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+    row-gap: var(--space-sm);
+}
+
+.budget-monthly-single-col {
+    margin-bottom: var(--space-md);
+}
+
+.budget-subtotal {
+    padding: var(--space-sm);
+    border-top: 2px solid var(--color-budget-accent);
+}
+
+.budget-totals {
+    border: 3px solid var(--color-budget-accent);
+    background-color: color-mix(in srgb, var(--color-budget-accent) 21%, transparent);
+}
+
+.rollover-items-grid {
+    display: grid;
+    gap: var(--space-sm);
+    justify-items: center;
+}
+
+[data-tooltip]::before {
+    position: absolute;
+    display: none;
+    opacity: 0;
+    content: attr(data-tooltip);
+    transition: opacity 0.05s ease;
+}
+
+[data-tooltip]:hover::before {
+    display: block;
+    opacity: 1;
+    background: var(--color-surface);
+}

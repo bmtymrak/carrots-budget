@@ -9,9 +9,7 @@
 .app-sidebar {
     flex: 0 0 175px;
     background-color: var(--color-brand);
-    padding-right: 20px;
-    padding-left: 20px;
-    padding-top: 15px;
+    padding: var(--space-lg) var(--space-xl) 0;
 }
 
 .app-main {
@@ -28,23 +26,23 @@
 
 .nav-list {
     list-style-type: none;
-    padding-left: 0px;
+    padding-left: 0;
 }
 
 .nav-list>li {
-    padding: 5px 5px 5px 0;
+    padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
 }
 
 .nav-list>li>a {
     text-decoration: none;
     color: white;
     font-weight: bold;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
 }
 
 .nav-list>li>a:focus-visible {
     outline-color: white;
-    outline-offset: 4px;
+    outline-offset: var(--focus-offset-roomy);
 }
 
 .nav-list-action {
@@ -53,10 +51,10 @@
 
 .sidebar-action {
     width: fit-content;
-    padding: 5px 8px;
-    border: 2px solid white;
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--color-surface);
     border-radius: 6px;
-    background-color: white;
+    background-color: var(--color-surface);
     color: var(--color-success);
     cursor: pointer;
     font: inherit;
@@ -70,7 +68,7 @@
 
 .sidebar-action:focus-visible {
     outline-color: white;
-    outline-offset: 4px;
+    outline-offset: var(--focus-offset-roomy);
 }
 
 .logo-sidebar-container {
@@ -80,7 +78,7 @@
 }
 
 .logo-sidebar-text {
-    color: white;
+    color: var(--color-surface);
     font-size: 24px;
     font-weight: 800;
 }
@@ -96,9 +94,9 @@
 .month-nav-container {
     display: flex;
     justify-content: space-around;
-    gap: 10px;
+    gap: var(--space-md);
     width: 100%;
-    max-width: 1050px;
+    max-width: var(--content-max-width);
     overflow-x: auto;
 }
 
@@ -107,20 +105,20 @@
     flex-direction: column;
     margin: auto;
     align-items: center;
-    padding-left: 10px;
+    padding-left: var(--space-md);
 
 }
 
 .content {
-    max-width: 1050px;
+    max-width: var(--content-max-width);
     width: 100%;
-    padding: 0 10px;
+    padding: 0 var(--space-md);
 }
 
-@media (max-width: 768px) {
+@media (width <= 48rem) {
     .content {
         max-width: 100%;
-        padding: 0 5px;
+        padding: 0 var(--space-sm);
     }
 }
 
@@ -128,13 +126,13 @@
     flex-basis: 0;
     flex-grow: 999;
     min-width: 50%;
-    padding: 15px 20px 0;
+    padding: var(--space-lg) var(--space-xl) 0;
     background-color: var(--color-page);
 }
 
-@media (max-width: 768px) {
+@media (width <= 48rem) {
     .public-main {
-        padding: 10px 20px;
+        padding: var(--space-md) var(--space-xl);
     }
 }
 
@@ -142,7 +140,7 @@
     display: flex;
     justify-content: center;
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: var(--space-md);
 
 }
 
@@ -150,7 +148,77 @@
     display: flex;
     align-items: center;
     justify-content: space-around;
-    margin-bottom: 5px;
-    border-radius: 10px;
-    margin-top: 20px;
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-sm);
+    border-radius: var(--radius-lg);
+}
+
+.grow {
+    flex-grow: 1;
+}
+
+.return-link {
+    margin-left: var(--space-md);
+    color: var(--color-text);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.menu-toggle {
+    display: none;
+}
+
+.menu-toggle:focus-visible {
+    outline-color: var(--color-surface);
+    outline-offset: var(--focus-offset-roomy);
+}
+
+@media (width <= 48rem) {
+    .main-container {
+        flex-direction: column;
+    }
+
+    .app-sidebar {
+        flex-basis: auto;
+        padding: var(--space-md) var(--space-xl);
+    }
+
+    .logo-sidebar-container {
+        justify-content: space-between;
+    }
+
+    .menu-toggle {
+        display: block;
+        border: 0;
+        background: none;
+        color: var(--color-surface);
+        cursor: pointer;
+        font-size: 24px;
+    }
+
+    #primary-nav {
+        display: none;
+        margin-top: var(--space-md);
+        padding: var(--space-md);
+        border-radius: var(--radius-lg);
+        background-color: var(--color-brand);
+    }
+
+    #primary-nav.nav-open {
+        display: block;
+    }
+
+    .nav-list > li {
+        padding: var(--space-md) 0;
+    }
+
+    .nav-list > li > a {
+        display: block;
+        padding: var(--space-md);
+        border-radius: var(--radius-sm);
+    }
+
+    .nav-list > li > a:hover {
+        background-color: rgb(255 255 255 / 10%);
+    }
 }

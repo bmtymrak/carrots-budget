@@ -86,7 +86,7 @@
     background-color: var(--color-surface-muted);
 }
 
-@media (max-width: 768px) {
+@media (width <= 48rem) {
     .purchase-filter-search {
         grid-column: span 1;
     }
@@ -138,11 +138,6 @@
     height: 50px;
     font-weight: bold;
     font-size: 20px;
-}
-
-.edit-links-container {
-    display: flex;
-    justify-content: space-around;
 }
 
 .purchase-pagination {
