@@ -18,7 +18,7 @@
 {% endblock heading_nav %}
 
 {% block body %}
-<div id="yearly-budget-detail" data-behavior="yearly-budget-detail" data-rollover-url="{% url "rollover_update" %}" data-year="{{ yearly_budget.date.year }}" data-ytd-path="{{ request.path }}" data-ytd-month="{{ request.GET.ytd|default:"" }}">
+<div id="yearly-budget-detail" data-behavior="yearly-budget-detail" data-rollover-url="{% url "rollover_update" %}" data-year="{{ yearly_budget.date.year }}" data-ytd-path="{{ request.path }}" data-ytd-month="{{ ytd_month }}">
 <div class="page-header-action">
     <button class="button-create" type="button" hx-get='{% url "purchase_create" %}?date={{yearly_budget.date.year}}-01-01&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
     <button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>

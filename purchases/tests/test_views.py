@@ -6,7 +6,6 @@ from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
-from django.test import override_settings
 from decimal import Decimal
 
 from purchases.models import Category, Purchase, Income, RecurringPurchase, Receipt
@@ -17,12 +16,6 @@ from .factories import (
     SubcategoryFactory,
     RecurringPurchaseFactory,
 )
-
-TEST_STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-}
-
 
 User = get_user_model()
 
@@ -55,6 +48,7 @@ class PurchaseViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["next"], reverse("purchase_list"))
+        self.assertContains(response, "<h2>Add a Purchase</h2>", html=True)
 
     def test_purchase_create_rejects_external_next_url(self):
         response = self.client.get(
@@ -88,10 +82,19 @@ class PurchaseViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["HX-Redirect"], reverse("purchase_list"))
 
-    def test_sidebar_purchase_button_opens_modal_with_return_path(self):
-        response = self.client.get(reverse("purchase_list"))
-        return_path = quote(reverse("purchase_list"), safe="")
-        purchase_url = f'{reverse("purchase_create")}?next={return_path}'
+    def test_sidebar_purchase_button_preserves_full_return_url(self):
+        response = self.client.get(
+            reverse("purchase_list"),
+            {
+                "search": "coffee & bagels",
+                "purchase_date_from": "2026-01-01",
+            },
+        )
+        return_url = response.context["request"].get_full_path()
+        encoded_return_url = quote(return_url, safe="")
+        purchase_url = (
+            f'{reverse("purchase_create")}?next={encoded_return_url}'
+        )
 
         self.assertContains(
             response,
@@ -103,6 +106,12 @@ class PurchaseViewTests(TestCase):
             html=True,
         )
         self.assertNotContains(response, f"href='{purchase_url}'", html=False)
+
+        purchase_form_response = self.client.get(
+            reverse("purchase_create"),
+            {"next": return_url},
+        )
+        self.assertEqual(purchase_form_response.context["next"], return_url)
 
         content = response.content.decode()
         self.assertLess(content.index("Purchase List</a>"), content.index("Add a Purchase</button>"))
@@ -622,6 +631,33 @@ class IncomeViewTests(TestCase):
         )
         self.client.login(username='testuser', password='testpass123')
         self.category = CategoryFactory(user=self.user)
+
+    def test_income_create_fragment_has_descriptive_heading(self):
+        response = self.client.get(
+            reverse("income_create"),
+            {"next": reverse("yearly_list")},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "<h2>Add Income</h2>", html=True)
+
+    def test_income_edit_fragment_has_descriptive_heading(self):
+        income = Income.objects.create(
+            user=self.user,
+            amount=Decimal("5000.00"),
+            date=datetime.date.today(),
+            source="Test Employer",
+            payer="Test Payer",
+            category=self.category,
+        )
+
+        response = self.client.get(
+            reverse("income_edit_htmx", kwargs={"pk": income.pk}),
+            {"next": reverse("yearly_list")},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "<h2>Edit Income</h2>", html=True)
 
     def test_income_create_view(self):
         response = self.client.post(

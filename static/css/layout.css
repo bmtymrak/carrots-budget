@@ -178,6 +178,12 @@
         flex-direction: column;
     }
 
+    .app-main {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
     .app-sidebar {
         flex-basis: auto;
         padding: var(--space-md) var(--space-xl);
