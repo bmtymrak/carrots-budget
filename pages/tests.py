@@ -34,13 +34,16 @@ class FrontendTemplateMarkupTests(SimpleTestCase):
                     self.assertRegex(image, r"\balt=(['\"]).*?\1")
                     self.assertNotRegex(image, r'\bwidth="\d+px"')
 
-    def test_icon_action_buttons_are_explicitly_labelled(self):
+    def test_icon_action_controls_are_explicitly_labelled(self):
         for template_name, source in self.template_sources():
             with self.subTest(template=template_name):
                 for line in source.splitlines():
                     if 'class="button-blank"' in line:
-                        self.assertIn('type="button"', line)
                         self.assertIn("aria-label=", line)
+                        if "<button" in line:
+                            self.assertIn('type="button"', line)
+                        if "<a" in line:
+                            self.assertIn("href=", line)
                     if 'class="list-nav-icon"' in line:
                         self.assertIn('alt=""', line)
                         self.assertIn('aria-hidden="true"', line)
