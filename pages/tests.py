@@ -27,6 +27,11 @@ class FrontendTemplateMarkupTests(SimpleTestCase):
                     if "<button" in line:
                         self.assertNotIn("</a>", line)
 
+    def test_templates_do_not_use_empty_class_attributes(self):
+        for template_name, source in self.template_sources():
+            with self.subTest(template=template_name):
+                self.assertNotRegex(source, r"\bclass=(['\"])\s*\1")
+
     def test_template_images_define_alternative_text(self):
         for template_name, source in self.template_sources():
             with self.subTest(template=template_name):
