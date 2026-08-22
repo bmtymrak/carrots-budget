@@ -1,0 +1,39 @@
+{% if purchases %}
+<div class="financial-table-scroll" role="region" aria-label="{{ aria_label|default:'Purchase data' }}" tabindex="0">
+    <table class="financial-table financial-table--purchase{% if show_category %} financial-table--purchase-categories{% endif %}{% if wide %} financial-table--wide{% endif %}">
+        <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Item</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Source</th>
+                <th scope="col">Location</th>
+                {% if show_category %}<th scope="col">Category</th>{% endif %}
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+            {% url "purchase_edit_htmx" pk=purchase.id as purchase_edit_url %}
+            {% url "purchase_delete_htmx" pk=purchase.id as purchase_delete_url %}
+            <tr>
+                <td>{{ purchase.date }}</td>
+                <td>{{ purchase.item }}</td>
+                <td>${{ purchase.amount|floatformat:"-2" }}</td>
+                <td>{{ purchase.source }}</td>
+                <td>{{ purchase.location }}</td>
+                {% if show_category %}<td>{{ purchase.category }}</td>{% endif %}
+                <td class="financial-table-actions">
+                    <div class="edit-links-container">
+                        {% include "_includes/icon_action.html" with action_label="Edit purchase" action_url=purchase_edit_url return_url=return_url encode_slashes=encode_slashes icon_path="images/edit-pencil.svg" only %}
+                        {% include "_includes/icon_action.html" with action_label="Delete purchase" action_url=purchase_delete_url return_url=return_url encode_slashes=encode_slashes icon_path="images/trash.svg" only %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p>{{ empty_message|default:"No purchases found." }}</p>
+{% endif %}

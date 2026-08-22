@@ -1,7 +1,8 @@
 <div>
     <h2>Confirm Delete</h2>
     <div class="card-base">
-        <div class="purchase-horizontal-grid card-table-header">
+        <div class="data-grid-scroll data-grid-scroll--purchase" role="region" aria-label="Income being deleted" tabindex="0">
+        <div class="data-grid data-grid--purchase card-table-header">
             <div class="card-table-heading">Date</div>
             <div class="card-table-heading">Source</div>
             <div class="card-table-heading">Amount</div>
@@ -10,7 +11,7 @@
             <div class="card-table-heading"></div>
         </div>
 
-        <div class="purchase-horizontal-grid">
+        <div class="data-grid data-grid--purchase">
             <div>{{income.date}}</div>
             <div>{{income.source}}</div>
             <div>${{income.amount}}</div>
@@ -18,7 +19,8 @@
             <div>{{income.notes}}</div>
             <div></div>
         </div>
+        </div>
     </div>
 
-    <button hx-delete='{% url "income_delete_htmx" pk=income.id %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
+    <button type="button" hx-delete='{% url "income_delete_htmx" pk=income.id %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
 </div>

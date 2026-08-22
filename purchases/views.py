@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import (
     ListView,
     CreateView,
@@ -193,9 +194,19 @@ def income_delete_htmx(request, pk):
 
 @login_required
 def purchase_create(request):
+    submitted_next = (
+        request.POST.get("next") if request.method == "POST" else request.GET.get("next")
+    )
+    if submitted_next and url_has_allowed_host_and_scheme(
+        submitted_next,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        next_url = submitted_next
+    else:
+        next_url = reverse("purchase_list")
 
     if request.method == "POST":
-        next = request.POST.get("next")
         formset_data = request.POST.copy()  # Makes Querydict mutable
         formset_date = formset_data["form-0-date"]
 
@@ -218,14 +229,12 @@ def purchase_create(request):
         if purchase_formset.is_valid():
             instances = purchase_formset.save(commit=False)
             if not instances:
-                return HttpResponseClientRedirect(next)
+                return HttpResponseClientRedirect(next_url)
 
             save_purchases_with_receipts(request.user, instances)
-            return HttpResponseClientRedirect(next)
+            return HttpResponseClientRedirect(next_url)
 
     if request.method == "GET":
-        next = request.GET["next"]
-        
         # Check if a date is provided as a query parameter
         date_param = request.GET.get("date")
         if date_param:
@@ -245,7 +254,7 @@ def purchase_create(request):
     return render(
         request,
         "purchases/purchase_create.html",
-        {"purchase_formset": purchase_formset, "next": next},
+        {"purchase_formset": purchase_formset, "next": next_url},
     )
 
 

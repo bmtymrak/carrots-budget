@@ -1,19 +1,22 @@
-{% extends "_base.html" %}
+{% extends "_layouts/public.html" %}
 {% load i18n %}
 
-{% block header %}
-<h1>Sign Up</h1>
-{% endblock header %}
-
+{% block title %}{% trans "Sign Up" %} · {{ block.super }}{% endblock title %}
 
 {% block body %}
-    <form class="signup form-grid" id="signup_form" method="post" action="{% url 'account_signup' %}">
-        {% csrf_token %}
-        {{ form.as_p }}
-        {% if redirect_field_value %}
-        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-        {% endif %}
-        <button type="submit">{% trans "Sign Up" %} &raquo;</button>
-    </form>
-
+<div class="auth-page">
+    <section class="card-base auth-card" aria-labelledby="signup-title">
+        <h1 class="auth-title" id="signup-title">{% trans "Sign Up" %}</h1>
+        <form class="signup form-grid auth-form" id="signup_form" method="post" action="{% url 'account_signup' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+            {% endif %}
+            <div class="auth-actions">
+                <button class="auth-primary-action" type="submit">{% trans "Sign Up" %}</button>
+            </div>
+        </form>
+    </section>
+</div>
 {% endblock body %}

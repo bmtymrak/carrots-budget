@@ -1,0 +1,173 @@
+/* Shared form layouts, editable financial controls, alerts, and receipt forms. */
+
+.field-error-text {
+    color: var(--color-danger);
+    font-size: 0.85rem;
+    line-height: 1.2;
+    white-space: normal;
+}
+
+.recurring-input-date {
+    width: 130px;
+}
+
+.recurring-input-amount {
+    width: 80px;
+}
+
+.recurring-input-source,
+.recurring-input-location,
+.recurring-input-notes {
+    width: 100px;
+}
+
+.recurring-input-category {
+    width: 120px;
+}
+
+.alert-success-box,
+.alert-danger-box {
+    margin-bottom: var(--space-md);
+    padding: var(--space-md);
+    border-radius: var(--radius-sm);
+}
+
+.alert-success-box {
+    background-color: var(--color-success-surface);
+}
+
+.alert-danger-box {
+    background-color: var(--color-danger-surface);
+    color: var(--color-danger-strong);
+}
+
+.status-added {
+    color: var(--color-success-bright);
+}
+
+.status-pending {
+    color: var(--color-muted);
+}
+
+#purchase-form-container {
+    width: var(--wide-form-width);
+    max-width: 100%;
+}
+
+@media (width <= 48rem) {
+    #purchase-form-container {
+        width: 100%;
+    }
+}
+
+.purchase-form {
+    display: grid;
+    grid-template-columns: 135px repeat(8, 1fr);
+    max-width: 100%;
+}
+
+.purchase-form input,
+.purchase-form select,
+.purchase-form textarea {
+    width: 90%;
+}
+
+.rollover-edit {
+    width: 75px;
+    padding: 0;
+    border: 0;
+    font-size: 16px;
+}
+
+.rollover-save-error {
+    margin: 0 0 var(--space-md);
+    padding: var(--space-md) var(--space-md);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-xs);
+    background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+    color: var(--color-danger);
+    font-weight: 700;
+}
+
+.rollover-edit[data-save-state="error"] {
+    outline: 2px solid var(--color-danger);
+    outline-offset: var(--focus-offset);
+}
+
+.month-select-container {
+    display: flex;
+    margin-bottom: var(--space-sm);
+}
+
+.form-grid {
+    display: grid;
+    max-width: 400px;
+    margin: auto;
+    row-gap: var(--space-sm);
+}
+
+.budgetitem-bulk-form {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    margin: auto;
+}
+
+.budgetitem-bulk-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.receipt-edit-form {
+    display: grid;
+    gap: 1rem;
+    width: var(--wide-form-width);
+    max-width: 100%;
+    margin: auto;
+}
+
+.receipt-details,
+.receipt-purchase-editor {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0.9rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.receipt-details legend,
+.receipt-purchase-editor legend {
+    padding: 0 0.35rem;
+    font-weight: 700;
+}
+
+.receipt-details input,
+.receipt-details select,
+.receipt-details textarea,
+.receipt-purchase-editor input,
+.receipt-purchase-editor select,
+.receipt-purchase-editor textarea {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.receipt-items {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.receipt-items h3,
+.receipt-total {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.receipt-purchase-editor {
+    background: var(--color-receipt-surface);
+}
+
+.receipt-total {
+    font-weight: 700;
+    text-align: right;
+}

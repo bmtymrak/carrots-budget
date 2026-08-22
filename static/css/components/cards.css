@@ -1,0 +1,58 @@
+/* Reusable card shells and financial table presentation. */
+
+.card-base {
+    width: 100%;
+    max-width: 100%;
+    margin-top: var(--space-xl);
+    padding: var(--space-lg);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+.card-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.card-header-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-sm);
+    border-radius: var(--radius-lg);
+}
+
+.card-header-action > a {
+    color: var(--color-surface);
+    text-decoration: none;
+}
+
+.card-main {
+    display: flex;
+}
+
+.card-container-horz {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;
+}
+
+.card-table-header {
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-muted);
+}
+
+.card-table-heading {
+    margin: var(--space-sm);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.card-table-subtotal {
+    margin: var(--space-2xs) var(--space-sm);
+    font-size: 16px;
+    font-weight: 600;
+}

@@ -1,0 +1,6 @@
+{% load static %}
+{% if element == "link" %}
+<a class="button-blank" aria-label="{{ action_label }}" href="{{ action_url }}{% if return_url %}?next={% if encode_slashes %}{{ return_url|urlencode:"" }}{% else %}{{ return_url|urlencode }}{% endif %}{% endif %}"><img class="list-nav-icon" src="{% static icon_path %}" alt="" aria-hidden="true" width="17"></a>
+{% else %}
+<button class="button-blank" type="button" aria-label="{{ action_label }}" hx-get='{{ action_url }}{% if return_url %}?next={% if encode_slashes %}{{ return_url|urlencode:"" }}{% else %}{{ return_url|urlencode }}{% endif %}{% endif %}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static icon_path %}" alt="" aria-hidden="true" width="17"></button>
+{% endif %}

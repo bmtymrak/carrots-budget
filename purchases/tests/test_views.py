@@ -6,7 +6,6 @@ from django.test import TestCase, Client, override_settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
-from django.test import override_settings
 from decimal import Decimal
 
 from purchases.models import Category, Purchase, Income, RecurringPurchase, Receipt
@@ -17,12 +16,6 @@ from .factories import (
     SubcategoryFactory,
     RecurringPurchaseFactory,
 )
-
-TEST_STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-}
-
 
 User = get_user_model()
 
@@ -49,6 +42,80 @@ class PurchaseViewTests(TestCase):
         self.client.login(username='testuser', password='testpass123')
         self.category = CategoryFactory(user=self.user)
         self.subcategory = SubcategoryFactory(user=self.user)
+
+    def test_purchase_create_get_without_next_uses_purchase_list(self):
+        response = self.client.get(reverse("purchase_create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["next"], reverse("purchase_list"))
+        self.assertContains(response, "<h2>Add a Purchase</h2>", html=True)
+
+    def test_purchase_create_rejects_external_next_url(self):
+        response = self.client.get(
+            reverse("purchase_create"),
+            {"next": "https://example.com/collect"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["next"], reverse("purchase_list"))
+
+    def test_purchase_create_post_without_next_redirects_to_purchase_list(self):
+        response = self.client.post(
+            reverse("purchase_create"),
+            {
+                "form-TOTAL_FORMS": "1",
+                "form-INITIAL_FORMS": "0",
+                "form-MIN_NUM_FORMS": "0",
+                "form-MAX_NUM_FORMS": "1000",
+                "form-0-item": "Test Purchase",
+                "form-0-date": datetime.date.today(),
+                "form-0-amount": "10.00",
+                "form-0-source": "Test Store",
+                "form-0-location": "Test Location",
+                "form-0-category": self.category.id,
+                "form-0-subcategory": self.subcategory.id,
+                "form-0-notes": "",
+                "form-0-savings": False,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["HX-Redirect"], reverse("purchase_list"))
+
+    def test_sidebar_purchase_button_preserves_full_return_url(self):
+        response = self.client.get(
+            reverse("purchase_list"),
+            {
+                "search": "coffee & bagels",
+                "purchase_date_from": "2026-01-01",
+            },
+        )
+        return_url = response.context["request"].get_full_path()
+        encoded_return_url = quote(return_url, safe="")
+        purchase_url = (
+            f'{reverse("purchase_create")}?next={encoded_return_url}'
+        )
+
+        self.assertContains(
+            response,
+            (
+                f'<button class="sidebar-action" type="button" '
+                f'hx-get="{purchase_url}" hx-target="#modal-content">'
+                "Add a Purchase</button>"
+            ),
+            html=True,
+        )
+        self.assertNotContains(response, f"href='{purchase_url}'", html=False)
+
+        purchase_form_response = self.client.get(
+            reverse("purchase_create"),
+            {"next": return_url},
+        )
+        self.assertEqual(purchase_form_response.context["next"], return_url)
+
+        content = response.content.decode()
+        self.assertLess(content.index("Purchase List</a>"), content.index("Add a Purchase</button>"))
+        self.assertLess(content.index("Add a Purchase</button>"), content.index("Logout</a>"))
 
     def test_purchase_create_view(self):
         response = self.client.post(

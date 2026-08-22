@@ -1,7 +1,9 @@
+{% load static %}
+
 <h2>{% if receipt %}Edit Receipt{% else %}Edit Purchase{% endif %}</h2>
 
 {% if receipt %}
-<form hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="receipt-edit-form" method="POST">
+<form data-behavior="receipt-edit" hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="receipt-edit-form" method="POST">
     {% csrf_token %}
     {{receipt_form.non_field_errors}}
     <fieldset class="receipt-details">
@@ -41,30 +43,7 @@
     <input type="hidden" name="next" value="{{next}}">
     <button type="submit">Save receipt</button>
 </form>
-<script>
-    (() => {
-        const receiptEditForm = document.querySelector(".receipt-edit-form")
-        if (!receiptEditForm) return
-
-        const receiptAmountInputs = receiptEditForm.querySelectorAll(
-            ".receipt-purchase-editor input[id$='-amount']"
-        )
-        const receiptTotal = receiptEditForm.querySelector("#receipt-total span")
-
-        function updateReceiptTotal() {
-            const total = [...receiptAmountInputs].reduce((sum, input) => {
-                const amount = parseFloat(input.value)
-                return sum + (Number.isNaN(amount) ? 0 : amount)
-            }, 0)
-
-            receiptTotal.textContent = total.toFixed(2)
-        }
-
-        receiptAmountInputs.forEach(input => {
-            input.addEventListener("input", updateReceiptTotal)
-        })
-    })()
-</script>
+<script src="{% static 'js/app/pages/receipt-edit.js' %}"></script>
 {% else %}
 <form hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="form-grid" method="POST">
     {% csrf_token %}

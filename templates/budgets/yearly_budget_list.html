@@ -1,11 +1,11 @@
-{% extends "_base.html" %}
+{% extends "_layouts/app.html" %}
 
 {% block header %}
     <h1 class="page-title">Budgets</h1>
 {% endblock header %}
 
 {% block body %}
-<button class="card-header-action button-budget button-create" hx-get='{% url "yearly_create" %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add New Budget</button>
+<button class="card-header-action button-budget button-create" type="button" hx-get='{% url "yearly_create" %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add New Budget</button>
 
 <ul>
     {% for budget in yearly_budgets %}

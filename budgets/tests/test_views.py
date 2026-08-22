@@ -75,6 +75,7 @@ class TestYearlyBudgetCreateView(TestCase):
         response = self.client.get(reverse("yearly_create"))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "<h2>Create Budget</h2>", html=True)
 
     def test_correct_budgets_created(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
@@ -602,6 +603,21 @@ class YearlyBudgetViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'budgets/yearly_budget_detail.html')
         self.assertContains(response, category.name)
+        self.assertEqual(response.context["ytd_month"], datetime.datetime.now().month)
+        self.assertContains(
+            response,
+            f'data-ytd-month="{datetime.datetime.now().month}"',
+        )
+
+    def test_yearly_budget_detail_uses_requested_ytd_month(self):
+        response = self.client.get(
+            reverse('yearly_detail', kwargs={'year': self.year}),
+            {'ytd': '6'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["ytd_month"], 6)
+        self.assertContains(response, 'data-ytd-month="6"')
 
     def test_yearly_budget_detail_ignores_invalid_ytd_month(self):
         response = self.client.get(
@@ -610,6 +626,22 @@ class YearlyBudgetViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["ytd_month"], datetime.datetime.now().month)
+
+    def test_past_year_budget_detail_uses_december_as_ytd_month(self):
+        past_year = self.year - 1
+        YearlyBudgetFactory(
+            user=self.user,
+            date=datetime.date(past_year, 1, 1),
+        )
+
+        response = self.client.get(
+            reverse('yearly_detail', kwargs={'year': past_year})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["ytd_month"], 12)
+        self.assertContains(response, 'data-ytd-month="12"')
 
     def test_yearly_budget_create_view(self):
         next_year = self.year + 1
@@ -714,8 +746,6 @@ class BudgetItemViewTests(TestCase):
             date=datetime.date(self.year, self.month, 1)
         )
         self.category = CategoryFactory(user=self.user)
-
-
 
     def test_budget_item_delete_view(self):
         budget_item = BudgetItemFactory(

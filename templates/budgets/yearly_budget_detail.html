@@ -1,4 +1,4 @@
-{% extends "_base.html" %}
+{% extends "_layouts/app.html" %}
 {% load static %}
 
 {% block header %}
@@ -18,16 +18,19 @@
 {% endblock heading_nav %}
 
 {% block body %}
+<div id="yearly-budget-detail" data-behavior="yearly-budget-detail" data-rollover-url="{% url "rollover_update" %}" data-year="{{ yearly_budget.date.year }}" data-ytd-path="{{ request.path }}" data-ytd-month="{{ ytd_month }}">
 <div class="page-header-action">
-    <button class="button-create" hx-get='{% url "purchase_create" %}?date={{yearly_budget.date.year}}-01-01&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
-    <button class="button-create" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
-    <button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
-    <button class="button-create" hx-get='{% url "recurring_purchase_list" %}?next={{request.path|urlencode}}' hx-target="#modal-content">Manage Recurring Purchases</button>
+    <button class="button-create" type="button" hx-get='{% url "purchase_create" %}?date={{yearly_budget.date.year}}-01-01&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
+    <button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
+    <button class="button-create" type="button" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
+    <button class="button-create" type="button" hx-get='{% url "recurring_purchase_list" %}?next={{request.path|urlencode}}' hx-target="#modal-content">Manage Recurring Purchases</button>
 </div>
+<p id="rollover-save-error" class="rollover-save-error" role="alert" hidden></p>
 
 <div class="card-base">
     <h2>Summary</h2>
-    <div class="summary-horizontal-grid-monthly card-table-header">
+    <div class="data-grid-scroll data-grid-scroll--summary" role="region" aria-label="Yearly budget summary data" tabindex="0">
+    <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted</div>
         <div class="card-table-heading">Spent</div>
         <div class="card-table-heading">Saved</div>
@@ -35,15 +38,15 @@
         <div class="card-table-heading">Budgeted Income</div>
         <div class="card-table-heading">Category Income</div>
     </div>
-    <div class="summary-horizontal-grid-monthly">
+    <div class="data-grid data-grid--summary">
         <div>${{total_budgeted|floatformat:"-2"}}</div>
-        <div class="">${{total_spending_spent|floatformat:"-2"}}</div>
-        <div class="">${{total_saved|floatformat:"-2"}}</div>
-        <div class="">${{total_income.amount|floatformat:"-2"}}</div>
-        <div class="">${{total_income_budgeted.amount|floatformat:"-2"}}</div>
-        <div class="">${{total_income_category.amount|floatformat:"-2"}}</div>
+        <div>${{total_spending_spent|floatformat:"-2"}}</div>
+        <div>${{total_saved|floatformat:"-2"}}</div>
+        <div>${{total_income.amount|floatformat:"-2"}}</div>
+        <div>${{total_income_budgeted.amount|floatformat:"-2"}}</div>
+        <div>${{total_income_category.amount|floatformat:"-2"}}</div>
     </div>
-    <div class="summary-horizontal-grid-monthly card-table-header">
+    <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted Income-Budgeted</div>
         <div class="card-table-heading">Spent + Saved</div>
         <div class="card-table-heading">Budgeted Income - (Spent + Saved)</div>
@@ -51,13 +54,14 @@
         <div class="card-table-heading"></div>
         <div class="card-table-heading"></div>
     </div>
-    <div class="summary-horizontal-grid-monthly">
-        <div class="">${{budgeted_income_diff|floatformat:"-2"}}</div>
-        <div class="">${{total_spent_saved|floatformat:"-2"}}</div>
-        <div class="">${{budgeted_income_spent_diff|floatformat:"-2"}}</div>
-        <div class=""></div>
-        <div class=""></div>
-        <div class=""></div>
+    <div class="data-grid data-grid--summary">
+        <div>${{budgeted_income_diff|floatformat:"-2"}}</div>
+        <div>${{total_spent_saved|floatformat:"-2"}}</div>
+        <div>${{budgeted_income_spent_diff|floatformat:"-2"}}</div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
     </div>
     <h3>YTD</h3>
     <div class="month-select-container">
@@ -77,7 +81,8 @@
             <option value="12">December</option>
         </select>
     </div>
-    <div class="summary-horizontal-grid-monthly card-table-header">
+    <div class="data-grid-scroll data-grid-scroll--summary" role="region" aria-label="Year-to-date budget summary data" tabindex="0">
+    <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted YTD</div>
         <div class="card-table-heading">Spent YTD</div>
         <div class="card-table-heading">Saved YTD</div>
@@ -85,15 +90,15 @@
         <div class="card-table-heading">Budgeted Income YTD</div>
         <div class="card-table-heading">Category Income YTD</div>
     </div>
-    <div class="summary-horizontal-grid-monthly">
-        <div class="">${{total_budgeted_ytd|floatformat:"-2"}}</div>
-        <div class="">${{total_spending_spent_ytd|floatformat:"-2"}}</div>
-        <div class="">${{total_saved_ytd|floatformat:"-2"}}</div>
-        <div class="">${{total_income_ytd.amount|floatformat:"-2"}}</div>
-        <div class="">${{total_income_budgeted_ytd.amount|floatformat:"-2"}}</div>
-        <div class="">${{total_income_category_ytd.amount|floatformat:"-2"}}</div>
+    <div class="data-grid data-grid--summary">
+        <div>${{total_budgeted_ytd|floatformat:"-2"}}</div>
+        <div>${{total_spending_spent_ytd|floatformat:"-2"}}</div>
+        <div>${{total_saved_ytd|floatformat:"-2"}}</div>
+        <div>${{total_income_ytd.amount|floatformat:"-2"}}</div>
+        <div>${{total_income_budgeted_ytd.amount|floatformat:"-2"}}</div>
+        <div>${{total_income_category_ytd.amount|floatformat:"-2"}}</div>
     </div>
-    <div class="summary-horizontal-grid-monthly card-table-header">
+    <div class="data-grid data-grid--summary card-table-header">
         <div class="card-table-heading">Budgeted Income-Budgeted YTD</div>
         <div class="card-table-heading">Spent + Saved</div>
         <div class="card-table-heading">Budgeted Income - (Spent + Saved)</div>
@@ -101,13 +106,14 @@
         <div class="card-table-heading"></div>
         <div class="card-table-heading"></div>
     </div>
-    <div class="summary-horizontal-grid-monthly">
-        <div class="">${{budgeted_income_diff_ytd|floatformat:"-2"}}</div>
-        <div class="">${{total_spent_saved_ytd|floatformat:"-2"}}</div>
-        <div class="">${{budgeted_income_spent_diff_ytd|floatformat:"-2"}}</div>
-        <div class=""></div>
-        <div class=""></div>
-        <div class=""></div>
+    <div class="data-grid data-grid--summary">
+        <div>${{budgeted_income_diff_ytd|floatformat:"-2"}}</div>
+        <div>${{total_spent_saved_ytd|floatformat:"-2"}}</div>
+        <div>${{budgeted_income_spent_diff_ytd|floatformat:"-2"}}</div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
     </div>
 </div>
 
@@ -115,12 +121,13 @@
     <div class="card-base">
         <div class="card-header">
             <h2>Budget</h2>
-            <div class="card-header-action"><button class="button-create" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</a>
+            <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
             </div>
         </div>
+        <div class="data-grid-scroll data-grid-scroll--budget-yearly" role="region" aria-label="Yearly budget category data" tabindex="0">
         <div class="card-main">
             <div>
-                <div class="budget-horizontal-grid-yearly card-table-header">
+                <div class="data-grid data-grid--budget-yearly card-table-header">
                     <div class="card-table-heading">Category</div>
                     <div class="card-table-heading">Budgeted YTD</div>
                     <div class="card-table-heading">Spent YTD</div>
@@ -131,25 +138,10 @@
                     <div></div>
                 </div>
 
-                <div class="budget-horizontal-grid-yearly">
-                    {% for budget_item in budget_items_combined %}
-                    {% comment %}
-                    <!-- <div data-tooltip="{{budget_item.category__name}}"><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div> -->
-                    {% endcomment %}
-                    <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=budget_item.category__name %}'>{{budget_item.category__name}}</a></div>
-                    <div>${{budget_item.amount_total_ytd|floatformat:"-2"}}</div>
-                    <div>${{budget_item.spent_ytd|floatformat:"-2"}}</div>
-                    <div>${{budget_item.diff_ytd|floatformat:"-2"}}</div>
-                    <div>${{budget_item.amount_total|floatformat:"-2"}}</div>
-                    <div>${{budget_item.spent|floatformat:"-2"}}</div>
-                    <div>${{budget_item.diff|floatformat:"-2"}}</div>
-                    <div>
-                        <button class="button-blank" hx-get='{% url "budgetitem_bulk_edit_htmx" category=budget_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                        <button class="button-blank" hx-get='{% url "budget_item_delete_htmx" category=budget_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="budget-horizontal-grid-yearly budget-subtotal">
+                {% for budget_item in budget_items_combined %}
+                    {% include "budgets/_yearly_budget_item_grid_row.html" with category_name=budget_item.category__name amount_ytd=budget_item.amount_total_ytd activity_ytd=budget_item.spent_ytd difference_ytd=budget_item.diff_ytd amount_total=budget_item.amount_total activity_total=budget_item.spent difference_total=budget_item.diff year=yearly_budget.date.year return_url=request.path only %}
+                {% endfor %}
+                <div class="data-grid data-grid--budget-yearly budget-subtotal">
                     <div class="card-table-subtotal">Spending Total</div>
                     <div class="card-table-subtotal">${{total_spending_budgeted_ytd|floatformat:"-2"}}</div>
                     <div class="card-table-subtotal">${{total_spending_spent_ytd|floatformat:"-2"}}</div>
@@ -167,17 +159,15 @@
                     </div>
                     <div class="rollover-items-grid">
                         {% for rollover in rollovers_spending %}
-                        <div>
-                            <input class="rollover-edit" data-category="{{rollover.category}}" type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
-                        </div>
+                        <div><input id="rollover-{{ rollover.pk }}" class="rollover-edit" data-category="{{ rollover.category }}" type="number" step="0.01" value="{{ rollover.amount|floatformat:"-2" }}" aria-label="Rollover amount for {{ rollover.category }}" aria-describedby="rollover-save-error"></div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
         <div class="card-main">
-            <div style="flex-grow:1;">
-                <div class="budget-horizontal-grid-yearly card-table-header">
+            <div class="grow">
+                <div class="data-grid data-grid--budget-yearly card-table-header">
                     <div class="card-table-heading">Category</div>
                     <div class="card-table-heading">Budgeted YTD</div>
                     <div class="card-table-heading">Saved YTD</div>
@@ -187,23 +177,10 @@
                     <div class="card-table-heading">+/-</div>
                     <div class="card-table-heading"></div>
                 </div>
-                <div class="budget-horizontal-grid-yearly">
-                    {% for savings_item in savings_items_combined %}
-                    <!-- <div data-tooltip="{{savings_item.category__name}}">{{savings_item.category__name}}</div> -->
-                    <div><a href='{% url "yearly_budget_item_detail" year=yearly_budget.date.year category=savings_item.category__name %}'>{{savings_item.category__name}}</a></div>
-                    <div>${{savings_item.amount_total_ytd|floatformat:"-2"}}</div>
-                    <div>${{savings_item.saved_ytd|floatformat:"-2"}}</div>
-                    <div>${{savings_item.diff_ytd|floatformat:"-2"}}</div>
-                    <div>${{savings_item.amount_total|floatformat:"-2"}}</div>
-                    <div>${{savings_item.saved|floatformat:"-2"}}</div>
-                    <div>{{savings_item.diff|floatformat:"-2"}}</div>
-                    <div>
-                        <button class="button-blank" hx-get='{% url "budgetitem_bulk_edit_htmx" category=savings_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                        <button class="button-blank" hx-get='{% url "budget_item_delete_htmx" category=savings_item.category__name year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="budget-horizontal-grid-yearly budget-subtotal">
+                {% for budget_item in savings_items_combined %}
+                    {% include "budgets/_yearly_budget_item_grid_row.html" with category_name=budget_item.category__name amount_ytd=budget_item.amount_total_ytd activity_ytd=budget_item.saved_ytd difference_ytd=budget_item.diff_ytd amount_total=budget_item.amount_total activity_total=budget_item.saved difference_total=budget_item.diff year=yearly_budget.date.year return_url=request.path only %}
+                {% endfor %}
+                <div class="data-grid data-grid--budget-yearly budget-subtotal">
                     <div class="card-table-subtotal">Savings Total</div>
                     <div class="card-table-subtotal">${{total_savings_budgeted_ytd|floatformat:"-2"}}</div>
                     <div class="card-table-subtotal">${{total_saved_ytd|floatformat:"-2"}}</div>
@@ -213,7 +190,7 @@
                     <div class="card-table-subtotal">${{total_savings_remaining|floatformat:"-2"}}</div>
                     <div class="card-table-subtotal"></div>
                 </div>
-                <div class="budget-horizontal-grid-yearly card-table-header budget-totals">
+                <div class="data-grid data-grid--budget-yearly card-table-header budget-totals">
                     <div class="card-table-heading">Total</div>
                     <div class="card-table-heading">${{total_budgeted_ytd|floatformat:"-2"}}</div>
                     <div class="card-table-heading">${{total_spent_saved_ytd|floatformat:"-2"}}</div>
@@ -229,14 +206,14 @@
                     <div class="budget-monthly-single-col card-table-header">
                         <div class="card-table-heading">Rollover</div>
                     </div>
-                    {% for rollover in rollovers_savings %}
-                    <div>
-                        <input class="rollover-edit" data-category='{{rollover.category}}' type="number" step="0.01" value="{{rollover.amount|floatformat:"-2"}}">
+                    <div class="rollover-items-grid">
+                        {% for rollover in rollovers_savings %}
+                        <div><input id="rollover-{{ rollover.pk }}" class="rollover-edit" data-category="{{ rollover.category }}" type="number" step="0.01" value="{{ rollover.amount|floatformat:"-2" }}" aria-label="Rollover amount for {{ rollover.category }}" aria-describedby="rollover-save-error"></div>
+                        {% endfor %}
                     </div>
-                    
-                    {% endfor %}
                 </div>
             </div>
+        </div>
         </div>
     </div>
   
@@ -245,123 +222,24 @@
 <div class="card-base">
     <div class="card-header">
         <h2>Income</h2>
-        <div class="card-header-action"><button class="button-create" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</a>
+        <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
         </div>
     </div>
-    
-    <div class="income-horizontal-grid-monthly card-table-header">
-        <div class="card-table-heading">Amount</div>
-        <div class="card-table-heading">Source</div>
-        <div class="card-table-heading">Category</div>
-        <div class="card-table-heading">Date</div>
-        <div class="card-table-heading">Notes</div>
-        <div></div>
-    </div>
-    <div class="income-horizontal-grid-monthly">
-    {% for income in incomes %}
-        <div>${{income.amount|floatformat:"-2"}}</div>
-        <div>{{income.source}}</div>
-        <div>{{income.category}}</div>
-        <div>{{income.date}}</div>
-        <div>{{income.notes}}</div>
-        <div>
-            <div class="edit-links-container">
-                <button class="button-blank" hx-get='{% url "income_edit_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                <button class="button-blank" hx-get='{% url "income_delete_htmx" pk=income.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
-            </div>
-        </div>
-    {% endfor %}
-    </div>
+
+    {% include "purchases/_income_table.html" with incomes=incomes return_url=request.path aria_label="Yearly income data" only %}
 </div>
 <div class="card-base">
     <h2>Uncategorized Purchases</h2>
-    <div class="purchase-horizontal-grid purchase-horizontal-grid-categories card-table-header">
-        <div class="card-table-heading">Date</div>
-        <div class="card-table-heading">Item</div>
-        <div class="card-table-heading">Amount</div>
-        <div class="card-table-heading">Source</div>
-        <div class="card-table-heading">Location</div>
-        <div class="card-table-heading">Category</div>
-        <div class="card-table-heading"></div>
-    </div>
-    {% for purchase in purchases_uncategorized %}
-
-    <div class="purchase-horizontal-grid purchase-horizontal-grid-categories">
-        <div>{{purchase.date}}</div>
-        <div>{{purchase.item}}</div>
-        <div>${{purchase.amount|floatformat:"-2"}}</div>
-        <div>{{purchase.source}}</div>
-        <div>{{purchase.location}}</div>
-        <div>{{purchase.category}}</div>
-        <div>
-            <div class="edit-links-container">
-                <button class="button-blank" hx-get='{% url "purchase_edit_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/edit-pencil.svg' %}" width="17px"></button>
-                <button class="button-blank" hx-get='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{request.path|urlencode}}' hx-target="#modal-content"><img class="list-nav-icon" src="{% static 'images/trash.svg' %}" width="17px"></button>
-            </div>
-        </div>
-    </div>
-
-    {% endfor %}
+    {% include "purchases/_purchase_table.html" with purchases=purchases_uncategorized show_category=True return_url=request.path aria_label="Uncategorized purchase data" empty_message="No uncategorized purchases." only %}
 </div>
 
 </div>
 
 
 
-<script>
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    const csrftoken = getCookie('csrftoken');
-
-    const rollovers = document.querySelectorAll(".rollover-edit");
-
-    function saveRollover(event){
-        const key = event.key;
-        if (key==="Enter" || event.type==='blur'){
-            event.preventDefault();
-            const targ= event.currentTarget.value;
-            fetch('{% url "rollover_update" %}',{
-                method: 'POST',
-                credentials: 'same-origin',
-                headers:{
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrftoken,
-                },
-                body: JSON.stringify({'amount':targ, 'category': event.currentTarget.dataset.category, "year":'{{yearly_budget.date.year}}', })
-                })
-            }
-        }
-
-    rollovers.forEach((item) =>{
-        item.addEventListener('keydown', (event)=>{
-            const key = event.key
-            saveRollover(event)
-        })
-        item.addEventListener('blur', saveRollover)
-    })
-
-
-        const monthYtdSelect = document.querySelector(".month-select")
-        const monthYtd = `{{request.GET.ytd}}`
-        monthYtdSelect.selectedIndex = `${monthYtd- 1}`
-        monthYtdSelect.onchange = function(){
-            window.location=`{{request.path}}?ytd=${this.value}`
-    }
-
-</script>
+</div>
 {% endblock body %}
+
+{% block extra_js %}
+<script src='{% static "js/app/pages/yearly-budget-detail.js" %}' defer></script>
+{% endblock extra_js %}

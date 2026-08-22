@@ -1,0 +1,242 @@
+/* Page-level purchases, authentication, and public-home styles. */
+
+.purchase-filter-panel {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.purchase-filter-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.purchase-filter-title {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.purchase-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px 16px;
+}
+
+.purchase-filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.purchase-filter-field label {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.purchase-filter-field input,
+.purchase-filter-field select {
+    width: 100%;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background-color: var(--color-surface);
+}
+
+.purchase-filter-field input::placeholder {
+    color: #6b7280;
+}
+
+.purchase-filter-field input:focus-visible {
+    outline-offset: 1px;
+}
+
+.purchase-filter-search {
+    grid-column: span 2;
+}
+
+.purchase-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+
+.purchase-filter-submit {
+    min-height: 42px;
+    padding: 0 18px;
+    cursor: pointer;
+}
+
+.purchase-filter-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    text-decoration: none;
+    background-color: var(--color-surface);
+}
+
+.purchase-filter-clear:hover {
+    background-color: var(--color-surface-muted);
+}
+
+.auth-page {
+    display: grid;
+    min-height: calc(100vh - (2 * var(--space-lg)));
+    padding: var(--space-xl) var(--space-md);
+    place-items: center;
+}
+
+.auth-card {
+    width: min(100%, 32rem);
+    margin: 0;
+}
+
+.auth-title {
+    margin: 0 0 var(--space-lg);
+    text-align: center;
+}
+
+.auth-form p {
+    display: grid;
+    gap: var(--space-xs);
+    margin: 0;
+}
+
+.auth-form input {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.auth-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
+}
+
+.auth-primary-action,
+.auth-secondary-action {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+}
+
+.auth-primary-action {
+    border: 1px solid var(--color-brand);
+    background-color: var(--color-brand);
+    color: var(--color-surface);
+    cursor: pointer;
+}
+
+.auth-secondary-action {
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    text-decoration: none;
+}
+
+.auth-primary-action:hover {
+    filter: brightness(0.9);
+}
+
+.auth-secondary-action:hover {
+    background-color: var(--color-surface-muted);
+}
+
+@media (width <= 48rem) {
+    .purchase-filter-search {
+        grid-column: span 1;
+    }
+
+    .purchase-filter-actions {
+        justify-content: stretch;
+    }
+
+    .purchase-filter-submit,
+    .purchase-filter-clear {
+        width: 100%;
+    }
+
+    .auth-page {
+        min-height: calc(100vh - (2 * var(--space-md)));
+        padding: var(--space-md) 0;
+    }
+
+    .auth-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .auth-primary-action,
+    .auth-secondary-action {
+        text-align: center;
+    }
+}
+
+.home-container {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.home-header-container {
+    display: flex;
+}
+
+.home-header-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.home-link-container {
+    display: flex;
+    justify-content: space-around;
+}
+
+.home-link-container>a {
+    text-decoration: none;
+}
+
+.home-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
+    border: 3px solid black;
+    border-radius: 5px;
+    height: 50px;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.purchase-pagination {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.purchase-pagination-previous {
+    justify-self: start;
+}
+
+.purchase-pagination-current {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.purchase-pagination-next {
+    justify-self: end;
+}

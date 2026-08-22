@@ -91,9 +91,10 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
         budget_context = service.get_yearly_budget_context(
             user=self.request.user,
             year=self.object.date.year,
-            ytd_month=ytd_month
+            ytd_month=ytd_month,
         )
-        
+
+        kwargs["ytd_month"] = ytd_month
         kwargs.update(budget_context)
 
         return kwargs
