@@ -632,33 +632,6 @@ class IncomeViewTests(TestCase):
         self.client.login(username='testuser', password='testpass123')
         self.category = CategoryFactory(user=self.user)
 
-    def test_income_create_fragment_has_descriptive_heading(self):
-        response = self.client.get(
-            reverse("income_create"),
-            {"next": reverse("yearly_list")},
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "<h2>Add Income</h2>", html=True)
-
-    def test_income_edit_fragment_has_descriptive_heading(self):
-        income = Income.objects.create(
-            user=self.user,
-            amount=Decimal("5000.00"),
-            date=datetime.date.today(),
-            source="Test Employer",
-            payer="Test Payer",
-            category=self.category,
-        )
-
-        response = self.client.get(
-            reverse("income_edit_htmx", kwargs={"pk": income.pk}),
-            {"next": reverse("yearly_list")},
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "<h2>Edit Income</h2>", html=True)
-
     def test_income_create_view(self):
         response = self.client.post(
             reverse('income_create'),

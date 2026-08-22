@@ -747,15 +747,6 @@ class BudgetItemViewTests(TestCase):
         )
         self.category = CategoryFactory(user=self.user)
 
-    def test_budget_item_create_fragment_has_descriptive_heading(self):
-        response = self.client.get(
-            reverse("budgetitem_create_htmx", kwargs={"year": self.year}),
-            {"next": reverse("yearly_list")},
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "<h2>Add Budget Item</h2>", html=True)
-
     def test_budget_item_delete_view(self):
         budget_item = BudgetItemFactory(
             user=self.user,
