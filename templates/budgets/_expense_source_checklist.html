@@ -1,3 +1,4 @@
+{% with expense_source_next_url|default:request.path as checklist_next_url %}
 <section
     id="expense-source-checklist"
     class="card-base expense-source-card"
@@ -9,7 +10,7 @@
             <button
                 class="button-create"
                 type="button"
-                hx-get='{% url "expense_source_manage" year=monthly_budget.date.year month=monthly_budget.date.month %}?next={{ request.path|urlencode }}'
+                hx-get='{% url "expense_source_manage" year=monthly_budget.date.year month=monthly_budget.date.month %}?next={{ checklist_next_url|urlencode }}'
                 hx-target="#modal-content"
             >Manage sources</button>
         </div>
@@ -38,7 +39,7 @@
                     role="listitem"
                 >
                     {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <input type="hidden" name="next" value="{{ checklist_next_url }}">
                     <input
                         id="expense-source-check-{{ item.source.id }}"
                         type="checkbox"
@@ -62,9 +63,10 @@
             <button
                 class="button-create"
                 type="button"
-                hx-get='{% url "expense_source_manage" year=monthly_budget.date.year month=monthly_budget.date.month %}?next={{ request.path|urlencode }}'
+                hx-get='{% url "expense_source_manage" year=monthly_budget.date.year month=monthly_budget.date.month %}?next={{ checklist_next_url|urlencode }}'
                 hx-target="#modal-content"
             >Add your first source</button>
         </div>
     {% endif %}
 </section>
+{% endwith %}

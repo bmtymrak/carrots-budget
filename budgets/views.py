@@ -2,6 +2,7 @@ import datetime
 import json
 import calendar
 import time
+from urllib.parse import urlsplit
 
 from django.db.models.fields import DecimalField, BooleanField
 from django.db import connection
@@ -523,7 +524,7 @@ def _expense_source_next_url(request, year, month):
         requested_url,
         allowed_hosts={request.get_host()},
         require_https=request.is_secure(),
-    ):
+    ) and urlsplit(requested_url).path == default_url:
         return requested_url
     return default_url
 
@@ -616,6 +617,10 @@ def expense_source_toggle(request, year, month, source_id):
         return render(
             request,
             "budgets/_expense_source_checklist.html",
-            {"monthly_budget": monthly_budget, **checklist_context},
+            {
+                "monthly_budget": monthly_budget,
+                "expense_source_next_url": next_url,
+                **checklist_context,
+            },
         )
     return redirect(next_url)

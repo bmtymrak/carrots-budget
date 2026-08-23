@@ -953,6 +953,10 @@ class ExpenseSourceViewTests(TestCase):
             ).exists()
         )
         self.assertContains(response, "1 / 1 complete")
+        self.assertEqual(
+            response.context["expense_source_next_url"],
+            self.monthly_url(),
+        )
 
     def test_each_checklist_form_listens_only_to_its_own_checkbox(self):
         for name in ("Bank statement", "Citi statement", "Discover statement"):
@@ -1078,3 +1082,23 @@ class ExpenseSourceViewTests(TestCase):
         )
 
         self.assertRedirects(response, self.monthly_url())
+
+    def test_toggle_endpoint_cannot_be_used_as_management_return_url(self):
+        source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
+        toggle_url = reverse(
+            "expense_source_toggle",
+            kwargs={"year": 2026, "month": 1, "source_id": source.id},
+        )
+
+        response = self.client.post(
+            self.manage_url(),
+            {
+                "action": "create",
+                "name": "Citi statement",
+                "next": toggle_url,
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["HX-Redirect"], self.monthly_url())
