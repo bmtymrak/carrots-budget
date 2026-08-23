@@ -952,7 +952,7 @@ class ExpenseSourceViewTests(TestCase):
                 expense_source=source,
             ).exists()
         )
-        self.assertContains(response, "1 of 1 complete")
+        self.assertContains(response, "1 / 1 complete")
 
     def test_unchecking_clears_checked_timestamp(self):
         source = ExpenseSource.objects.create(user=self.user, name="Bank statement")

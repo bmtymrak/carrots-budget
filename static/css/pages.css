@@ -248,7 +248,7 @@
 
 .monthly-budget-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    grid-template-columns: minmax(0, 1fr) 250px;
     gap: var(--space-xl);
     align-items: start;
 }
@@ -260,7 +260,10 @@
 .monthly-budget-companion {
     position: sticky;
     top: var(--space-xl);
+    width: 100%;
+    max-width: 250px;
     min-width: 0;
+    justify-self: end;
 }
 
 .monthly-budget-companion .expense-source-card-header,
@@ -272,10 +275,6 @@
     margin-left: 0;
 }
 
-.monthly-budget-companion .expense-source-helper {
-    margin-left: 0;
-}
-
 .monthly-budget-companion .expense-source-actions {
     justify-content: stretch;
     margin-top: var(--space-md);
@@ -283,13 +282,13 @@
 
 .monthly-budget-companion .expense-source-actions .button-create {
     width: 100%;
-    min-height: 40px;
+    min-height: 36px;
 }
 
 .monthly-budget-companion .expense-source-progress progress {
     display: block;
     width: 100%;
-    margin-top: var(--space-md);
+    margin-top: var(--space-sm);
 }
 
 .monthly-budget-companion .expense-source-row label {
@@ -318,43 +317,28 @@
     gap: var(--space-xl);
 }
 
-.expense-source-helper {
-    max-width: 42rem;
-    margin: 0 var(--space-sm) var(--space-md);
-    color: var(--color-muted);
-    font-size: 0.95rem;
-}
-
 .expense-source-actions {
     flex-shrink: 0;
 }
 
 .expense-source-progress {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-xl);
-    margin: var(--space-xs) 0 var(--space-lg);
-    padding: 12px var(--space-lg);
+    display: grid;
+    gap: var(--space-sm);
+    margin: var(--space-xs) 0 var(--space-md);
+    padding: 8px var(--space-md);
     border: 1px solid color-mix(in srgb, var(--color-success) 25%, white);
     border-radius: var(--radius-lg);
     background: color-mix(in srgb, var(--color-success) 6%, white);
 }
 
-.expense-source-progress strong,
-.expense-source-progress-note {
+.expense-source-progress strong {
     display: block;
-}
-
-.expense-source-progress-note {
-    margin-top: var(--space-2xs);
-    color: var(--color-muted);
-    font-size: 0.88rem;
+    font-size: 0.85rem;
 }
 
 .expense-source-progress progress {
-    width: min(270px, 38%);
-    height: 12px;
+    width: 100%;
+    height: 7px;
     accent-color: var(--color-success);
 }
 
@@ -548,6 +532,7 @@
 
     .monthly-budget-companion {
         position: static;
+        width: min(100%, 250px);
     }
 }
 
@@ -561,12 +546,6 @@
     .expense-source-actions {
         justify-content: flex-start;
         margin-top: var(--space-xs);
-    }
-
-    .expense-source-progress progress {
-        display: block;
-        width: 100%;
-        margin-top: var(--space-md);
     }
 
     .expense-source-row label {

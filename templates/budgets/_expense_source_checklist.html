@@ -4,12 +4,7 @@
     aria-labelledby="expense-source-checklist-title"
 >
     <div class="card-header expense-source-card-header">
-        <div>
-            <h2 id="expense-source-checklist-title">Expense review</h2>
-            <p class="expense-source-helper">
-                Check each statement or account after you have accounted for all of its expenses.
-            </p>
-        </div>
+        <h2 id="expense-source-checklist-title">Expense review</h2>
         <div class="card-header-action expense-source-actions">
             <button
                 class="button-create"
@@ -22,16 +17,7 @@
 
     {% if expense_source_total %}
         <div class="expense-source-progress" aria-live="polite">
-            <div>
-                <strong>{{ expense_source_completed }} of {{ expense_source_total }} complete</strong>
-                <span class="expense-source-progress-note">
-                    {% if expense_source_completed == expense_source_total %}
-                        All sources reviewed
-                    {% else %}
-                        Keep going when you finish the next statement
-                    {% endif %}
-                </span>
-            </div>
+            <strong>{{ expense_source_completed }} / {{ expense_source_total }} complete</strong>
             <progress
                 value="{{ expense_source_completed }}"
                 max="{{ expense_source_total }}"

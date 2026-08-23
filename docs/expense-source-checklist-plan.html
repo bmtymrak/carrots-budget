@@ -65,7 +65,7 @@
         .fake-main { display: grid; gap: 8px; }
         .fake-summary { min-height: 120px; padding: 11px; border-radius: 8px; background: #e9f4eb; }
         .fake-content-block { min-height: 52px; padding: 10px; border: 1px solid #e0e8e2; border-radius: 8px; background: #fff; color: var(--muted); font-size: .78rem; }
-        .fake-companion { padding: 10px; border: 1px solid #cad9ce; border-radius: 9px; background: #fff; }
+        .fake-companion { width: 100%; max-width: 250px; padding: 10px; border: 1px solid #cad9ce; border-radius: 9px; background: #fff; justify-self: end; }
         .fake-summary small, .mock-note { color: var(--muted); }
         .queue h4 { margin: 0 0 5px; color: var(--muted); font-size: .72rem; text-transform: uppercase; }
         .queue .fake-row { display: block; }
@@ -100,7 +100,7 @@
             <section id="decision">
                 <h2>1. Feature decision</h2>
                 <p class="lead">Use reusable, user-owned expense-review sources with separate completion state for each monthly budget. A source is a statement or account to review, not the existing <code>Purchase.source</code> field.</p>
-                <div class="callout"><strong>Recommended experience:</strong> place “Expense review” in a narrow companion rail to the right of the monthly budget’s main content. Keep it sticky while the main column scrolls, and stack it below the main content when the viewport cannot support two readable columns.</div>
+                <div class="callout"><strong>Recommended experience:</strong> place “Expense review” in a compact companion rail, no wider than 250px, to the right of the monthly budget’s main content. Keep it sticky while the main column scrolls, and stack it below the main content when the viewport cannot support two readable columns.</div>
                 <div class="panel">
                     <h3>Locked behavior</h3>
                     <ul>
@@ -126,7 +126,7 @@
                             </div>
                             <aside class="fake-companion">
                                 <div class="app-title"><strong>Expense review</strong><span class="fake-action">Manage</span></div>
-                                <small>2 of 4 complete</small><div class="fake-progress"><span></span></div>
+                                <small>2 / 4 complete</small><div class="fake-progress"><span></span></div>
                                 <div class="fake-row done"><span class="fake-check"></span>Bank <span class="fake-status">Done</span></div>
                                 <div class="fake-row done"><span class="fake-check"></span>Discover <span class="fake-status">Done</span></div>
                                 <div class="fake-row"><span class="fake-check"></span>Citi <span class="fake-status">Review</span></div>
@@ -172,7 +172,7 @@
                     <article class="step"><p class="step-number">Step 1 · Persistence</p><h3>Independent checklist models</h3><p>Add <code>ExpenseSource</code> and <code>ExpenseSourceCheck</code>. Enforce per-user names and one completion row per monthly budget/source pair. Register both in admin and add factories.</p></article>
                     <article class="step"><p class="step-number">Step 2 · Monthly context</p><h3>Read active sources and state</h3><p>Build checklist items from active user-owned sources and any completion rows for the displayed month. Do not write database rows during a page GET.</p></article>
                     <article class="step"><p class="step-number">Step 3 · HTMX endpoints</p><h3>Toggle and manage inline</h3><p>Add authenticated, user-scoped endpoints for monthly toggles and a modal that creates, renames, archives, and restores reusable sources.</p></article>
-                    <article class="step"><p class="step-number">Step 4 · Templates and CSS</p><h3>Integrate the companion rail</h3><p>Wrap the monthly page in a main/aside grid, widen only this page’s content container, and keep the checklist rail sticky on desktop. Collapse to one column below the desktop breakpoint while preserving native controls, focus states, and touch targets.</p></article>
+                    <article class="step"><p class="step-number">Step 4 · Templates and CSS</p><h3>Integrate the companion rail</h3><p>Wrap the monthly page in a main/aside grid, cap the checklist rail at 250px, and keep it sticky on desktop. Use only a compact completion count and slim progress bar. Collapse to one column below the desktop breakpoint while preserving native controls, focus states, and touch targets.</p></article>
                 </div>
                 <div class="panel">
                     <h3>Interface contract</h3>
