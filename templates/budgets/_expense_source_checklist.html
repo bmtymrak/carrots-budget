@@ -32,7 +32,7 @@
                     method="post"
                     action='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=item.source.id %}'
                     hx-post='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=item.source.id %}'
-                    hx-trigger="change from:input[type='checkbox']"
+                    hx-trigger="change"
                     hx-target="#expense-source-checklist"
                     hx-swap="outerHTML"
                     role="listitem"

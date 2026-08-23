@@ -954,6 +954,16 @@ class ExpenseSourceViewTests(TestCase):
         )
         self.assertContains(response, "1 / 1 complete")
 
+    def test_each_checklist_form_listens_only_to_its_own_checkbox(self):
+        for name in ("Bank statement", "Citi statement", "Discover statement"):
+            ExpenseSource.objects.create(user=self.user, name=name)
+
+        response = self.client.get(self.monthly_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'hx-trigger="change"', count=3)
+        self.assertNotContains(response, "from:input")
+
     def test_unchecking_clears_checked_timestamp(self):
         source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
         check = ExpenseSourceCheck.objects.create(
