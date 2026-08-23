@@ -6,7 +6,14 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
 
-from budgets.models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
+from budgets.models import (
+    YearlyBudget,
+    MonthlyBudget,
+    BudgetItem,
+    Rollover,
+    ExpenseSource,
+    ExpenseSourceCheck,
+)
 from purchases.models import Category, Purchase, Receipt, Subcategory
 from budgets.forms import BudgetItemForm
 from .factories import (
@@ -850,3 +857,214 @@ class RolloverViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.rollover.refresh_from_db()
         self.assertEqual(self.rollover.amount, Decimal('600.00'))
+
+
+@override_settings(STORAGES=TEST_STORAGES)
+class ExpenseSourceViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="expense-source-user",
+            email="expense-source@test.com",
+            password="testpass123",
+        )
+        self.other_user = User.objects.create_user(
+            username="other-expense-source-user",
+            email="other-expense-source@test.com",
+            password="testpass123",
+        )
+        YearlyBudget.objects.create(user=self.user, date=datetime.date(2026, 1, 1))
+        YearlyBudget.objects.create(
+            user=self.other_user,
+            date=datetime.date(2026, 1, 1),
+        )
+        self.january = MonthlyBudget.objects.get(
+            user=self.user,
+            date=datetime.date(2026, 1, 1),
+        )
+        self.february = MonthlyBudget.objects.get(
+            user=self.user,
+            date=datetime.date(2026, 2, 1),
+        )
+        self.client.login(
+            email="expense-source@test.com",
+            password="testpass123",
+        )
+
+    def monthly_url(self, month=1):
+        return reverse("monthly_detail", kwargs={"year": 2026, "month": month})
+
+    def manage_url(self):
+        return reverse(
+            "expense_source_manage",
+            kwargs={"year": 2026, "month": 1},
+        )
+
+    def test_monthly_page_reads_sources_without_creating_checks(self):
+        ExpenseSource.objects.create(user=self.user, name="Bank statement")
+        Purchase.objects.create(
+            user=self.user,
+            date=datetime.date(2026, 1, 5),
+            source="Unrelated purchase source",
+            amount=25,
+        )
+
+        response = self.client.get(self.monthly_url())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["expense_source_total"], 1)
+        self.assertEqual(response.context["expense_source_completed"], 0)
+        self.assertContains(response, "Bank statement")
+        self.assertContains(response, 'class="monthly-budget-companion"')
+        self.assertContains(response, 'class="content content--monthly-budget"')
+        self.assertEqual(ExpenseSource.objects.count(), 1)
+        self.assertEqual(ExpenseSourceCheck.objects.count(), 0)
+
+    def test_toggle_updates_only_the_requested_month(self):
+        source = ExpenseSource.objects.create(
+            user=self.user,
+            name="Citi card statement",
+        )
+
+        response = self.client.post(
+            reverse(
+                "expense_source_toggle",
+                kwargs={
+                    "year": 2026,
+                    "month": 1,
+                    "source_id": source.id,
+                },
+            ),
+            {"is_checked": "on", "next": self.monthly_url()},
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "budgets/_expense_source_checklist.html")
+        january_check = ExpenseSourceCheck.objects.get(
+            monthly_budget=self.january,
+            expense_source=source,
+        )
+        self.assertTrue(january_check.is_checked)
+        self.assertIsNotNone(january_check.checked_at)
+        self.assertFalse(
+            ExpenseSourceCheck.objects.filter(
+                monthly_budget=self.february,
+                expense_source=source,
+            ).exists()
+        )
+        self.assertContains(response, "1 of 1 complete")
+
+    def test_unchecking_clears_checked_timestamp(self):
+        source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
+        check = ExpenseSourceCheck.objects.create(
+            monthly_budget=self.january,
+            expense_source=source,
+            is_checked=True,
+            checked_at=datetime.datetime.now(datetime.timezone.utc),
+        )
+
+        response = self.client.post(
+            reverse(
+                "expense_source_toggle",
+                kwargs={"year": 2026, "month": 1, "source_id": source.id},
+            ),
+            {"next": self.monthly_url()},
+        )
+
+        self.assertRedirects(response, self.monthly_url())
+        check.refresh_from_db()
+        self.assertFalse(check.is_checked)
+        self.assertIsNone(check.checked_at)
+
+    def test_management_create_rename_archive_and_restore(self):
+        response = self.client.post(
+            self.manage_url(),
+            {
+                "action": "create",
+                "name": "  Discover   card statement  ",
+                "next": self.monthly_url(),
+            },
+        )
+        self.assertRedirects(response, self.monthly_url())
+        source = ExpenseSource.objects.get(user=self.user)
+        self.assertEqual(source.name, "Discover card statement")
+
+        response = self.client.post(
+            self.manage_url(),
+            {
+                "action": "rename",
+                "source_id": source.id,
+                "name": "Citi card statement",
+                "next": self.monthly_url(),
+            },
+        )
+        self.assertRedirects(response, self.monthly_url())
+        source.refresh_from_db()
+        self.assertEqual(source.name, "Citi card statement")
+
+        response = self.client.post(
+            self.manage_url(),
+            {
+                "action": "archive",
+                "source_id": source.id,
+                "next": self.monthly_url(),
+            },
+        )
+        self.assertRedirects(response, self.monthly_url())
+        source.refresh_from_db()
+        self.assertFalse(source.is_active)
+
+        response = self.client.post(
+            self.manage_url(),
+            {
+                "action": "restore",
+                "source_id": source.id,
+                "next": self.monthly_url(),
+            },
+        )
+        self.assertRedirects(response, self.monthly_url())
+        source.refresh_from_db()
+        self.assertTrue(source.is_active)
+
+    def test_cannot_manage_or_toggle_another_users_source(self):
+        other_source = ExpenseSource.objects.create(
+            user=self.other_user,
+            name="Other bank statement",
+        )
+
+        manage_response = self.client.post(
+            self.manage_url(),
+            {
+                "action": "archive",
+                "source_id": other_source.id,
+                "next": self.monthly_url(),
+            },
+        )
+        toggle_response = self.client.post(
+            reverse(
+                "expense_source_toggle",
+                kwargs={
+                    "year": 2026,
+                    "month": 1,
+                    "source_id": other_source.id,
+                },
+            ),
+            {"is_checked": "on", "next": self.monthly_url()},
+        )
+
+        self.assertEqual(manage_response.status_code, 404)
+        self.assertEqual(toggle_response.status_code, 404)
+        other_source.refresh_from_db()
+        self.assertTrue(other_source.is_active)
+
+    def test_external_next_url_is_rejected(self):
+        response = self.client.post(
+            self.manage_url(),
+            {
+                "action": "create",
+                "name": "Bank statement",
+                "next": "https://example.com/phishing",
+            },
+        )
+
+        self.assertRedirects(response, self.monthly_url())

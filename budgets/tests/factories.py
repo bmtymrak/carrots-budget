@@ -4,7 +4,14 @@ from factory.django import DjangoModelFactory
 from factory import fuzzy
 import datetime
 
-from budgets.models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
+from budgets.models import (
+    YearlyBudget,
+    MonthlyBudget,
+    BudgetItem,
+    Rollover,
+    ExpenseSource,
+    ExpenseSourceCheck,
+)
 from purchases.tests.factories import UserFactory, CategoryFactory
 
 class YearlyBudgetFactory(DjangoModelFactory):
@@ -47,4 +54,25 @@ class RolloverFactory(DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     yearly_budget = factory.SubFactory(YearlyBudgetFactory)
     category = factory.SubFactory(CategoryFactory)
-    amount = fuzzy.FuzzyDecimal(0, 1000, precision=2) 
+    amount = fuzzy.FuzzyDecimal(0, 1000, precision=2)
+
+
+class ExpenseSourceFactory(DjangoModelFactory):
+    class Meta:
+        model = ExpenseSource
+
+    user = factory.SubFactory(UserFactory)
+    name = factory.Sequence(lambda n: f"Expense source {n}")
+    is_active = True
+
+
+class ExpenseSourceCheckFactory(DjangoModelFactory):
+    class Meta:
+        model = ExpenseSourceCheck
+
+    monthly_budget = factory.SubFactory(MonthlyBudgetFactory)
+    expense_source = factory.SubFactory(
+        ExpenseSourceFactory,
+        user=factory.SelfAttribute("..monthly_budget.user"),
+    )
+    is_checked = False

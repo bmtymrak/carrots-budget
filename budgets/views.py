@@ -9,8 +9,11 @@ from django.http.response import HttpResponseRedirect
 from django.http import JsonResponse, QueryDict
 from django.views.generic.edit import DeleteView
 from purchases.forms import PurchaseForm, PurchaseFormSetReceipt
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
+from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 from django.views.generic import (
     ListView,
     CreateView,
@@ -32,9 +35,21 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce
 
-from budgets.models import MonthlyBudget, YearlyBudget, BudgetItem, Rollover
+from budgets.models import (
+    MonthlyBudget,
+    YearlyBudget,
+    BudgetItem,
+    Rollover,
+    ExpenseSource,
+    ExpenseSourceCheck,
+)
 from purchases.models import Category, Purchase, Income
-from budgets.forms import BudgetItemForm, BudgetItemFormset, YearlyBudgetForm
+from budgets.forms import (
+    BudgetItemForm,
+    BudgetItemFormset,
+    YearlyBudgetForm,
+    ExpenseSourceForm,
+)
 from budgets.services import BudgetService
 from django_htmx.http import HttpResponseClientRedirect
 from purchases.services import save_purchases_with_receipts
@@ -489,3 +504,118 @@ def budget_item_create(request, year):
         "budgets/budgetitem_create_modal.html",
         {"form": form, "next": next, "year": year},
     )
+
+
+def _get_user_monthly_budget(request, year, month):
+    month_start, next_month_start = BudgetService.month_bounds(year, month)
+    return get_object_or_404(
+        MonthlyBudget,
+        user=request.user,
+        date__gte=month_start,
+        date__lt=next_month_start,
+    )
+
+
+def _expense_source_next_url(request, year, month):
+    default_url = reverse("monthly_detail", kwargs={"year": year, "month": month})
+    requested_url = request.POST.get("next") or request.GET.get("next")
+    if requested_url and url_has_allowed_host_and_scheme(
+        requested_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return requested_url
+    return default_url
+
+
+def _expense_source_redirect(request, next_url):
+    if request.headers.get("HX-Request") == "true":
+        return HttpResponseClientRedirect(next_url)
+    return redirect(next_url)
+
+
+def _expense_source_modal_context(request, monthly_budget, form, next_url):
+    return {
+        "monthly_budget": monthly_budget,
+        "form": form,
+        "active_expense_sources": ExpenseSource.objects.filter(
+            user=request.user,
+            is_active=True,
+        ),
+        "archived_expense_sources": ExpenseSource.objects.filter(
+            user=request.user,
+            is_active=False,
+        ),
+        "next": next_url,
+    }
+
+
+@login_required
+def expense_source_manage(request, year, month):
+    monthly_budget = _get_user_monthly_budget(request, year, month)
+    next_url = _expense_source_next_url(request, year, month)
+    action = request.POST.get("action", "create")
+
+    if request.method == "POST" and action in {"create", "rename"}:
+        source = None
+        if action == "rename":
+            source = get_object_or_404(
+                ExpenseSource,
+                pk=request.POST.get("source_id"),
+                user=request.user,
+            )
+        form = ExpenseSourceForm(request.POST, instance=source, user=request.user)
+        if form.is_valid():
+            source = form.save(commit=False)
+            source.user = request.user
+            source.save()
+            return _expense_source_redirect(request, next_url)
+    elif request.method == "POST" and action in {"archive", "restore"}:
+        source = get_object_or_404(
+            ExpenseSource,
+            pk=request.POST.get("source_id"),
+            user=request.user,
+        )
+        source.is_active = action == "restore"
+        source.save(update_fields=["is_active", "updated_at"])
+        return _expense_source_redirect(request, next_url)
+    else:
+        form = ExpenseSourceForm(user=request.user)
+
+    return render(
+        request,
+        "budgets/expense_source_manage_modal.html",
+        _expense_source_modal_context(request, monthly_budget, form, next_url),
+    )
+
+
+@login_required
+@require_POST
+def expense_source_toggle(request, year, month, source_id):
+    monthly_budget = _get_user_monthly_budget(request, year, month)
+    source = get_object_or_404(
+        ExpenseSource,
+        pk=source_id,
+        user=request.user,
+        is_active=True,
+    )
+    check, _ = ExpenseSourceCheck.objects.get_or_create(
+        monthly_budget=monthly_budget,
+        expense_source=source,
+    )
+    check.is_checked = request.POST.get("is_checked") in {"1", "on", "true"}
+    check.checked_at = timezone.now() if check.is_checked else None
+    check.save(update_fields=["is_checked", "checked_at"])
+
+    next_url = _expense_source_next_url(request, year, month)
+    if request.headers.get("HX-Request") == "true":
+        checklist_context = BudgetService().get_expense_source_checklist(
+            user=request.user,
+            monthly_budget=monthly_budget,
+        )
+        return render(
+            request,
+            "budgets/_expense_source_checklist.html",
+            {"monthly_budget": monthly_budget, **checklist_context},
+        )
+    return redirect(next_url)

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Implementation plan and UI mockups for the Carrots Budget monthly expense source checklist.">
+    <title>Carrots Budget · Expense source checklist plan</title>
+    <style>
+        :root {
+            --ink: #203027;
+            --muted: #607169;
+            --line: #d9e6dc;
+            --paper: #fff;
+            --wash: #f3f8f4;
+            --green: #237654;
+            --green-dark: #164b36;
+            --green-soft: #e0f1e7;
+            --orange: #c9682f;
+            --orange-soft: #fff0e5;
+            --shadow: 0 14px 36px rgb(30 75 49 / 9%);
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { margin: 0; color: var(--ink); background: var(--wash); font: 16px/1.6 Inter, ui-sans-serif, system-ui, sans-serif; }
+        a { color: var(--green); font-weight: 750; }
+        h1, h2, h3, p { margin-top: 0; }
+        h1, h2, h3 { color: var(--green-dark); line-height: 1.15; letter-spacing: -.035em; }
+        h1 { max-width: 850px; margin-bottom: 16px; font-size: clamp(2.4rem, 6vw, 4.7rem); }
+        h2 { margin-bottom: 14px; font-size: clamp(1.7rem, 3vw, 2.35rem); }
+        h3 { margin-bottom: 8px; font-size: 1.2rem; }
+        code { padding: .12em .35em; border: 1px solid #e1ebe3; border-radius: 4px; background: #f2f6f3; color: #315745; font-size: .9em; }
+        ul { padding-left: 22px; }
+        li + li { margin-top: 6px; }
+        .shell { width: min(1160px, calc(100% - 36px)); margin: auto; }
+        .hero { padding: 68px 0 82px; color: #f4fff7; background: radial-gradient(circle at 88% 18%, rgb(230 125 53 / 34%), transparent 26%), linear-gradient(126deg, #153e2f, #237654 58%, #285e48); }
+        .eyebrow { margin-bottom: 16px; color: #bde9cd; font-size: .78rem; font-weight: 850; letter-spacing: .15em; text-transform: uppercase; }
+        .hero h1 { color: #f4fff7; }
+        .summary { max-width: 820px; margin: 0; color: #d8efdf; font-size: 1.1rem; }
+        main { padding: 38px 0 68px; }
+        .toc { position: relative; display: flex; flex-wrap: wrap; gap: 8px; margin: -62px 0 42px; padding: 14px; border: 1px solid #fff; border-radius: 14px; background: rgb(255 255 255 / 96%); box-shadow: var(--shadow); }
+        .toc a { padding: 7px 11px; border-radius: 8px; background: var(--green-soft); font-size: .88rem; text-decoration: none; }
+        section { margin-top: 50px; }
+        .lead { max-width: 820px; color: var(--muted); font-size: 1.03rem; }
+        .panel, .mock, .step { padding: 24px 27px; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); box-shadow: 0 8px 24px rgb(31 72 52 / 4.5%); }
+        .callout { margin-top: 20px; padding: 17px 20px; border: 1px solid #f1d4bd; border-left: 5px solid var(--orange); border-radius: 11px; background: var(--orange-soft); }
+        .mock-grid, .steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px; }
+        .mock { padding: 18px; }
+        .mock.recommended { border-top: 5px solid var(--orange); }
+        .mock-label, .step-number { margin-bottom: 12px; color: var(--orange); font-size: .76rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+        .app-frame { padding: 12px; border: 1px solid #cad9ce; border-radius: 11px; background: #f8fcf9; }
+        .app-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
+        .app-title strong { color: var(--green-dark); }
+        .fake-action { padding: 5px 8px; border-radius: 6px; background: var(--green); color: white; font-size: .7rem; font-weight: 800; }
+        .fake-progress { height: 8px; margin: 8px 0 10px; overflow: hidden; border-radius: 999px; background: #dce9df; }
+        .fake-progress span { display: block; width: 50%; height: 100%; background: var(--green); }
+        .fake-row { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 6px 8px; border: 1px solid #e0e8e2; border-radius: 7px; background: #fff; font-size: .82rem; }
+        .fake-row + .fake-row { margin-top: 5px; }
+        .fake-row.done { color: #587064; background: #f2faf4; text-decoration: line-through; }
+        .fake-check { width: 14px; height: 14px; border: 2px solid var(--green); border-radius: 3px; background: white; }
+        .fake-row.done .fake-check { background: var(--green); box-shadow: inset 0 0 0 2px white; }
+        .fake-status { margin-left: auto; color: #8b5c25; font-size: .7rem; font-weight: 800; }
+        .fake-row.done .fake-status { color: var(--green); }
+        .split-frame, .queue { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .companion-frame { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(170px, .8fr); gap: 10px; align-items: start; }
+        .fake-main { display: grid; gap: 8px; }
+        .fake-summary { min-height: 120px; padding: 11px; border-radius: 8px; background: #e9f4eb; }
+        .fake-content-block { min-height: 52px; padding: 10px; border: 1px solid #e0e8e2; border-radius: 8px; background: #fff; color: var(--muted); font-size: .78rem; }
+        .fake-companion { padding: 10px; border: 1px solid #cad9ce; border-radius: 9px; background: #fff; }
+        .fake-summary small, .mock-note { color: var(--muted); }
+        .queue h4 { margin: 0 0 5px; color: var(--muted); font-size: .72rem; text-transform: uppercase; }
+        .queue .fake-row { display: block; }
+        .mobile-frame { max-width: 280px; margin: auto; }
+        .mobile-frame .fake-row { min-height: 52px; }
+        .mock-note { margin: 13px 0 0; font-size: .9rem; }
+        .step { padding: 20px; }
+        .table-wrap { overflow-x: auto; margin-top: 17px; border: 1px solid var(--line); border-radius: 12px; }
+        table { width: 100%; min-width: 700px; border-collapse: collapse; }
+        th, td { padding: 13px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+        th { color: var(--muted); background: #f5faf6; font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; }
+        tr:last-child td { border-bottom: 0; }
+        footer { padding: 38px 0 10px; color: var(--muted); font-size: .88rem; }
+        @media (width <= 45rem) { .shell { width: min(100% - 28px, 680px); } .hero { padding: 50px 0 78px; } .mock-grid, .steps, .split-frame, .queue, .companion-frame { grid-template-columns: 1fr; } .panel, .mock { padding: 20px; } }
+        @media print { body { background: white; } .hero { padding: 25px 0; color: #000; background: none; } .hero h1, .summary, .eyebrow { color: #222; } .toc { display: none; } .panel, .mock, .step { box-shadow: none; break-inside: avoid; } }
+    </style>
+</head>
+<body>
+    <header class="hero">
+        <div class="shell">
+            <p class="eyebrow">Feature plan · August 2026</p>
+            <h1>Monthly expense source checklist</h1>
+            <p class="summary">Give each monthly budget a lightweight review list for statements and accounts, so reconciliation is visible and can be checked off without coupling it to individual purchases.</p>
+        </div>
+    </header>
+    <main>
+        <div class="shell">
+            <nav class="toc" aria-label="Document sections">
+                <a href="#decision">Feature decision</a><a href="#mocks">UI mocks</a><a href="#implementation">Implementation</a><a href="#testing">Testing</a>
+            </nav>
+
+            <section id="decision">
+                <h2>1. Feature decision</h2>
+                <p class="lead">Use reusable, user-owned expense-review sources with separate completion state for each monthly budget. A source is a statement or account to review, not the existing <code>Purchase.source</code> field.</p>
+                <div class="callout"><strong>Recommended experience:</strong> place “Expense review” in a narrow companion rail to the right of the monthly budget’s main content. Keep it sticky while the main column scrolls, and stack it below the main content when the viewport cannot support two readable columns.</div>
+                <div class="panel">
+                    <h3>Locked behavior</h3>
+                    <ul>
+                        <li>The reusable source list starts empty; examples below are illustrative only.</li>
+                        <li>Completion is always manual and applies only to the displayed month.</li>
+                        <li>New months begin unchecked. Archived sources leave active checklists but retain history and can be restored.</li>
+                        <li>No purchase counts, totals, name matching, or automatic completion are involved.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="mocks">
+                <h2>2. Monthly detail page mocks</h2>
+                <p class="lead">These wireframes compare four presentations of the same independent task. Mock A treats reconciliation as supporting context rather than part of the primary financial content.</p>
+                <div class="mock-grid">
+                    <article class="mock recommended">
+                        <p class="mock-label">Mock A · Recommended companion rail</p>
+                        <div class="app-frame companion-frame">
+                            <div class="fake-main">
+                                <div class="fake-summary"><strong>Monthly summary</strong><br><small>Budgeted · Spent · Saved<br>Income · Remaining · Free</small></div>
+                                <div class="fake-content-block"><strong>Budget + Income</strong><br>Main financial planning content</div>
+                                <div class="fake-content-block"><strong>Purchases</strong><br>Monthly transaction table</div>
+                            </div>
+                            <aside class="fake-companion">
+                                <div class="app-title"><strong>Expense review</strong><span class="fake-action">Manage</span></div>
+                                <small>2 of 4 complete</small><div class="fake-progress"><span></span></div>
+                                <div class="fake-row done"><span class="fake-check"></span>Bank <span class="fake-status">Done</span></div>
+                                <div class="fake-row done"><span class="fake-check"></span>Discover <span class="fake-status">Done</span></div>
+                                <div class="fake-row"><span class="fake-check"></span>Citi <span class="fake-status">Review</span></div>
+                                <div class="fake-row"><span class="fake-check"></span>Cash <span class="fake-status">Review</span></div>
+                            </aside>
+                        </div>
+                        <p class="mock-note">Best information hierarchy: the budget remains primary while the review checklist stays visible as supporting workflow.</p>
+                    </article>
+                    <article class="mock">
+                        <p class="mock-label">Mock B · Inline dedicated card</p>
+                        <div class="app-frame">
+                            <div class="app-title"><strong>Expense review</strong><span class="fake-action">Manage sources</span></div>
+                            <small>2 of 4 complete</small><div class="fake-progress"><span></span></div>
+                            <div class="fake-row done"><span class="fake-check"></span>Bank statement <span class="fake-status">Complete</span></div>
+                            <div class="fake-row"><span class="fake-check"></span>Discover card <span class="fake-status">Needs review</span></div>
+                        </div>
+                        <p class="mock-note">Simple and prominent, but incorrectly gives the supporting checklist the same visual weight as core budget content.</p>
+                    </article>
+                    <article class="mock">
+                        <p class="mock-label">Mock C · Review queue</p>
+                        <div class="app-frame">
+                            <div class="app-title"><strong>Expense review</strong><span class="fake-action">2 / 4</span></div>
+                            <div class="queue"><div><h4>To review</h4><div class="fake-row"><span class="fake-check"></span>Citi card</div><div class="fake-row"><span class="fake-check"></span>Cash wallet</div></div><div><h4>Completed</h4><div class="fake-row done"><span class="fake-check"></span>Bank</div><div class="fake-row done"><span class="fake-check"></span>Discover</div></div></div>
+                        </div>
+                        <p class="mock-note">Useful for long lists, but moving completed rows reduces spatial stability.</p>
+                    </article>
+                    <article class="mock">
+                        <p class="mock-label">Mock D · Mobile-first rows</p>
+                        <div class="app-frame mobile-frame">
+                            <div class="app-title"><strong>Expense review</strong><span class="fake-action">Manage</span></div>
+                            <div class="fake-row done"><span class="fake-check"></span><span>Bank statement<br><small>Complete</small></span></div>
+                            <div class="fake-row"><span class="fake-check"></span><span>Discover card statement<br><small>Needs review</small></span></div>
+                            <div class="fake-row"><span class="fake-check"></span><span>Citi card statement<br><small>Needs review</small></span></div>
+                        </div>
+                        <p class="mock-note">Use this touch-friendly treatment as Mock A’s narrow-screen layout.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="implementation">
+                <h2>3. Implementation plan</h2>
+                <div class="steps">
+                    <article class="step"><p class="step-number">Step 1 · Persistence</p><h3>Independent checklist models</h3><p>Add <code>ExpenseSource</code> and <code>ExpenseSourceCheck</code>. Enforce per-user names and one completion row per monthly budget/source pair. Register both in admin and add factories.</p></article>
+                    <article class="step"><p class="step-number">Step 2 · Monthly context</p><h3>Read active sources and state</h3><p>Build checklist items from active user-owned sources and any completion rows for the displayed month. Do not write database rows during a page GET.</p></article>
+                    <article class="step"><p class="step-number">Step 3 · HTMX endpoints</p><h3>Toggle and manage inline</h3><p>Add authenticated, user-scoped endpoints for monthly toggles and a modal that creates, renames, archives, and restores reusable sources.</p></article>
+                    <article class="step"><p class="step-number">Step 4 · Templates and CSS</p><h3>Integrate the companion rail</h3><p>Wrap the monthly page in a main/aside grid, widen only this page’s content container, and keep the checklist rail sticky on desktop. Collapse to one column below the desktop breakpoint while preserving native controls, focus states, and touch targets.</p></article>
+                </div>
+                <div class="panel">
+                    <h3>Interface contract</h3>
+                    <div class="table-wrap"><table><thead><tr><th>Surface</th><th>Contract</th><th>Behavior</th></tr></thead><tbody>
+                        <tr><td>Monthly context</td><td><code>expense_source_checklist</code>, total, completed</td><td>Only active sources belonging to the current user.</td></tr>
+                        <tr><td>Toggle route</td><td>POST by year, month, and source ID</td><td>Create/update monthly state and return the refreshed card for HTMX.</td></tr>
+                        <tr><td>Manage route</td><td>GET/POST by year and month</td><td>Render the modal and process create, rename, archive, or restore.</td></tr>
+                        <tr><td>Purchase boundary</td><td>No relation to <code>Purchase.source</code></td><td>Purchases never create or alter checklist sources or completion.</td></tr>
+                    </tbody></table></div>
+                </div>
+            </section>
+
+            <section id="testing">
+                <h2>4. Testing and acceptance</h2>
+                <div class="panel"><ul>
+                    <li>Model uniqueness, monthly independence, checked timestamps, and archive history.</li>
+                    <li>Empty and populated monthly-page states plus progress counts.</li>
+                    <li>Cross-user protection on every management and toggle operation.</li>
+                    <li>Proof that matching <code>Purchase.source</code> text has no checklist effect.</li>
+                    <li>HTMX partial updates, ordinary POST redirects, mobile layout, and keyboard interaction.</li>
+                </ul></div>
+            </section>
+            <footer>Prepared for Carrots Budget. Production target: Mock A’s companion rail with Mock D’s narrow-screen row treatment.</footer>
+        </div>
+    </main>
+</body>
+</html>

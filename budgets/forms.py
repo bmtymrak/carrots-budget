@@ -1,8 +1,14 @@
-from django.forms import ModelForm, CharField, ChoiceField, modelformset_factory
+from django.forms import (
+    ModelForm,
+    CharField,
+    ChoiceField,
+    TextInput,
+    modelformset_factory,
+)
 from django.core.exceptions import ValidationError
 import datetime
 
-from .models import MonthlyBudget, YearlyBudget, BudgetItem
+from .models import MonthlyBudget, YearlyBudget, BudgetItem, ExpenseSource
 from purchases.models import Category
 
 
@@ -56,6 +62,35 @@ class BudgetItemForm(ModelForm):
     class Meta:
         model = BudgetItem
         fields = ["category", "new_category", "amount", "savings", "notes"]
+
+
+class ExpenseSourceForm(ModelForm):
+    class Meta:
+        model = ExpenseSource
+        fields = ["name"]
+        labels = {"name": "Statement or account name"}
+        widgets = {
+            "name": TextInput(
+                attrs={
+                    "placeholder": "e.g. Bank statement",
+                    "autocomplete": "off",
+                }
+            )
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user")
+        super().__init__(*args, **kwargs)
+
+    def clean_name(self):
+        name = " ".join(self.cleaned_data["name"].split())
+        duplicate = ExpenseSource.objects.filter(
+            user=self.user,
+            name__iexact=name,
+        ).exclude(pk=self.instance.pk)
+        if duplicate.exists():
+            raise ValidationError("You already have an expense source with this name.")
+        return name
 
 
 BudgetItemFormset = modelformset_factory(BudgetItem, fields=("amount",), extra=0)

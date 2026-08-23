@@ -1,0 +1,92 @@
+<section class="expense-source-modal" aria-labelledby="expense-source-modal-title">
+    <div class="expense-source-modal-header">
+        <div>
+            <p class="expense-source-eyebrow">Monthly checklist</p>
+            <h2 id="expense-source-modal-title">Manage expense sources</h2>
+        </div>
+        <p class="expense-source-modal-month">{{ monthly_budget.date|date:"F Y" }}</p>
+    </div>
+
+    <p class="expense-source-modal-intro">
+        These reusable statement and account names are separate from purchase sources.
+        Add them once, then check them off independently each month.
+    </p>
+
+    <form
+        class="form-grid expense-source-create-form"
+        method="post"
+        action="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
+        hx-post="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
+        hx-target="#modal-content"
+    >
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <input type="hidden" name="action" value="create">
+        {{ form.name.label_tag }}
+        {{ form.name }}
+        {% for error in form.name.errors %}
+            <p class="field-error-text">{{ error }}</p>
+        {% endfor %}
+        <button class="button-create" type="submit">Add source</button>
+    </form>
+
+    <div class="expense-source-management-list">
+        <h3>Active sources</h3>
+        {% for source in active_expense_sources %}
+            <div class="expense-source-management-row">
+                <form
+                    class="expense-source-rename-form"
+                    method="post"
+                    action="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
+                    hx-post="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
+                    hx-target="#modal-content"
+                >
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <input type="hidden" name="action" value="rename">
+                    <input type="hidden" name="source_id" value="{{ source.id }}">
+                    <label class="visually-hidden" for="expense-source-name-{{ source.id }}">
+                        Rename {{ source.name }}
+                    </label>
+                    <input id="expense-source-name-{{ source.id }}" name="name" value="{{ source.name }}">
+                    <button class="button-create" type="submit">Save</button>
+                </form>
+                <form
+                    method="post"
+                    action="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
+                    hx-post="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
+                    hx-target="#modal-content"
+                >
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <input type="hidden" name="action" value="archive">
+                    <input type="hidden" name="source_id" value="{{ source.id }}">
+                    <button class="expense-source-archive-button" type="submit">Archive</button>
+                </form>
+            </div>
+        {% empty %}
+            <p class="expense-source-muted">No active sources.</p>
+        {% endfor %}
+
+        <h3>Archived sources</h3>
+        {% for source in archived_expense_sources %}
+            <div class="expense-source-management-row archived">
+                <span>{{ source.name }}</span>
+                <form
+                    method="post"
+                    action="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
+                    hx-post="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
+                    hx-target="#modal-content"
+                >
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <input type="hidden" name="action" value="restore">
+                    <input type="hidden" name="source_id" value="{{ source.id }}">
+                    <button class="button-create" type="submit">Restore</button>
+                </form>
+            </div>
+        {% empty %}
+            <p class="expense-source-muted">Archived sources will appear here.</p>
+        {% endfor %}
+    </div>
+</section>

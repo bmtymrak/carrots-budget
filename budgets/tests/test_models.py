@@ -4,7 +4,14 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
-from budgets.models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
+from budgets.models import (
+    YearlyBudget,
+    MonthlyBudget,
+    BudgetItem,
+    Rollover,
+    ExpenseSource,
+    ExpenseSourceCheck,
+)
 from budgets.forms import BudgetItemForm
 from purchases.models import Category
 
@@ -84,3 +91,59 @@ class TestBudgetItem(TestCase):
         )
         self.assertEqual(Rollover.objects.all().count(), 1)
         self.assertEqual(Rollover.objects.all()[0].category, category)
+
+
+class TestExpenseSource(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            email="source@test.com",
+            username="source-user",
+            password="testpass123",
+        )
+        cls.yearly_budget = YearlyBudget.objects.create(
+            user=cls.user,
+            date=datetime.date(2026, 1, 1),
+        )
+        cls.january = MonthlyBudget.objects.get(
+            user=cls.user,
+            date=datetime.date(2026, 1, 1),
+        )
+        cls.february = MonthlyBudget.objects.get(
+            user=cls.user,
+            date=datetime.date(2026, 2, 1),
+        )
+
+    def test_source_name_is_unique_per_user(self):
+        ExpenseSource.objects.create(user=self.user, name="Bank statement")
+
+        with self.assertRaises(IntegrityError):
+            ExpenseSource.objects.create(user=self.user, name="Bank statement")
+
+    def test_check_is_unique_per_month_and_source(self):
+        source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
+        ExpenseSourceCheck.objects.create(
+            monthly_budget=self.january,
+            expense_source=source,
+        )
+
+        with self.assertRaises(IntegrityError):
+            ExpenseSourceCheck.objects.create(
+                monthly_budget=self.january,
+                expense_source=source,
+            )
+
+    def test_same_source_has_independent_monthly_state(self):
+        source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
+        january_check = ExpenseSourceCheck.objects.create(
+            monthly_budget=self.january,
+            expense_source=source,
+            is_checked=True,
+        )
+        february_check = ExpenseSourceCheck.objects.create(
+            monthly_budget=self.february,
+            expense_source=source,
+        )
+
+        self.assertTrue(january_check.is_checked)
+        self.assertFalse(february_check.is_checked)

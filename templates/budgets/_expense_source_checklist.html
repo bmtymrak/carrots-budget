@@ -1,0 +1,84 @@
+<section
+    id="expense-source-checklist"
+    class="card-base expense-source-card"
+    aria-labelledby="expense-source-checklist-title"
+>
+    <div class="card-header expense-source-card-header">
+        <div>
+            <h2 id="expense-source-checklist-title">Expense review</h2>
+            <p class="expense-source-helper">
+                Check each statement or account after you have accounted for all of its expenses.
+            </p>
+        </div>
+        <div class="card-header-action expense-source-actions">
+            <button
+                class="button-create"
+                type="button"
+                hx-get='{% url "expense_source_manage" year=monthly_budget.date.year month=monthly_budget.date.month %}?next={{ request.path|urlencode }}'
+                hx-target="#modal-content"
+            >Manage sources</button>
+        </div>
+    </div>
+
+    {% if expense_source_total %}
+        <div class="expense-source-progress" aria-live="polite">
+            <div>
+                <strong>{{ expense_source_completed }} of {{ expense_source_total }} complete</strong>
+                <span class="expense-source-progress-note">
+                    {% if expense_source_completed == expense_source_total %}
+                        All sources reviewed
+                    {% else %}
+                        Keep going when you finish the next statement
+                    {% endif %}
+                </span>
+            </div>
+            <progress
+                value="{{ expense_source_completed }}"
+                max="{{ expense_source_total }}"
+                aria-label="{{ expense_source_completed }} of {{ expense_source_total }} expense sources complete"
+            ></progress>
+        </div>
+
+        <div class="expense-source-list" role="list" aria-label="Expense sources">
+            {% for item in expense_source_checklist %}
+                <form
+                    class="expense-source-row{% if item.is_checked %} is-checked{% endif %}"
+                    method="post"
+                    action='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=item.source.id %}'
+                    hx-post='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=item.source.id %}'
+                    hx-trigger="change from:input[type='checkbox']"
+                    hx-target="#expense-source-checklist"
+                    hx-swap="outerHTML"
+                    role="listitem"
+                >
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <input
+                        id="expense-source-check-{{ item.source.id }}"
+                        type="checkbox"
+                        name="is_checked"
+                        value="1"
+                        {% if item.is_checked %}checked{% endif %}
+                    >
+                    <label for="expense-source-check-{{ item.source.id }}">
+                        <span class="expense-source-name">{{ item.source.name }}</span>
+                        <span class="expense-source-status">
+                            {% if item.is_checked %}Complete{% else %}Needs review{% endif %}
+                        </span>
+                    </label>
+                </form>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="expense-source-empty">
+            <strong>No expense sources yet</strong>
+            <p>Add the statements or accounts you review every month.</p>
+            <button
+                class="button-create"
+                type="button"
+                hx-get='{% url "expense_source_manage" year=monthly_budget.date.year month=monthly_budget.date.month %}?next={{ request.path|urlencode }}'
+                hx-target="#modal-content"
+            >Add your first source</button>
+        </div>
+    {% endif %}
+</section>

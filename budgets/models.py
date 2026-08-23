@@ -72,6 +72,72 @@ class MonthlyBudget(models.Model):
         ]
 
 
+class ExpenseSource(models.Model):
+    """A reusable statement or account that a user reviews each month."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="expense_sources",
+    )
+    name = models.CharField(max_length=250)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "name"],
+                name="unique_expense_source_user_name",
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=["user", "is_active", "name"],
+                name="idx_expense_source_active",
+            )
+        ]
+        ordering = ["name", "id"]
+
+
+class ExpenseSourceCheck(models.Model):
+    """The completion state for one expense source in one monthly budget."""
+
+    monthly_budget = models.ForeignKey(
+        MonthlyBudget,
+        on_delete=models.CASCADE,
+        related_name="expense_source_checks",
+    )
+    expense_source = models.ForeignKey(
+        ExpenseSource,
+        on_delete=models.CASCADE,
+        related_name="monthly_checks",
+    )
+    is_checked = models.BooleanField(default=False)
+    checked_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.monthly_budget.date:%Y-%m} - {self.expense_source.name}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["monthly_budget", "expense_source"],
+                name="unique_monthly_expense_source_check",
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=["monthly_budget", "expense_source"],
+                name="idx_monthly_exp_source_chk",
+            )
+        ]
+
+
 class BudgetItem(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
