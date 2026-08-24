@@ -931,6 +931,8 @@ class ExpenseSourceViewTests(TestCase):
         self.assertContains(response, "Bank statement")
         self.assertContains(response, 'class="monthly-budget-companion"')
         self.assertContains(response, 'class="content content--monthly-budget"')
+        self.assertContains(response, "+ Add note")
+        self.assertNotContains(response, 'class="expense-source-note" open')
         self.assertEqual(ExpenseSource.objects.count(), 1)
         self.assertEqual(ExpenseSourceCheck.objects.count(), 0)
 
@@ -1199,6 +1201,12 @@ class ExpenseSourceViewTests(TestCase):
         self.assertEqual(january_check.notes, "Waiting for one pending charge")
         self.assertEqual(january_check.checked_at, original_checked_at)
         self.assertContains(second_response, "Waiting for one pending charge")
+        self.assertContains(
+            second_response,
+            'class="expense-source-note" open',
+        )
+        self.assertContains(second_response, ">Save</button>")
+        self.assertNotContains(second_response, "Save note")
 
         february_response = self.client.get(self.monthly_url(month=2))
         self.assertContains(february_response, source.name)

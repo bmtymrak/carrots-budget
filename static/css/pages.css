@@ -10,7 +10,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 12px;
+    gap: 4px 12px;
 }
 
 .purchase-filter-title {
@@ -415,12 +415,42 @@
     color: var(--color-success);
 }
 
+.expense-source-note {
+    grid-column: 1 / -1;
+    min-width: 0;
+}
+
+.expense-source-note summary {
+    width: fit-content;
+    color: var(--color-muted);
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+    list-style: none;
+}
+
+.expense-source-note summary::-webkit-details-marker {
+    display: none;
+}
+
+.expense-source-note summary:hover {
+    color: var(--color-success);
+}
+
+.expense-source-note-editor {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+}
+
 .expense-source-notes {
     box-sizing: border-box;
-    grid-column: 1 / -1;
     width: 100%;
-    min-height: 52px;
-    padding: 8px var(--space-md);
+    min-height: 34px;
+    padding: 6px var(--space-sm);
     resize: vertical;
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--radius-md);
@@ -437,8 +467,8 @@
 }
 
 .expense-source-note-save {
-    grid-column: 1 / -1;
-    min-height: 32px;
+    min-height: 34px;
+    padding: 4px var(--space-sm);
 }
 
 .expense-source-empty {

@@ -62,21 +62,26 @@
                             {% endif %}
                         </span>
                     </label>
-                    <label
-                        class="visually-hidden"
-                        for="expense-source-notes-{{ item.source.id }}"
-                    >Notes for {{ item.source.name }}</label>
-                    <textarea
-                        id="expense-source-notes-{{ item.source.id }}"
-                        class="expense-source-notes"
-                        name="notes"
-                        rows="2"
-                        placeholder="Add a note"
-                    >{{ item.notes }}</textarea>
-                    <button
-                        class="button-create expense-source-note-save"
-                        type="submit"
-                    >Save note</button>
+                    <details class="expense-source-note"{% if item.notes %} open{% endif %}>
+                        <summary>{% if item.notes %}Note{% else %}+ Add note{% endif %}</summary>
+                        <div class="expense-source-note-editor">
+                            <label
+                                class="visually-hidden"
+                                for="expense-source-notes-{{ item.source.id }}"
+                            >Notes for {{ item.source.name }}</label>
+                            <textarea
+                                id="expense-source-notes-{{ item.source.id }}"
+                                class="expense-source-notes"
+                                name="notes"
+                                rows="1"
+                                placeholder="Add a note"
+                            >{{ item.notes }}</textarea>
+                            <button
+                                class="button-create expense-source-note-save"
+                                type="submit"
+                            >Save</button>
+                        </div>
+                    </details>
                 </form>
             {% endfor %}
         </div>
