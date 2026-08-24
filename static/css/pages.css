@@ -10,7 +10,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 4px 12px;
+    gap: 12px;
 }
 
 .purchase-filter-title {
@@ -295,11 +295,6 @@
     display: block;
 }
 
-.monthly-budget-companion .expense-source-status {
-    display: block;
-    margin-top: 3px;
-}
-
 .visually-hidden {
     position: absolute;
     width: 1px;
@@ -351,7 +346,7 @@
     display: grid;
     grid-template-columns: 21px minmax(0, 1fr);
     align-items: center;
-    gap: 12px;
+    gap: 4px 12px;
     min-height: 54px;
     padding: 8px 12px;
     border: 1px solid var(--color-border-subtle);
@@ -387,21 +382,6 @@
     font-weight: 700;
 }
 
-.expense-source-status {
-    flex-shrink: 0;
-    color: #8b5c25;
-    font-size: 0.85rem;
-    font-weight: 700;
-}
-
-.expense-source-checked-at {
-    display: block;
-    margin-top: var(--space-2xs);
-    font-size: 0.75rem;
-    font-weight: 400;
-    white-space: nowrap;
-}
-
 .expense-source-row.is-checked {
     border-color: color-mix(in srgb, var(--color-success) 25%, white);
     background: color-mix(in srgb, var(--color-success) 5%, white);
@@ -409,10 +389,6 @@
 
 .expense-source-row.is-checked .expense-source-name {
     color: var(--color-muted);
-}
-
-.expense-source-row.is-checked .expense-source-status {
-    color: var(--color-success);
 }
 
 .expense-source-note {
@@ -625,11 +601,6 @@
 
     .expense-source-row label {
         display: block;
-    }
-
-    .expense-source-status {
-        display: block;
-        margin-top: 3px;
     }
 
     .expense-source-modal {

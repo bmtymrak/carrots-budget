@@ -49,18 +49,6 @@
                     >
                     <label for="expense-source-check-{{ item.source.id }}">
                         <span class="expense-source-name">{{ item.source.name }}</span>
-                        <span class="expense-source-status">
-                            {% if item.is_checked %}
-                                Complete
-                                {% if item.checked_at %}
-                                    <span class="expense-source-checked-at">
-                                        {{ item.checked_at|date:"M j, g:i a" }}
-                                    </span>
-                                {% endif %}
-                            {% else %}
-                                Needs review
-                            {% endif %}
-                        </span>
                     </label>
                     <details class="expense-source-note"{% if item.notes %} open{% endif %}>
                         <summary>{% if item.notes %}Note{% else %}+ Add note{% endif %}</summary>

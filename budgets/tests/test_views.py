@@ -968,6 +968,9 @@ class ExpenseSourceViewTests(TestCase):
             ).exists()
         )
         self.assertContains(response, "1 / 1 complete")
+        self.assertNotContains(response, "Needs review")
+        self.assertNotContains(response, "Complete")
+        self.assertNotContains(response, "expense-source-checked-at")
         self.assertEqual(
             response.context["expense_source_next_url"],
             self.monthly_url(),
