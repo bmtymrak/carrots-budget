@@ -400,7 +400,6 @@
 
 .expense-source-row.is-checked .expense-source-name {
     color: var(--color-muted);
-    text-decoration: line-through;
 }
 
 .expense-source-row.is-checked .expense-source-status {
@@ -438,6 +437,7 @@
 
 .expense-source-modal h3 {
     margin-top: 22px;
+    margin-bottom: var(--space-sm);
     font-size: 1.05rem;
 }
 
@@ -471,8 +471,10 @@
 
 .expense-source-create-form input,
 .expense-source-rename-form input {
+    box-sizing: border-box;
     width: 100%;
     min-height: 40px;
+    min-width: 0;
     padding: 8px var(--space-md);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -483,20 +485,31 @@
 }
 
 .expense-source-management-row {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 76px;
+    align-items: stretch;
     gap: 8px;
     margin-bottom: 8px;
 }
 
 .expense-source-rename-form {
-    display: flex;
-    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 60px;
+    min-width: 0;
     gap: 8px;
 }
 
-.expense-source-rename-form button {
-    flex-shrink: 0;
+.expense-source-rename-form .button-create,
+.expense-source-archive-button {
+    width: 100%;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 var(--space-md);
+    border-radius: var(--radius-md);
+}
+
+.expense-source-management-row > form:last-child {
+    display: flex;
 }
 
 .expense-source-management-row.archived {
@@ -508,10 +521,7 @@
 }
 
 .expense-source-archive-button {
-    min-height: 35px;
-    padding: var(--space-xs) var(--space-md);
     border: 1px solid color-mix(in srgb, var(--color-danger) 45%, white);
-    border-radius: 6px;
     background: color-mix(in srgb, var(--color-danger) 5%, white);
     color: var(--color-danger);
     cursor: pointer;
@@ -562,8 +572,7 @@
     }
 
     .expense-source-management-row {
-        align-items: stretch;
-        flex-direction: column;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .expense-source-rename-form,
