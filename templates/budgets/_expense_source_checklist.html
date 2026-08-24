@@ -33,7 +33,7 @@
                     method="post"
                     action='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=item.source.id %}'
                     hx-post='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=item.source.id %}'
-                    hx-trigger="change"
+                    hx-trigger="change[event.target.matches('input[type=checkbox]')], submit"
                     hx-target="#expense-source-checklist"
                     hx-swap="outerHTML"
                     role="listitem"
@@ -50,9 +50,33 @@
                     <label for="expense-source-check-{{ item.source.id }}">
                         <span class="expense-source-name">{{ item.source.name }}</span>
                         <span class="expense-source-status">
-                            {% if item.is_checked %}Complete{% else %}Needs review{% endif %}
+                            {% if item.is_checked %}
+                                Complete
+                                {% if item.checked_at %}
+                                    <span class="expense-source-checked-at">
+                                        {{ item.checked_at|date:"M j, g:i a" }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                Needs review
+                            {% endif %}
                         </span>
                     </label>
+                    <label
+                        class="visually-hidden"
+                        for="expense-source-notes-{{ item.source.id }}"
+                    >Notes for {{ item.source.name }}</label>
+                    <textarea
+                        id="expense-source-notes-{{ item.source.id }}"
+                        class="expense-source-notes"
+                        name="notes"
+                        rows="2"
+                        placeholder="Add a note"
+                    >{{ item.notes }}</textarea>
+                    <button
+                        class="button-create expense-source-note-save"
+                        type="submit"
+                    >Save note</button>
                 </form>
             {% endfor %}
         </div>

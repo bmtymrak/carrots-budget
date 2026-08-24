@@ -11,6 +11,7 @@ from budgets.models import (
     Rollover,
     ExpenseSource,
     ExpenseSourceCheck,
+    ExpenseSourceMonth,
 )
 from budgets.forms import BudgetItemForm
 from purchases.models import Category
@@ -147,3 +148,43 @@ class TestExpenseSource(TestCase):
 
         self.assertTrue(january_check.is_checked)
         self.assertFalse(february_check.is_checked)
+
+    def test_source_can_be_included_in_nonconsecutive_months(self):
+        source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
+        january_membership = ExpenseSourceMonth.objects.create(
+            expense_source=source,
+            monthly_budget=self.january,
+        )
+        march = MonthlyBudget.objects.get(
+            user=self.user,
+            date=datetime.date(2026, 3, 1),
+        )
+        march_membership = ExpenseSourceMonth.objects.create(
+            expense_source=source,
+            monthly_budget=march,
+        )
+
+        self.assertEqual(january_membership.monthly_budget, self.january)
+        self.assertEqual(march_membership.monthly_budget, march)
+        self.assertFalse(
+            ExpenseSourceMonth.objects.filter(
+                expense_source=source,
+                monthly_budget=self.february,
+            ).exists()
+        )
+
+    def test_monthly_notes_are_independent(self):
+        source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
+        january_check = ExpenseSourceCheck.objects.create(
+            monthly_budget=self.january,
+            expense_source=source,
+            notes="Waiting for a pending charge",
+        )
+        february_check = ExpenseSourceCheck.objects.create(
+            monthly_budget=self.february,
+            expense_source=source,
+            notes="",
+        )
+
+        self.assertEqual(january_check.notes, "Waiting for a pending charge")
+        self.assertEqual(february_check.notes, "")

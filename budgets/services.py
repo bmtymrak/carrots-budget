@@ -2,7 +2,16 @@ import datetime
 import calendar
 from decimal import Decimal
 
-from django.db.models import Sum, Q, Value, DecimalField, F, ExpressionWrapper
+from django.db.models import (
+    Sum,
+    Q,
+    Value,
+    DecimalField,
+    F,
+    ExpressionWrapper,
+    Exists,
+    OuterRef,
+)
 from django.db.models.functions import Coalesce
 
 from budgets.models import (
@@ -12,6 +21,7 @@ from budgets.models import (
     MonthlyBudget,
     ExpenseSource,
     ExpenseSourceCheck,
+    ExpenseSourceMonth,
 )
 from purchases.models import Purchase, Income
 
@@ -33,13 +43,20 @@ class BudgetService:
     def get_expense_source_checklist(self, user, monthly_budget) -> dict:
         """Build the active checklist without writing completion rows on GET."""
 
-        sources = list(ExpenseSource.objects.filter(user=user, is_active=True))
+        monthly_memberships = ExpenseSourceMonth.objects.filter(
+            expense_source=OuterRef("pk"),
+            monthly_budget=monthly_budget,
+        )
+        sources = list(
+            ExpenseSource.objects.filter(user=user)
+            .annotate(is_active_for_month=Exists(monthly_memberships))
+            .filter(is_active_for_month=True)
+        )
         checks_by_source_id = {
             check.expense_source_id: check
             for check in ExpenseSourceCheck.objects.filter(
                 monthly_budget=monthly_budget,
                 expense_source__user=user,
-                expense_source__is_active=True,
             )
         }
         checklist = [
@@ -51,6 +68,9 @@ class BudgetService:
                 "checked_at": checks_by_source_id.get(source.id).checked_at
                 if source.id in checks_by_source_id
                 else None,
+                "notes": checks_by_source_id.get(source.id).notes
+                if source.id in checks_by_source_id
+                else "",
             }
             for source in sources
         ]

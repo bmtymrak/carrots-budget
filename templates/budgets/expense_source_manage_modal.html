@@ -8,8 +8,9 @@
     </div>
 
     <p class="expense-source-modal-intro">
-        These reusable statement and account names are separate from purchase sources.
-        Add them once, then check them off independently each month.
+        Choose which reusable sources appear in {{ monthly_budget.date|date:"F Y" }}.
+        Changes here affect only this month; other months keep their own list,
+        checkmarks, and notes.
     </p>
 
     <form
@@ -31,7 +32,7 @@
     </form>
 
     <div class="expense-source-management-list">
-        <h3>Active sources</h3>
+        <h3>Included in {{ monthly_budget.date|date:"F Y" }}</h3>
         {% for source in active_expense_sources %}
             <div class="expense-source-management-row">
                 <form
@@ -61,14 +62,14 @@
                     <input type="hidden" name="next" value="{{ next }}">
                     <input type="hidden" name="action" value="archive">
                     <input type="hidden" name="source_id" value="{{ source.id }}">
-                    <button class="expense-source-archive-button" type="submit">Archive</button>
+                    <button class="expense-source-archive-button" type="submit">Remove</button>
                 </form>
             </div>
         {% empty %}
-            <p class="expense-source-muted">No active sources.</p>
+            <p class="expense-source-muted">No sources included this month.</p>
         {% endfor %}
 
-        <h3>Archived sources</h3>
+        <h3>Available sources</h3>
         {% for source in archived_expense_sources %}
             <div class="expense-source-management-row archived">
                 <span>{{ source.name }}</span>
@@ -82,11 +83,11 @@
                     <input type="hidden" name="next" value="{{ next }}">
                     <input type="hidden" name="action" value="restore">
                     <input type="hidden" name="source_id" value="{{ source.id }}">
-                    <button class="button-create" type="submit">Restore</button>
+                    <button class="button-create" type="submit">Add to month</button>
                 </form>
             </div>
         {% empty %}
-            <p class="expense-source-muted">Archived sources will appear here.</p>
+            <p class="expense-source-muted">All reusable sources are included.</p>
         {% endfor %}
     </div>
 </section>

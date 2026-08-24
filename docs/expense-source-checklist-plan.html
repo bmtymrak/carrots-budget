@@ -106,7 +106,8 @@
                     <ul>
                         <li>The reusable source list starts empty; examples below are illustrative only.</li>
                         <li>Completion is always manual and applies only to the displayed month.</li>
-                        <li>New months begin unchecked. Archived sources leave active checklists but retain history and can be restored.</li>
+                        <li>Each month has an explicit source list. Adding or removing a source affects only the displayed month, so nonconsecutive use is fully supported.</li>
+                        <li>Reusable source names can be added back in any later month. Checkmarks, timestamps, and notes are saved independently for each source and month.</li>
                         <li>No purchase counts, totals, name matching, or automatic completion are involved.</li>
                     </ul>
                 </div>
@@ -127,7 +128,7 @@
                             <aside class="fake-companion">
                                 <div class="app-title"><strong>Expense review</strong><span class="fake-action">Manage</span></div>
                                 <small>2 / 4 complete</small><div class="fake-progress"><span></span></div>
-                                <div class="fake-row done"><span class="fake-check"></span>Bank <span class="fake-status">Done</span></div>
+                                <div class="fake-row done"><span class="fake-check"></span>Bank <span class="fake-status">Done · note</span></div>
                                 <div class="fake-row done"><span class="fake-check"></span>Discover <span class="fake-status">Done</span></div>
                                 <div class="fake-row"><span class="fake-check"></span>Citi <span class="fake-status">Review</span></div>
                                 <div class="fake-row"><span class="fake-check"></span>Cash <span class="fake-status">Review</span></div>
@@ -169,17 +170,17 @@
             <section id="implementation">
                 <h2>3. Implementation plan</h2>
                 <div class="steps">
-                    <article class="step"><p class="step-number">Step 1 · Persistence</p><h3>Independent checklist models</h3><p>Add <code>ExpenseSource</code> and <code>ExpenseSourceCheck</code>. Enforce per-user names and one completion row per monthly budget/source pair. Register both in admin and add factories.</p></article>
-                    <article class="step"><p class="step-number">Step 2 · Monthly context</p><h3>Read active sources and state</h3><p>Build checklist items from active user-owned sources and any completion rows for the displayed month. Do not write database rows during a page GET.</p></article>
-                    <article class="step"><p class="step-number">Step 3 · HTMX endpoints</p><h3>Toggle and manage inline</h3><p>Add authenticated, user-scoped endpoints for monthly toggles and a modal that creates, renames, archives, and restores reusable sources.</p></article>
+                    <article class="step"><p class="step-number">Step 1 · Persistence</p><h3>Independent checklist models</h3><p>Add <code>ExpenseSource</code>, explicit <code>ExpenseSourceMonth</code> membership rows, and monthly <code>ExpenseSourceCheck</code> state with notes. Enforce per-user names and one membership and completion row per monthly budget/source pair.</p></article>
+                    <article class="step"><p class="step-number">Step 2 · Monthly context</p><h3>Read each month’s list and state</h3><p>Build checklist items only from memberships for the displayed month, then attach that month’s completion state and notes. Do not write database rows during a page GET.</p></article>
+                    <article class="step"><p class="step-number">Step 3 · HTMX endpoints</p><h3>Toggle and manage inline</h3><p>Add authenticated, user-scoped endpoints for monthly toggles and a modal that creates, renames, adds, and removes reusable sources for only the displayed month.</p></article>
                     <article class="step"><p class="step-number">Step 4 · Templates and CSS</p><h3>Integrate the companion rail</h3><p>Wrap the monthly page in a main/aside grid, cap the checklist rail at 250px, and keep it sticky on desktop. Use only a compact completion count and slim progress bar. Collapse to one column below the desktop breakpoint while preserving native controls, focus states, and touch targets.</p></article>
                 </div>
                 <div class="panel">
                     <h3>Interface contract</h3>
                     <div class="table-wrap"><table><thead><tr><th>Surface</th><th>Contract</th><th>Behavior</th></tr></thead><tbody>
-                        <tr><td>Monthly context</td><td><code>expense_source_checklist</code>, total, completed</td><td>Only active sources belonging to the current user.</td></tr>
-                        <tr><td>Toggle route</td><td>POST by year, month, and source ID</td><td>Create/update monthly state and return the refreshed card for HTMX.</td></tr>
-                        <tr><td>Manage route</td><td>GET/POST by year and month</td><td>Render the modal and process create, rename, archive, or restore.</td></tr>
+                        <tr><td>Monthly context</td><td><code>expense_source_checklist</code>, total, completed</td><td>Sources explicitly included in the month plus that month’s saved state.</td></tr>
+                        <tr><td>Toggle route</td><td>POST by year, month, and source ID</td><td>Create/update monthly completion and notes without changing the original checked timestamp during note edits.</td></tr>
+                        <tr><td>Manage route</td><td>GET/POST by year and month</td><td>Create or rename a reusable source, or add/remove its membership for this month only.</td></tr>
                         <tr><td>Purchase boundary</td><td>No relation to <code>Purchase.source</code></td><td>Purchases never create or alter checklist sources or completion.</td></tr>
                     </tbody></table></div>
                 </div>
@@ -188,7 +189,7 @@
             <section id="testing">
                 <h2>4. Testing and acceptance</h2>
                 <div class="panel"><ul>
-                    <li>Model uniqueness, monthly independence, checked timestamps, and archive history.</li>
+                    <li>Model uniqueness, nonconsecutive monthly membership, monthly notes, stable checked timestamps, and retained history.</li>
                     <li>Empty and populated monthly-page states plus progress counts.</li>
                     <li>Cross-user protection on every management and toggle operation.</li>
                     <li>Proof that matching <code>Purchase.source</code> text has no checklist effect.</li>

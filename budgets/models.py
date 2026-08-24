@@ -81,7 +81,6 @@ class ExpenseSource(models.Model):
         related_name="expense_sources",
     )
     name = models.CharField(max_length=250)
-    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -95,13 +94,40 @@ class ExpenseSource(models.Model):
                 name="unique_expense_source_user_name",
             )
         ]
+        ordering = ["name", "id"]
+
+
+class ExpenseSourceMonth(models.Model):
+    """Include a reusable expense source on one monthly budget checklist."""
+
+    expense_source = models.ForeignKey(
+        ExpenseSource,
+        on_delete=models.CASCADE,
+        related_name="monthly_memberships",
+    )
+    monthly_budget = models.ForeignKey(
+        MonthlyBudget,
+        on_delete=models.CASCADE,
+        related_name="expense_source_memberships",
+    )
+
+    def __str__(self):
+        return f"{self.monthly_budget.date:%Y-%m} - {self.expense_source.name}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["monthly_budget", "expense_source"],
+                name="unique_monthly_expense_source_membership",
+            ),
+        ]
         indexes = [
             models.Index(
-                fields=["user", "is_active", "name"],
-                name="idx_expense_source_active",
+                fields=["monthly_budget", "expense_source"],
+                name="idx_monthly_exp_source_member",
             )
         ]
-        ordering = ["name", "id"]
+        ordering = ["monthly_budget__date", "expense_source__name", "id"]
 
 
 class ExpenseSourceCheck(models.Model):
@@ -119,6 +145,7 @@ class ExpenseSourceCheck(models.Model):
     )
     is_checked = models.BooleanField(default=False)
     checked_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, default="")
 
     def __str__(self):
         return f"{self.monthly_budget.date:%Y-%m} - {self.expense_source.name}"

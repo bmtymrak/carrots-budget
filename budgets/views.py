@@ -43,6 +43,7 @@ from budgets.models import (
     Rollover,
     ExpenseSource,
     ExpenseSourceCheck,
+    ExpenseSourceMonth,
 )
 from purchases.models import Category, Purchase, Income
 from budgets.forms import (
@@ -536,17 +537,18 @@ def _expense_source_redirect(request, next_url):
 
 
 def _expense_source_modal_context(request, monthly_budget, form, next_url):
+    monthly_memberships = ExpenseSourceMonth.objects.filter(
+        expense_source=OuterRef("pk"),
+        monthly_budget=monthly_budget,
+    )
+    sources = ExpenseSource.objects.filter(user=request.user).annotate(
+        is_active_for_month=Exists(monthly_memberships),
+    )
     return {
         "monthly_budget": monthly_budget,
         "form": form,
-        "active_expense_sources": ExpenseSource.objects.filter(
-            user=request.user,
-            is_active=True,
-        ),
-        "archived_expense_sources": ExpenseSource.objects.filter(
-            user=request.user,
-            is_active=False,
-        ),
+        "active_expense_sources": sources.filter(is_active_for_month=True),
+        "archived_expense_sources": sources.filter(is_active_for_month=False),
         "next": next_url,
     }
 
@@ -570,6 +572,11 @@ def expense_source_manage(request, year, month):
             source = form.save(commit=False)
             source.user = request.user
             source.save()
+            if action == "create":
+                ExpenseSourceMonth.objects.create(
+                    expense_source=source,
+                    monthly_budget=monthly_budget,
+                )
             return _expense_source_redirect(request, next_url)
     elif request.method == "POST" and action in {"archive", "restore"}:
         source = get_object_or_404(
@@ -577,8 +584,16 @@ def expense_source_manage(request, year, month):
             pk=request.POST.get("source_id"),
             user=request.user,
         )
-        source.is_active = action == "restore"
-        source.save(update_fields=["is_active", "updated_at"])
+        if action == "archive":
+            ExpenseSourceMonth.objects.filter(
+                expense_source=source,
+                monthly_budget=monthly_budget,
+            ).delete()
+        else:
+            ExpenseSourceMonth.objects.get_or_create(
+                expense_source=source,
+                monthly_budget=monthly_budget,
+            )
         return _expense_source_redirect(request, next_url)
     else:
         form = ExpenseSourceForm(user=request.user)
@@ -595,18 +610,25 @@ def expense_source_manage(request, year, month):
 def expense_source_toggle(request, year, month, source_id):
     monthly_budget = _get_user_monthly_budget(request, year, month)
     source = get_object_or_404(
-        ExpenseSource,
+        ExpenseSource.objects.filter(
+            monthly_memberships__monthly_budget=monthly_budget,
+        ).distinct(),
         pk=source_id,
         user=request.user,
-        is_active=True,
     )
     check, _ = ExpenseSourceCheck.objects.get_or_create(
         monthly_budget=monthly_budget,
         expense_source=source,
     )
+    was_checked = check.is_checked
     check.is_checked = request.POST.get("is_checked") in {"1", "on", "true"}
-    check.checked_at = timezone.now() if check.is_checked else None
-    check.save(update_fields=["is_checked", "checked_at"])
+    if check.is_checked and not was_checked:
+        check.checked_at = timezone.now()
+    elif not check.is_checked:
+        check.checked_at = None
+    if "notes" in request.POST:
+        check.notes = request.POST["notes"].strip()
+    check.save(update_fields=["is_checked", "checked_at", "notes"])
 
     next_url = _expense_source_next_url(request, year, month)
     if request.headers.get("HX-Request") == "true":
