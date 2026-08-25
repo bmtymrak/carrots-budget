@@ -34,61 +34,14 @@
     <div class="expense-source-management-list">
         <h3>Included in {{ monthly_budget.date|date:"F Y" }}</h3>
         {% for source_row in included_expense_source_rows %}
-            <div class="expense-source-management-row">
-                <form
-                    class="expense-source-rename-form"
-                    method="post"
-                    action="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
-                    hx-post="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
-                    hx-target="#modal-content"
-                >
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ next }}">
-                    <input type="hidden" name="action" value="rename">
-                    <input type="hidden" name="source_id" value="{{ source_row.source.id }}">
-                    <label class="visually-hidden" for="{{ source_row.rename_form.name.id_for_label }}">
-                        Rename {{ source_row.source.name }}
-                    </label>
-                    {{ source_row.rename_form.name }}
-                    <button class="button-create" type="submit">Save</button>
-                    {% for error in source_row.rename_form.name.errors %}
-                        <p class="field-error-text">{{ error }}</p>
-                    {% endfor %}
-                </form>
-                <form
-                    method="post"
-                    action="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
-                    hx-post="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
-                    hx-target="#modal-content"
-                >
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ next }}">
-                    <input type="hidden" name="action" value="remove_from_month">
-                    <input type="hidden" name="source_id" value="{{ source_row.source.id }}">
-                    <button class="expense-source-remove-button" type="submit">Remove</button>
-                </form>
-            </div>
+            {% include "budgets/_expense_source_management_row.html" with source_row=source_row membership_action="remove_from_month" membership_label="Remove" membership_button_class="expense-source-remove-button" %}
         {% empty %}
             <p class="expense-source-muted">No sources included this month.</p>
         {% endfor %}
 
         <h3>Available sources</h3>
-        {% for source in available_expense_sources %}
-            <div class="expense-source-management-row is-available">
-                <span>{{ source.name }}</span>
-                <form
-                    method="post"
-                    action="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
-                    hx-post="{% url 'expense_source_manage' year=monthly_budget.date.year month=monthly_budget.date.month %}"
-                    hx-target="#modal-content"
-                >
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ next }}">
-                    <input type="hidden" name="action" value="add_to_month">
-                    <input type="hidden" name="source_id" value="{{ source.id }}">
-                    <button class="button-create" type="submit">Add to month</button>
-                </form>
-            </div>
+        {% for source_row in available_expense_source_rows %}
+            {% include "budgets/_expense_source_management_row.html" with source_row=source_row membership_action="add_to_month" membership_label="Add to month" membership_button_class="button-create" is_available=True %}
         {% empty %}
             <p class="expense-source-muted">All reusable sources are included.</p>
         {% endfor %}

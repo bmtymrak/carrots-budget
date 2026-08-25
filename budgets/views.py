@@ -560,25 +560,26 @@ def _expense_source_modal_context(
         if source.pk not in monthly_sources_by_source_id
         or not monthly_sources_by_source_id[source.pk].is_included
     ]
-    included_source_rows = []
-    for source in included_sources:
-        if rename_form and rename_form.instance.pk == source.pk:
-            row_rename_form = rename_form
-        else:
-            row_rename_form = ExpenseSourceForm(
-                instance=source,
-                user=request.user,
-                auto_id=f"expense-source-{source.pk}-%s",
-            )
-        included_source_rows.append(
-            {"source": source, "rename_form": row_rename_form}
-        )
+
+    def build_source_rows(sources):
+        source_rows = []
+        for source in sources:
+            if rename_form and rename_form.instance.pk == source.pk:
+                row_rename_form = rename_form
+            else:
+                row_rename_form = ExpenseSourceForm(
+                    instance=source,
+                    user=request.user,
+                    auto_id=f"expense-source-{source.pk}-%s",
+                )
+            source_rows.append({"source": source, "rename_form": row_rename_form})
+        return source_rows
 
     return {
         "monthly_budget": monthly_budget,
         "create_form": create_form,
-        "included_expense_source_rows": included_source_rows,
-        "available_expense_sources": available_sources,
+        "included_expense_source_rows": build_source_rows(included_sources),
+        "available_expense_source_rows": build_source_rows(available_sources),
         "next": next_url,
     }
 

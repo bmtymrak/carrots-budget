@@ -531,7 +531,7 @@
 
 .expense-source-management-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 76px;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: stretch;
     gap: 8px;
     margin-bottom: 8px;
@@ -562,7 +562,6 @@
 }
 
 .expense-source-management-row.is-available {
-    justify-content: space-between;
     padding: 9px var(--space-md);
     border-radius: var(--radius-md);
     background: var(--color-disabled-surface);

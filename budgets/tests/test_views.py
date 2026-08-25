@@ -1207,6 +1207,55 @@ class ExpenseSourceViewTests(TestCase):
         self.assertContains(self.client.get(self.monthly_url(2)), "Current statement name")
         self.assertNotContains(self.client.get(self.monthly_url(1)), "Old statement name")
 
+    def test_available_source_can_be_renamed_without_adding_it_to_month(self):
+        source = self.create_source("Old statement name", months=(1,))
+        self.create_source("Existing statement name", months=(1,))
+
+        response = self.client.post(
+            self.manage_url(month=2),
+            {
+                "action": "rename",
+                "source_id": source.id,
+                "name": "Existing statement name",
+                "next": self.monthly_url(month=2),
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        source_row = next(
+            source_row
+            for source_row in response.context["available_expense_source_rows"]
+            if source_row["source"].pk == source.pk
+        )
+        self.assertTrue(source_row["rename_form"].is_bound)
+        self.assertIn("name", source_row["rename_form"].errors)
+        self.assertContains(
+            response,
+            "You already have an expense source with this name.",
+        )
+
+        correction_response = self.client.post(
+            self.manage_url(month=2),
+            {
+                "action": "rename",
+                "source_id": source.id,
+                "name": "Current statement name",
+                "next": self.monthly_url(month=2),
+            },
+        )
+
+        self.assertRedirects(correction_response, self.monthly_url(month=2))
+        source.refresh_from_db()
+        self.assertEqual(source.name, "Current statement name")
+        self.assertFalse(
+            source.monthly_sources.filter(monthly_budget=self.february).exists()
+        )
+        self.assertContains(
+            self.client.get(self.monthly_url(month=1)),
+            "Current statement name",
+        )
+
     def test_management_rejects_unknown_actions(self):
         response = self.client.post(
             self.manage_url(),
