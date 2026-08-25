@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import YearlyBudget, MonthlyBudget, BudgetItem, Rollover
+from .models import (
+    YearlyBudget,
+    MonthlyBudget,
+    BudgetItem,
+    Rollover,
+    ExpenseSource,
+    MonthlyExpenseSource,
+)
 
 
 class BudgetItemAdmin(admin.ModelAdmin):
@@ -11,3 +18,5 @@ admin.site.register(YearlyBudget)
 admin.site.register(MonthlyBudget)
 admin.site.register(BudgetItem, BudgetItemAdmin)
 admin.site.register(Rollover)
+admin.site.register(ExpenseSource)
+admin.site.register(MonthlyExpenseSource)

@@ -1,5 +1,7 @@
 {% extends "_layouts/app.html" %}
 
+{% block content_class %}content--monthly-budget{% endblock content_class %}
+
 {% block header %}
     <h1 class="page-title">{{monthly_budget.date|date:"F Y"}}</h1>
 {% endblock header %}
@@ -21,6 +23,8 @@
 
     
 {% block body %}
+<div class="monthly-budget-layout">
+<div class="monthly-budget-main">
     <div class="page-header-action">
         <button class="button-create" type="button" hx-get='{% url "purchase_create" %}?date={{monthly_budget.date|date:"Y-m-d"}}&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
         <button class="button-create" type="button" hx-get='{% url "recurring_purchase_add_to_month" year=monthly_budget.date.year month=monthly_budget.date.month %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Recurring Purchases</button>
@@ -128,5 +132,11 @@
 <div class="card-base">
     <h2>Purchases</h2>
     {% include "purchases/_purchase_table.html" with purchases=purchases show_category=True return_url=request.path aria_label="Monthly purchase data" only %}
+</div>
+</div>
+
+<aside class="monthly-budget-companion" aria-label="Expense review companion">
+    {% include "budgets/_expense_source_checklist.html" %}
+</aside>
 </div>
 {% endblock body %}

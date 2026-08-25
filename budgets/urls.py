@@ -14,6 +14,8 @@ from .views import (
     budgetitem_delete,
     budget_item_create,
     budget_create,
+    expense_source_manage,
+    expense_source_toggle,
 )
 
 urlpatterns = [
@@ -22,6 +24,16 @@ urlpatterns = [
         "<int:year>/<int:month>",
         MonthlyBudgetDetailView.as_view(),
         name="monthly_detail",
+    ),
+    path(
+        "<int:year>/<int:month>/expense-sources/manage",
+        expense_source_manage,
+        name="expense_source_manage",
+    ),
+    path(
+        "<int:year>/<int:month>/expense-sources/<int:source_id>/toggle",
+        expense_source_toggle,
+        name="expense_source_toggle",
     ),
     path(
         "<int:year>/budgetitem-create-htmx",

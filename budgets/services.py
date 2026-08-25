@@ -2,10 +2,23 @@ import datetime
 import calendar
 from decimal import Decimal
 
-from django.db.models import Sum, Q, Value, DecimalField, F, ExpressionWrapper
+from django.db.models import (
+    Sum,
+    Q,
+    Value,
+    DecimalField,
+    F,
+    ExpressionWrapper,
+)
 from django.db.models.functions import Coalesce
 
-from budgets.models import BudgetItem, Rollover, YearlyBudget, MonthlyBudget
+from budgets.models import (
+    BudgetItem,
+    Rollover,
+    YearlyBudget,
+    MonthlyBudget,
+    MonthlyExpenseSource,
+)
 from purchases.models import Purchase, Income
 
 
@@ -22,6 +35,36 @@ class BudgetService:
     @staticmethod
     def year_bounds(year: int):
         return datetime.date(year, 1, 1), datetime.date(year + 1, 1, 1)
+
+    def get_expense_source_checklist(self, user, monthly_budget) -> dict:
+        """Build the included checklist without writing monthly sources on GET."""
+
+        included_monthly_sources = MonthlyExpenseSource.objects.filter(
+            monthly_budget=monthly_budget,
+            expense_source__user=user,
+            is_included=True,
+        ).select_related("expense_source").order_by(
+            "expense_source__name",
+            "expense_source_id",
+        )
+        checklist_items = [
+            {
+                "source": monthly_source.expense_source,
+                "is_checked": monthly_source.is_checked,
+                "checked_at": monthly_source.checked_at,
+                "notes": monthly_source.notes,
+            }
+            for monthly_source in included_monthly_sources
+        ]
+        completed_count = sum(
+            checklist_item["is_checked"] for checklist_item in checklist_items
+        )
+
+        return {
+            "expense_source_checklist": checklist_items,
+            "expense_source_count": len(checklist_items),
+            "expense_source_completed_count": completed_count,
+        }
 
     def get_monthly_budget_context(
         self, user, year: int, month: int, monthly_budget=None
@@ -155,6 +198,11 @@ class BudgetService:
             date__lt=next_month_start,
         ).order_by("date", "source").select_related("category")
 
+        expense_source_context = self.get_expense_source_checklist(
+            user=user,
+            monthly_budget=monthly_budget,
+        )
+
         return {
             "budget_items": budget_items_list,
             "savings_items": savings_items_list,
@@ -176,6 +224,7 @@ class BudgetService:
             "months": [
                 (calendar.month_name[m], m) for m in range(1, 13)
             ],
+            **expense_source_context,
         }
 
     def get_yearly_budget_context(self, user, year: int, ytd_month: int) -> dict:

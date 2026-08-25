@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 import datetime
 
 from purchases.models import Category
-from budgets.models import BudgetItem, YearlyBudget
-from budgets.forms import BudgetItemForm, YearlyBudgetForm
+from budgets.models import BudgetItem, YearlyBudget, ExpenseSource
+from budgets.forms import BudgetItemForm, YearlyBudgetForm, ExpenseSourceForm
 
 
 User = get_user_model()
@@ -123,3 +123,31 @@ class YearlyBudgetFormTest(TestCase):
         form = YearlyBudgetForm()
         current_year = datetime.date.today().year
         self.assertEqual(form.fields['year'].initial, current_year)
+
+
+class ExpenseSourceFormTest(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email="expense-source-form@test.com",
+            username="expense-source-form",
+            password="testpass123",
+        )
+
+    def test_normalizes_whitespace(self):
+        form = ExpenseSourceForm(
+            data={"name": "  Bank   statement  "},
+            user=self.user,
+        )
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data["name"], "Bank statement")
+
+    def test_rejects_duplicate_name_case_insensitively(self):
+        ExpenseSource.objects.create(user=self.user, name="Bank statement")
+        form = ExpenseSourceForm(
+            data={"name": "BANK STATEMENT"},
+            user=self.user,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("already have an expense source", str(form.errors))
