@@ -2,6 +2,7 @@ import datetime
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from budgets.models import (
@@ -10,8 +11,7 @@ from budgets.models import (
     BudgetItem,
     Rollover,
     ExpenseSource,
-    ExpenseSourceCheck,
-    ExpenseSourceMonth,
+    MonthlyExpenseSource,
 )
 from budgets.forms import BudgetItemForm
 from purchases.models import Category
@@ -121,37 +121,54 @@ class TestExpenseSource(TestCase):
         with self.assertRaises(IntegrityError):
             ExpenseSource.objects.create(user=self.user, name="Bank statement")
 
-    def test_check_is_unique_per_month_and_source(self):
+    def test_source_name_is_unique_per_user_case_insensitively(self):
+        ExpenseSource.objects.create(user=self.user, name="Bank statement")
+
+        with self.assertRaises(IntegrityError):
+            ExpenseSource.objects.create(user=self.user, name="BANK STATEMENT")
+
+    def test_source_name_is_normalized_for_direct_model_writes(self):
+        source = ExpenseSource.objects.create(
+            user=self.user,
+            name="  Bank   statement  ",
+        )
+
+        self.assertEqual(source.name, "Bank statement")
+
+    def test_monthly_source_is_unique_per_month_and_source(self):
         source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
-        ExpenseSourceCheck.objects.create(
+        MonthlyExpenseSource.objects.create(
             monthly_budget=self.january,
             expense_source=source,
         )
 
         with self.assertRaises(IntegrityError):
-            ExpenseSourceCheck.objects.create(
+            MonthlyExpenseSource.objects.create(
                 monthly_budget=self.january,
                 expense_source=source,
             )
 
-    def test_same_source_has_independent_monthly_state(self):
+    def test_same_source_has_independent_monthly_sources(self):
         source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
-        january_check = ExpenseSourceCheck.objects.create(
+        checked_at = datetime.datetime(2026, 1, 20, tzinfo=datetime.timezone.utc)
+        january_monthly_source = MonthlyExpenseSource.objects.create(
             monthly_budget=self.january,
             expense_source=source,
             is_checked=True,
+            checked_at=checked_at,
         )
-        february_check = ExpenseSourceCheck.objects.create(
+        february_monthly_source = MonthlyExpenseSource.objects.create(
             monthly_budget=self.february,
             expense_source=source,
         )
 
-        self.assertTrue(january_check.is_checked)
-        self.assertFalse(february_check.is_checked)
+        self.assertTrue(january_monthly_source.is_checked)
+        self.assertEqual(january_monthly_source.checked_at, checked_at)
+        self.assertFalse(february_monthly_source.is_checked)
 
     def test_source_can_be_included_in_nonconsecutive_months(self):
         source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
-        january_membership = ExpenseSourceMonth.objects.create(
+        january_monthly_source = MonthlyExpenseSource.objects.create(
             expense_source=source,
             monthly_budget=self.january,
         )
@@ -159,15 +176,15 @@ class TestExpenseSource(TestCase):
             user=self.user,
             date=datetime.date(2026, 3, 1),
         )
-        march_membership = ExpenseSourceMonth.objects.create(
+        march_monthly_source = MonthlyExpenseSource.objects.create(
             expense_source=source,
             monthly_budget=march,
         )
 
-        self.assertEqual(january_membership.monthly_budget, self.january)
-        self.assertEqual(march_membership.monthly_budget, march)
+        self.assertEqual(january_monthly_source.monthly_budget, self.january)
+        self.assertEqual(march_monthly_source.monthly_budget, march)
         self.assertFalse(
-            ExpenseSourceMonth.objects.filter(
+            MonthlyExpenseSource.objects.filter(
                 expense_source=source,
                 monthly_budget=self.february,
             ).exists()
@@ -175,16 +192,55 @@ class TestExpenseSource(TestCase):
 
     def test_monthly_notes_are_independent(self):
         source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
-        january_check = ExpenseSourceCheck.objects.create(
+        january_monthly_source = MonthlyExpenseSource.objects.create(
             monthly_budget=self.january,
             expense_source=source,
             notes="Waiting for a pending charge",
         )
-        february_check = ExpenseSourceCheck.objects.create(
+        february_monthly_source = MonthlyExpenseSource.objects.create(
             monthly_budget=self.february,
             expense_source=source,
             notes="",
         )
 
-        self.assertEqual(january_check.notes, "Waiting for a pending charge")
-        self.assertEqual(february_check.notes, "")
+        self.assertEqual(january_monthly_source.notes, "Waiting for a pending charge")
+        self.assertEqual(february_monthly_source.notes, "")
+
+    def test_monthly_source_rejects_cross_user_relationships(self):
+        other_user = User.objects.create_user(
+            email="other-source@test.com",
+            username="other-source-user",
+            password="testpass123",
+        )
+        other_source = ExpenseSource.objects.create(
+            user=other_user,
+            name="Other user's statement",
+        )
+
+        with self.assertRaises(ValidationError):
+            MonthlyExpenseSource.objects.create(
+                monthly_budget=self.january,
+                expense_source=other_source,
+            )
+
+    def test_checked_state_requires_a_timestamp(self):
+        source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
+
+        with self.assertRaises(ValidationError):
+            MonthlyExpenseSource.objects.create(
+                monthly_budget=self.january,
+                expense_source=source,
+                is_checked=True,
+                checked_at=None,
+            )
+
+    def test_unchecked_state_cannot_keep_a_timestamp(self):
+        source = ExpenseSource.objects.create(user=self.user, name="Bank statement")
+
+        with self.assertRaises(ValidationError):
+            MonthlyExpenseSource.objects.create(
+                monthly_budget=self.january,
+                expense_source=source,
+                is_checked=False,
+                checked_at=datetime.datetime.now(datetime.timezone.utc),
+            )

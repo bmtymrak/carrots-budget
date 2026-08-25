@@ -359,7 +359,11 @@
     background: color-mix(in srgb, var(--color-success) 2%, white);
 }
 
-.expense-source-row > input[type="checkbox"] {
+.expense-source-toggle {
+    display: contents;
+}
+
+.expense-source-toggle > input[type="checkbox"] {
     width: 21px;
     height: 21px;
     flex: 0 0 21px;
@@ -540,8 +544,12 @@
     gap: 8px;
 }
 
+.expense-source-rename-form .field-error-text {
+    grid-column: 1 / -1;
+}
+
 .expense-source-rename-form .button-create,
-.expense-source-archive-button {
+.expense-source-remove-button {
     width: 100%;
     min-height: 40px;
     height: 40px;
@@ -553,7 +561,7 @@
     display: flex;
 }
 
-.expense-source-management-row.archived {
+.expense-source-management-row.is-available {
     justify-content: space-between;
     padding: 9px var(--space-md);
     border-radius: var(--radius-md);
@@ -561,14 +569,14 @@
     color: var(--color-muted);
 }
 
-.expense-source-archive-button {
+.expense-source-remove-button {
     border: 1px solid color-mix(in srgb, var(--color-danger) 45%, white);
     background: color-mix(in srgb, var(--color-danger) 5%, white);
     color: var(--color-danger);
     cursor: pointer;
 }
 
-.expense-source-archive-button:hover {
+.expense-source-remove-button:hover {
     background: color-mix(in srgb, var(--color-danger) 12%, white);
 }
 

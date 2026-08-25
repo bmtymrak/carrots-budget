@@ -9,8 +9,6 @@ from django.db.models import (
     DecimalField,
     F,
     ExpressionWrapper,
-    Exists,
-    OuterRef,
 )
 from django.db.models.functions import Coalesce
 
@@ -19,9 +17,7 @@ from budgets.models import (
     Rollover,
     YearlyBudget,
     MonthlyBudget,
-    ExpenseSource,
-    ExpenseSourceCheck,
-    ExpenseSourceMonth,
+    MonthlyExpenseSource,
 )
 from purchases.models import Purchase, Income
 
@@ -41,45 +37,33 @@ class BudgetService:
         return datetime.date(year, 1, 1), datetime.date(year + 1, 1, 1)
 
     def get_expense_source_checklist(self, user, monthly_budget) -> dict:
-        """Build the active checklist without writing completion rows on GET."""
+        """Build the included checklist without writing monthly sources on GET."""
 
-        monthly_memberships = ExpenseSourceMonth.objects.filter(
-            expense_source=OuterRef("pk"),
+        included_monthly_sources = MonthlyExpenseSource.objects.filter(
             monthly_budget=monthly_budget,
+            expense_source__user=user,
+            is_included=True,
+        ).select_related("expense_source").order_by(
+            "expense_source__name",
+            "expense_source_id",
         )
-        sources = list(
-            ExpenseSource.objects.filter(user=user)
-            .annotate(is_active_for_month=Exists(monthly_memberships))
-            .filter(is_active_for_month=True)
-        )
-        checks_by_source_id = {
-            check.expense_source_id: check
-            for check in ExpenseSourceCheck.objects.filter(
-                monthly_budget=monthly_budget,
-                expense_source__user=user,
-            )
-        }
-        checklist = [
+        checklist_items = [
             {
-                "source": source,
-                "is_checked": checks_by_source_id.get(source.id).is_checked
-                if source.id in checks_by_source_id
-                else False,
-                "checked_at": checks_by_source_id.get(source.id).checked_at
-                if source.id in checks_by_source_id
-                else None,
-                "notes": checks_by_source_id.get(source.id).notes
-                if source.id in checks_by_source_id
-                else "",
+                "source": monthly_source.expense_source,
+                "is_checked": monthly_source.is_checked,
+                "checked_at": monthly_source.checked_at,
+                "notes": monthly_source.notes,
             }
-            for source in sources
+            for monthly_source in included_monthly_sources
         ]
-        completed = sum(item["is_checked"] for item in checklist)
+        completed_count = sum(
+            checklist_item["is_checked"] for checklist_item in checklist_items
+        )
 
         return {
-            "expense_source_checklist": checklist,
-            "expense_source_total": len(checklist),
-            "expense_source_completed": completed,
+            "expense_source_checklist": checklist_items,
+            "expense_source_count": len(checklist_items),
+            "expense_source_completed_count": completed_count,
         }
 
     def get_monthly_budget_context(

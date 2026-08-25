@@ -2,6 +2,8 @@ import datetime
 
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db.models.functions import Lower
 
 from purchases.models import Category
 
@@ -87,62 +89,43 @@ class ExpenseSource(models.Model):
     def __str__(self):
         return self.name
 
+    @staticmethod
+    def normalize_name(name):
+        return " ".join(name.split())
+
+    def clean(self):
+        super().clean()
+        self.name = self.normalize_name(self.name)
+
+    def save(self, *args, **kwargs):
+        self.name = self.normalize_name(self.name)
+        return super().save(*args, **kwargs)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "name"],
+                "user",
+                Lower("name"),
                 name="unique_expense_source_user_name",
             )
         ]
         ordering = ["name", "id"]
 
 
-class ExpenseSourceMonth(models.Model):
-    """Include a reusable expense source on one monthly budget checklist."""
+class MonthlyExpenseSource(models.Model):
+    """A source's inclusion and review details for one monthly budget."""
 
     expense_source = models.ForeignKey(
         ExpenseSource,
         on_delete=models.CASCADE,
-        related_name="monthly_memberships",
+        related_name="monthly_sources",
     )
     monthly_budget = models.ForeignKey(
         MonthlyBudget,
         on_delete=models.CASCADE,
-        related_name="expense_source_memberships",
+        related_name="monthly_expense_sources",
     )
-
-    def __str__(self):
-        return f"{self.monthly_budget.date:%Y-%m} - {self.expense_source.name}"
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["monthly_budget", "expense_source"],
-                name="unique_monthly_expense_source_membership",
-            ),
-        ]
-        indexes = [
-            models.Index(
-                fields=["monthly_budget", "expense_source"],
-                name="idx_monthly_exp_source_member",
-            )
-        ]
-        ordering = ["monthly_budget__date", "expense_source__name", "id"]
-
-
-class ExpenseSourceCheck(models.Model):
-    """The completion state for one expense source in one monthly budget."""
-
-    monthly_budget = models.ForeignKey(
-        MonthlyBudget,
-        on_delete=models.CASCADE,
-        related_name="expense_source_checks",
-    )
-    expense_source = models.ForeignKey(
-        ExpenseSource,
-        on_delete=models.CASCADE,
-        related_name="monthly_checks",
-    )
+    is_included = models.BooleanField(default=True)
     is_checked = models.BooleanField(default=False)
     checked_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True, default="")
@@ -150,18 +133,42 @@ class ExpenseSourceCheck(models.Model):
     def __str__(self):
         return f"{self.monthly_budget.date:%Y-%m} - {self.expense_source.name}"
 
+    def clean(self):
+        super().clean()
+        validation_errors = []
+        if (
+            self.expense_source_id
+            and self.monthly_budget_id
+            and self.expense_source.user_id != self.monthly_budget.user_id
+        ):
+            validation_errors.append(
+                "The expense source and monthly budget must belong to the same user."
+            )
+        if self.is_checked != (self.checked_at is not None):
+            validation_errors.append(
+                "Checked monthly expense sources must have a timestamp, and unchecked "
+                "sources cannot retain one."
+            )
+        if validation_errors:
+            raise ValidationError(validation_errors)
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["monthly_budget", "expense_source"],
-                name="unique_monthly_expense_source_check",
-            )
-        ]
-        indexes = [
-            models.Index(
-                fields=["monthly_budget", "expense_source"],
-                name="idx_monthly_exp_source_chk",
-            )
+                name="unique_monthly_expense_source",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(is_checked=True, checked_at__isnull=False)
+                    | models.Q(is_checked=False, checked_at__isnull=True)
+                ),
+                name="monthly_expense_source_checked_at_matches_state",
+            ),
         ]
 
 

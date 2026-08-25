@@ -9,8 +9,8 @@
 
     <p class="expense-source-modal-intro">
         Choose which reusable sources appear in {{ monthly_budget.date|date:"F Y" }}.
-        Changes here affect only this month; other months keep their own list,
-        checkmarks, and notes.
+        Adding or removing a source affects only this month. Renaming a source
+        changes its name in every month; checkmarks and notes remain month-specific.
     </p>
 
     <form
@@ -23,9 +23,9 @@
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
         <input type="hidden" name="action" value="create">
-        {{ form.name.label_tag }}
-        {{ form.name }}
-        {% for error in form.name.errors %}
+        {{ create_form.name.label_tag }}
+        {{ create_form.name }}
+        {% for error in create_form.name.errors %}
             <p class="field-error-text">{{ error }}</p>
         {% endfor %}
         <button class="button-create" type="submit">Add source</button>
@@ -33,7 +33,7 @@
 
     <div class="expense-source-management-list">
         <h3>Included in {{ monthly_budget.date|date:"F Y" }}</h3>
-        {% for source in active_expense_sources %}
+        {% for source_row in included_expense_source_rows %}
             <div class="expense-source-management-row">
                 <form
                     class="expense-source-rename-form"
@@ -45,12 +45,15 @@
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ next }}">
                     <input type="hidden" name="action" value="rename">
-                    <input type="hidden" name="source_id" value="{{ source.id }}">
-                    <label class="visually-hidden" for="expense-source-name-{{ source.id }}">
-                        Rename {{ source.name }}
+                    <input type="hidden" name="source_id" value="{{ source_row.source.id }}">
+                    <label class="visually-hidden" for="{{ source_row.rename_form.name.id_for_label }}">
+                        Rename {{ source_row.source.name }}
                     </label>
-                    <input id="expense-source-name-{{ source.id }}" name="name" value="{{ source.name }}">
+                    {{ source_row.rename_form.name }}
                     <button class="button-create" type="submit">Save</button>
+                    {% for error in source_row.rename_form.name.errors %}
+                        <p class="field-error-text">{{ error }}</p>
+                    {% endfor %}
                 </form>
                 <form
                     method="post"
@@ -60,9 +63,9 @@
                 >
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ next }}">
-                    <input type="hidden" name="action" value="archive">
-                    <input type="hidden" name="source_id" value="{{ source.id }}">
-                    <button class="expense-source-archive-button" type="submit">Remove</button>
+                    <input type="hidden" name="action" value="remove_from_month">
+                    <input type="hidden" name="source_id" value="{{ source_row.source.id }}">
+                    <button class="expense-source-remove-button" type="submit">Remove</button>
                 </form>
             </div>
         {% empty %}
@@ -70,8 +73,8 @@
         {% endfor %}
 
         <h3>Available sources</h3>
-        {% for source in archived_expense_sources %}
-            <div class="expense-source-management-row archived">
+        {% for source in available_expense_sources %}
+            <div class="expense-source-management-row is-available">
                 <span>{{ source.name }}</span>
                 <form
                     method="post"
@@ -81,7 +84,7 @@
                 >
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ next }}">
-                    <input type="hidden" name="action" value="restore">
+                    <input type="hidden" name="action" value="add_to_month">
                     <input type="hidden" name="source_id" value="{{ source.id }}">
                     <button class="button-create" type="submit">Add to month</button>
                 </form>

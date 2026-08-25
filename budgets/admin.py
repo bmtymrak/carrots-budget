@@ -6,8 +6,7 @@ from .models import (
     BudgetItem,
     Rollover,
     ExpenseSource,
-    ExpenseSourceCheck,
-    ExpenseSourceMonth,
+    MonthlyExpenseSource,
 )
 
 
@@ -20,5 +19,4 @@ admin.site.register(MonthlyBudget)
 admin.site.register(BudgetItem, BudgetItemAdmin)
 admin.site.register(Rollover)
 admin.site.register(ExpenseSource)
-admin.site.register(ExpenseSourceCheck)
-admin.site.register(ExpenseSourceMonth)
+admin.site.register(MonthlyExpenseSource)

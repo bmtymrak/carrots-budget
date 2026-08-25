@@ -16,61 +16,75 @@
         </div>
     </div>
 
-    {% if expense_source_total %}
+    {% if expense_source_count %}
         <div class="expense-source-progress" aria-live="polite">
-            <strong>{{ expense_source_completed }} / {{ expense_source_total }} complete</strong>
+            <strong>{{ expense_source_completed_count }} / {{ expense_source_count }} complete</strong>
             <progress
-                value="{{ expense_source_completed }}"
-                max="{{ expense_source_total }}"
-                aria-label="{{ expense_source_completed }} of {{ expense_source_total }} expense sources complete"
+                value="{{ expense_source_completed_count }}"
+                max="{{ expense_source_count }}"
+                aria-label="{{ expense_source_completed_count }} of {{ expense_source_count }} expense sources complete"
             ></progress>
         </div>
 
         <div class="expense-source-list" role="list" aria-label="Expense sources">
-            {% for item in expense_source_checklist %}
-                <form
-                    class="expense-source-row{% if item.is_checked %} is-checked{% endif %}"
-                    method="post"
-                    action='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=item.source.id %}'
-                    hx-post='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=item.source.id %}'
-                    hx-trigger="change[event.target.matches('input[type=checkbox]')], submit"
-                    hx-target="#expense-source-checklist"
-                    hx-swap="outerHTML"
+            {% for checklist_item in expense_source_checklist %}
+                <div
+                    class="expense-source-row{% if checklist_item.is_checked %} is-checked{% endif %}"
                     role="listitem"
                 >
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ checklist_next_url }}">
-                    <input
-                        id="expense-source-check-{{ item.source.id }}"
-                        type="checkbox"
-                        name="is_checked"
-                        value="1"
-                        {% if item.is_checked %}checked{% endif %}
+                    <form
+                        class="expense-source-toggle"
+                        method="post"
+                        action='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=checklist_item.source.id %}'
+                        hx-post='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=checklist_item.source.id %}'
+                        hx-trigger="change[event.target.matches('input[type=checkbox]')]"
+                        hx-target="#expense-source-checklist"
+                        hx-swap="outerHTML"
                     >
-                    <label for="expense-source-check-{{ item.source.id }}">
-                        <span class="expense-source-name">{{ item.source.name }}</span>
-                    </label>
-                    <details class="expense-source-note"{% if item.notes %} open{% endif %}>
-                        <summary>{% if item.notes %}Note{% else %}+ Add note{% endif %}</summary>
-                        <div class="expense-source-note-editor">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ checklist_next_url }}">
+                        <input type="hidden" name="is_checked" value="0">
+                        <input
+                            id="expense-source-check-{{ checklist_item.source.id }}"
+                            type="checkbox"
+                            name="is_checked"
+                            value="1"
+                            {% if checklist_item.is_checked %}checked{% endif %}
+                        >
+                        <label for="expense-source-check-{{ checklist_item.source.id }}">
+                            <span class="expense-source-name">{{ checklist_item.source.name }}</span>
+                        </label>
+                    </form>
+                    <details class="expense-source-note"{% if checklist_item.notes %} open{% endif %}>
+                        <summary>{% if checklist_item.notes %}Note{% else %}+ Add note{% endif %}</summary>
+                        <form
+                            class="expense-source-note-editor"
+                            method="post"
+                            action='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=checklist_item.source.id %}'
+                            hx-post='{% url "expense_source_toggle" year=monthly_budget.date.year month=monthly_budget.date.month source_id=checklist_item.source.id %}'
+                            hx-target="#expense-source-checklist"
+                            hx-swap="outerHTML"
+                        >
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ checklist_next_url }}">
                             <label
                                 class="visually-hidden"
-                                for="expense-source-notes-{{ item.source.id }}"
-                            >Notes for {{ item.source.name }}</label>
+                                for="expense-source-notes-{{ checklist_item.source.id }}"
+                            >Notes for {{ checklist_item.source.name }}</label>
                             <textarea
-                                id="expense-source-notes-{{ item.source.id }}"
+                                id="expense-source-notes-{{ checklist_item.source.id }}"
                                 class="expense-source-notes"
                                 name="notes"
                                 rows="1"
                                 placeholder="Add a note"
-                            >{{ item.notes }}</textarea>
+                            >{{ checklist_item.notes }}</textarea>
                             <button
                                 class="button-create expense-source-note-save"
                                 type="submit"
                             >Save</button>
-                        </div>
+                        </form>
                     </details>
-                </form>
+                </div>
             {% endfor %}
         </div>
     {% else %}

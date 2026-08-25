@@ -5,16 +5,16 @@ import time
 from urllib.parse import urlsplit
 
 from django.db.models.fields import DecimalField, BooleanField
-from django.db import connection
+from django.db import IntegrityError, connection, transaction
 from django.http.response import HttpResponseRedirect
-from django.http import JsonResponse, QueryDict
+from django.http import Http404, HttpResponseBadRequest, JsonResponse, QueryDict
 from django.views.generic.edit import DeleteView
 from purchases.forms import PurchaseForm, PurchaseFormSetReceipt
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 from django.views.generic import (
     ListView,
     CreateView,
@@ -29,10 +29,8 @@ from django.db.models import (
     F,
     Value,
     Q,
-    OuterRef,
     Subquery,
     ExpressionWrapper,
-    Exists,
 )
 from django.db.models.functions import Coalesce
 
@@ -42,8 +40,7 @@ from budgets.models import (
     BudgetItem,
     Rollover,
     ExpenseSource,
-    ExpenseSourceCheck,
-    ExpenseSourceMonth,
+    MonthlyExpenseSource,
 )
 from purchases.models import Category, Purchase, Income
 from budgets.forms import (
@@ -138,13 +135,10 @@ class MonthlyBudgetDetailView(LoginRequiredMixin, AddUserMixin, CreateView):
     template_name = "budgets/monthly_budget_detail.html"
 
     def _get_monthly_budget(self):
-        month_start, next_month_start = BudgetService.month_bounds(
-            self.kwargs["year"], self.kwargs["month"]
-        )
-        return MonthlyBudget.objects.get(
-            date__gte=month_start,
-            date__lt=next_month_start,
-            user=self.request.user,
+        return _get_user_monthly_budget(
+            self.request,
+            self.kwargs["year"],
+            self.kwargs["month"],
         )
 
     def get(self, request, *args, **kwargs):
@@ -509,7 +503,10 @@ def budget_item_create(request, year):
 
 
 def _get_user_monthly_budget(request, year, month):
-    month_start, next_month_start = BudgetService.month_bounds(year, month)
+    try:
+        month_start, next_month_start = BudgetService.month_bounds(year, month)
+    except ValueError as error:
+        raise Http404("Invalid budget month") from error
     return get_object_or_404(
         MonthlyBudget,
         user=request.user,
@@ -536,72 +533,146 @@ def _expense_source_redirect(request, next_url):
     return redirect(next_url)
 
 
-def _expense_source_modal_context(request, monthly_budget, form, next_url):
-    monthly_memberships = ExpenseSourceMonth.objects.filter(
-        expense_source=OuterRef("pk"),
-        monthly_budget=monthly_budget,
-    )
-    sources = ExpenseSource.objects.filter(user=request.user).annotate(
-        is_active_for_month=Exists(monthly_memberships),
-    )
+def _expense_source_modal_context(
+    request,
+    monthly_budget,
+    create_form,
+    next_url,
+    rename_form=None,
+):
+    user_sources = list(ExpenseSource.objects.filter(user=request.user))
+    monthly_sources_by_source_id = {
+        monthly_source.expense_source_id: monthly_source
+        for monthly_source in MonthlyExpenseSource.objects.filter(
+            expense_source__user=request.user,
+            monthly_budget=monthly_budget,
+        )
+    }
+    included_sources = [
+        source
+        for source in user_sources
+        if source.pk in monthly_sources_by_source_id
+        and monthly_sources_by_source_id[source.pk].is_included
+    ]
+    available_sources = [
+        source
+        for source in user_sources
+        if source.pk not in monthly_sources_by_source_id
+        or not monthly_sources_by_source_id[source.pk].is_included
+    ]
+    included_source_rows = []
+    for source in included_sources:
+        if rename_form and rename_form.instance.pk == source.pk:
+            row_rename_form = rename_form
+        else:
+            row_rename_form = ExpenseSourceForm(
+                instance=source,
+                user=request.user,
+                auto_id=f"expense-source-{source.pk}-%s",
+            )
+        included_source_rows.append(
+            {"source": source, "rename_form": row_rename_form}
+        )
+
     return {
         "monthly_budget": monthly_budget,
-        "form": form,
-        "active_expense_sources": sources.filter(is_active_for_month=True),
-        "archived_expense_sources": sources.filter(is_active_for_month=False),
+        "create_form": create_form,
+        "included_expense_source_rows": included_source_rows,
+        "available_expense_sources": available_sources,
         "next": next_url,
     }
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def expense_source_manage(request, year, month):
     monthly_budget = _get_user_monthly_budget(request, year, month)
     next_url = _expense_source_next_url(request, year, month)
-    action = request.POST.get("action", "create")
+    create_form = ExpenseSourceForm(user=request.user)
+    rename_form = None
 
-    if request.method == "POST" and action in {"create", "rename"}:
-        source = None
-        if action == "rename":
-            source = get_object_or_404(
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "create":
+            create_form = ExpenseSourceForm(request.POST, user=request.user)
+            if create_form.is_valid():
+                try:
+                    with transaction.atomic():
+                        expense_source = create_form.save(commit=False)
+                        expense_source.user = request.user
+                        expense_source.save()
+                        MonthlyExpenseSource.objects.create(
+                            expense_source=expense_source,
+                            monthly_budget=monthly_budget,
+                        )
+                except IntegrityError:
+                    create_form.add_error(
+                        "name",
+                        "You already have an expense source with this name.",
+                    )
+                else:
+                    return _expense_source_redirect(request, next_url)
+        elif action == "rename":
+            expense_source = get_object_or_404(
                 ExpenseSource,
                 pk=request.POST.get("source_id"),
                 user=request.user,
             )
-        form = ExpenseSourceForm(request.POST, instance=source, user=request.user)
-        if form.is_valid():
-            source = form.save(commit=False)
-            source.user = request.user
-            source.save()
-            if action == "create":
-                ExpenseSourceMonth.objects.create(
-                    expense_source=source,
+            rename_form = ExpenseSourceForm(
+                request.POST,
+                instance=expense_source,
+                user=request.user,
+                auto_id=f"expense-source-{expense_source.pk}-%s",
+            )
+            if rename_form.is_valid():
+                try:
+                    with transaction.atomic():
+                        expense_source = rename_form.save(commit=False)
+                        expense_source.user = request.user
+                        expense_source.save()
+                except IntegrityError:
+                    rename_form.add_error(
+                        "name",
+                        "You already have an expense source with this name.",
+                    )
+                else:
+                    return _expense_source_redirect(request, next_url)
+        elif action in {"remove_from_month", "add_to_month"}:
+            expense_source = get_object_or_404(
+                ExpenseSource,
+                pk=request.POST.get("source_id"),
+                user=request.user,
+            )
+            if action == "remove_from_month":
+                monthly_source = get_object_or_404(
+                    MonthlyExpenseSource,
+                    expense_source=expense_source,
                     monthly_budget=monthly_budget,
                 )
+                monthly_source.is_included = False
+                monthly_source.save(update_fields=["is_included"])
+            else:
+                monthly_source, _ = MonthlyExpenseSource.objects.get_or_create(
+                    expense_source=expense_source,
+                    monthly_budget=monthly_budget,
+                )
+                if not monthly_source.is_included:
+                    monthly_source.is_included = True
+                    monthly_source.save(update_fields=["is_included"])
             return _expense_source_redirect(request, next_url)
-    elif request.method == "POST" and action in {"archive", "restore"}:
-        source = get_object_or_404(
-            ExpenseSource,
-            pk=request.POST.get("source_id"),
-            user=request.user,
-        )
-        if action == "archive":
-            ExpenseSourceMonth.objects.filter(
-                expense_source=source,
-                monthly_budget=monthly_budget,
-            ).delete()
         else:
-            ExpenseSourceMonth.objects.get_or_create(
-                expense_source=source,
-                monthly_budget=monthly_budget,
-            )
-        return _expense_source_redirect(request, next_url)
-    else:
-        form = ExpenseSourceForm(user=request.user)
+            return HttpResponseBadRequest("Unsupported expense source action")
 
     return render(
         request,
         "budgets/expense_source_manage_modal.html",
-        _expense_source_modal_context(request, monthly_budget, form, next_url),
+        _expense_source_modal_context(
+            request,
+            monthly_budget,
+            create_form,
+            next_url,
+            rename_form=rename_form,
+        ),
     )
 
 
@@ -609,26 +680,31 @@ def expense_source_manage(request, year, month):
 @require_POST
 def expense_source_toggle(request, year, month, source_id):
     monthly_budget = _get_user_monthly_budget(request, year, month)
-    source = get_object_or_404(
-        ExpenseSource.objects.filter(
-            monthly_memberships__monthly_budget=monthly_budget,
-        ).distinct(),
-        pk=source_id,
-        user=request.user,
-    )
-    check, _ = ExpenseSourceCheck.objects.get_or_create(
+    monthly_source = get_object_or_404(
+        MonthlyExpenseSource.objects.select_related("expense_source"),
         monthly_budget=monthly_budget,
-        expense_source=source,
+        expense_source_id=source_id,
+        expense_source__user=request.user,
+        is_included=True,
     )
-    was_checked = check.is_checked
-    check.is_checked = request.POST.get("is_checked") in {"1", "on", "true"}
-    if check.is_checked and not was_checked:
-        check.checked_at = timezone.now()
-    elif not check.is_checked:
-        check.checked_at = None
+    update_fields = []
+    if "is_checked" in request.POST:
+        was_checked = monthly_source.is_checked
+        monthly_source.is_checked = request.POST.get("is_checked") in {
+            "1",
+            "on",
+            "true",
+        }
+        if monthly_source.is_checked and not was_checked:
+            monthly_source.checked_at = timezone.now()
+        elif not monthly_source.is_checked:
+            monthly_source.checked_at = None
+        update_fields.extend(["is_checked", "checked_at"])
     if "notes" in request.POST:
-        check.notes = request.POST["notes"].strip()
-    check.save(update_fields=["is_checked", "checked_at", "notes"])
+        monthly_source.notes = request.POST["notes"].strip()
+        update_fields.append("notes")
+    if update_fields:
+        monthly_source.save(update_fields=update_fields)
 
     next_url = _expense_source_next_url(request, year, month)
     if request.headers.get("HX-Request") == "true":

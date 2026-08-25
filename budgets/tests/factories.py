@@ -10,8 +10,7 @@ from budgets.models import (
     BudgetItem,
     Rollover,
     ExpenseSource,
-    ExpenseSourceCheck,
-    ExpenseSourceMonth,
+    MonthlyExpenseSource,
 )
 from purchases.tests.factories import UserFactory, CategoryFactory
 
@@ -66,25 +65,16 @@ class ExpenseSourceFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f"Expense source {n}")
 
 
-class ExpenseSourceMonthFactory(DjangoModelFactory):
+class MonthlyExpenseSourceFactory(DjangoModelFactory):
     class Meta:
-        model = ExpenseSourceMonth
+        model = MonthlyExpenseSource
 
     expense_source = factory.SubFactory(ExpenseSourceFactory)
     monthly_budget = factory.SubFactory(
         MonthlyBudgetFactory,
         user=factory.SelfAttribute("..expense_source.user"),
     )
-
-
-class ExpenseSourceCheckFactory(DjangoModelFactory):
-    class Meta:
-        model = ExpenseSourceCheck
-
-    monthly_budget = factory.SubFactory(MonthlyBudgetFactory)
-    expense_source = factory.SubFactory(
-        ExpenseSourceFactory,
-        user=factory.SelfAttribute("..monthly_budget.user"),
-    )
+    is_included = True
     is_checked = False
+    checked_at = None
     notes = ""

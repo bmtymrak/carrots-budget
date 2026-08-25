@@ -83,12 +83,16 @@ class ExpenseSourceForm(ModelForm):
         super().__init__(*args, **kwargs)
 
     def clean_name(self):
-        name = " ".join(self.cleaned_data["name"].split())
-        duplicate = ExpenseSource.objects.filter(
-            user=self.user,
-            name__iexact=name,
-        ).exclude(pk=self.instance.pk)
-        if duplicate.exists():
+        name = ExpenseSource.normalize_name(self.cleaned_data["name"])
+        duplicate_exists = (
+            ExpenseSource.objects.filter(
+                user=self.user,
+                name__iexact=name,
+            )
+            .exclude(pk=self.instance.pk)
+            .exists()
+        )
+        if duplicate_exists:
             raise ValidationError("You already have an expense source with this name.")
         return name
 
