@@ -1,11 +1,13 @@
 {% load static %}
 
-<div class="logo-sidebar-container">
-    <span class="logo-sidebar-text">Carrots</span>
-    <img src='{% static "images/carrots_logo.svg" %}' alt="Carrots Budget logo" height="50">
+<div class="app-topbar-inner">
+<a class="app-brand" href='{% url "yearly_list" %}' aria-label="Carrots budgets">
+    <img src='{% static "images/carrots_logo.svg" %}' alt="" aria-hidden="true" width="22" height="42">
+    <span>Carrots</span>
+</a>
+<nav class="app-navigation" aria-label="Primary navigation">
     <button id="menu-toggle" class="menu-toggle" type="button" aria-controls="primary-nav" aria-expanded="false" aria-label="Toggle navigation">☰</button>
-</div>
-<ul class="nav-list" id="primary-nav">
+    <ul class="nav-list" id="primary-nav">
     {% if user.is_authenticated %}
     <li><a href='{% url "yearly_list" %}'>Budgets</a></li>
     <li><a href='{% url "purchase_list" %}'>Purchase List</a></li>
@@ -15,4 +17,6 @@
     <li><a href="{% url 'account_login' %}">Login</a></li>
     <li><a href="{% url 'account_signup' %}">Sign Up</a></li>
     {% endif %}
-</ul>
+    </ul>
+</nav>
+</div>

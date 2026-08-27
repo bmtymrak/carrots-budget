@@ -23,6 +23,7 @@
             }, 0)
 
             receiptTotal.textContent = total.toFixed(2)
+            receiptTotal.classList.toggle("value-negative", total < 0)
         }
 
         receiptAmountInputs.forEach((input) => {

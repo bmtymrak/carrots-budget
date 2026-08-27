@@ -73,8 +73,8 @@ class PurchaseForm(ModelForm):
             "location",
             "category",
             "subcategory",
-            "notes",
             "savings",
+            "notes",
         ]
 
 
@@ -87,7 +87,7 @@ class ReceiptForm(ModelForm):
 class ReceiptPurchaseForm(PurchaseForm):
     class Meta:
         model = Purchase
-        fields = ["item", "amount", "category", "subcategory", "notes", "savings"]
+        fields = ["item", "amount", "category", "subcategory", "savings", "notes"]
 
 
 class BaseReceiptPurchaseFormSet(BaseModelFormSet):

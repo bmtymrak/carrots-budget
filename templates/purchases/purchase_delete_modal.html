@@ -1,25 +1,7 @@
-<div>
-    <h2>Confirm Delete</h2>
-    <div class="card-base">
-        <div class="data-grid-scroll data-grid-scroll--purchase" role="region" aria-label="Purchase being deleted" tabindex="0">
-        <div class="data-grid data-grid--purchase data-grid--purchase-delete card-table-header">
-            <div class="card-table-heading">Date</div>
-            <div class="card-table-heading">Item</div>
-            <div class="card-table-heading">Amount</div>
-            <div class="card-table-heading">Source</div>
-            <div class="card-table-heading">Location</div>
-            <div class="card-table-heading">Category</div>
-        </div>
-    
-        <div class="data-grid data-grid--purchase data-grid--purchase-delete">
-            <div>{{purchase.date}}</div>
-            <div>{{purchase.item}}</div>
-            <div>${{purchase.amount}}</div>
-            <div>{{purchase.source}}</div>
-            <div>{{purchase.location}}</div>
-            <div>{{purchase.category}}</div>
-        </div>
-        </div>
-    </div>
-    <button type="button" hx-delete='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{next|urlencode:""}}' class="button-delete button-delete-standalone">Delete</button>
+{% load value_styles %}
+<div class="modal-content-header"><h2>Delete purchase?</h2></div>
+<div class="modal-content-body">
+    <dl class="delete-summary"><div><dt>Date</dt><dd>{{ purchase.date|date:"M j, Y" }}</dd></div><div><dt>Item</dt><dd>{{ purchase.item }}</dd></div><div><dt>Amount</dt><dd class="{{ purchase.amount|negative_class }}">${{ purchase.amount|floatformat:"-2" }}</dd></div><div><dt>Source</dt><dd>{{ purchase.source }}</dd></div><div><dt>Location</dt><dd>{{ purchase.location }}</dd></div><div><dt>Category</dt><dd>{{ purchase.category|default:"Uncategorized" }}</dd></div></dl>
+    <div class="danger-callout"><strong>This cannot be undone.</strong><p>The purchase will be permanently removed.</p></div>
 </div>
+<div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button type="button" hx-delete='{% url "purchase_delete_htmx" pk=purchase.id %}?next={{ next|urlencode:"" }}' class="button-delete">Delete purchase</button></div>

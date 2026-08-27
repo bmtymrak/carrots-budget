@@ -23,9 +23,11 @@ class SharedFrontendComponentTests(SimpleTestCase):
             "_includes/icon_action.html", {**context, "element": "link"}
         )
 
-        self.assertIn('<button class="button-blank" type="button"', button_markup)
+        self.assertIn(
+            '<button class="button-blank icon-action" type="button"', button_markup
+        )
         self.assertIn('aria-label="Edit purchase"', button_markup)
-        self.assertIn('<a class="button-blank"', link_markup)
+        self.assertIn('<a class="button-blank icon-action"', link_markup)
         self.assertIn('aria-label="Edit purchase"', link_markup)
         self.assertIn('href="/purchases/1/edit/"', link_markup)
 

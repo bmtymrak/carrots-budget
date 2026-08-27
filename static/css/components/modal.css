@@ -9,15 +9,18 @@
 }
 
 .modal {
-    position: relative;
+    position: fixed;
+    inset: 0;
     max-width: calc(100vw - var(--space-2xl));
     max-height: calc(100vh - var(--space-2xl));
     margin: auto;
-    padding: var(--space-xl) 48px var(--space-xl) 35px;
+    width: min(620px, calc(100vw - 30px));
+    padding: 0;
     overflow-y: auto;
-    border: 0;
-    border-radius: var(--radius-xl);
-    background-color: var(--color-page);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-modal);
     overscroll-behavior: contain;
 }
 
@@ -27,8 +30,8 @@
 
 .modal-close {
     position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
+    top: 10px;
+    right: 10px;
     display: inline-grid;
     width: 32px;
     height: 32px;
@@ -43,6 +46,91 @@
     place-items: center;
 }
 
+.modal-content-header {
+    padding: 15px 50px 13px 17px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.modal-content-header h2 {
+    margin: 0;
+    font-size: 21px;
+}
+
+.modal-content-header p {
+    margin: 4px 0 0;
+    color: var(--color-muted);
+}
+
+.modal-content-body {
+    padding: 17px;
+}
+
+.modal-content-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 17px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface-muted);
+}
+
+.modal-content-footer .modal-total {
+    margin-right: auto;
+    font-weight: 800;
+}
+
+.modal-content-footer .modal-total strong {
+    margin-left: 4px;
+    font-size: 18px;
+}
+
+.modal-cancel {
+    min-height: 36px;
+    padding: 7px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-surface);
+    cursor: pointer;
+    font-weight: 800;
+}
+
+@media (width <=35rem) {
+    .modal {
+        width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
+    }
+
+    .modal-content-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .modal-content-footer .modal-total {
+        margin: 0 0 4px;
+    }
+
+    .modal-content-footer button {
+        width: 100%;
+    }
+}
+
 .modal-close:hover {
     background: var(--color-surface-muted);
+}
+
+.modal:has(.purchase-create-form) {
+    width: min(1180px, calc(100vw - 32px));
+}
+
+.modal:has(.receipt-edit-form) {
+    width: min(1040px, calc(100vw - 32px));
+}
+
+.modal:has(.recurring-management) {
+    width: min(920px, calc(100vw - 32px));
+}
+
+.modal:has([data-behavior="recurring-selection"]) {
+    width: min(1180px, calc(100vw - 32px));
 }

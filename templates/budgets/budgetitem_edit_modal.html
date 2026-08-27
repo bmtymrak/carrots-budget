@@ -1,7 +1,13 @@
 
-<h2>{{budget_item.category.name}}</h2>
-<form hx-post='{% url "budgetitem_edit_htmx" year=budget_item.monthly_budget.date.year month=budget_item.monthly_budget.date.month category=budget_item.category.name %}' class="form-grid" method="POST">
-    {{form}}
-    <input type="hidden" name="next" value="{{next}}">
-    <button type="submit">Save</button>
+<div class="modal-content-header"><h2>Edit budget item</h2><p>{{ budget_item.category.name }} · {{ budget_item.monthly_budget.date|date:"F Y" }}</p></div>
+<form hx-post='{% url "budgetitem_edit_htmx" year=budget_item.monthly_budget.date.year month=budget_item.monthly_budget.date.month category=budget_item.category.name %}' method="POST">
+    {% csrf_token %}
+    <div class="modal-content-body"><div class="modal-errors">{{ form.non_field_errors }}</div><div class="modal-form-grid">
+        <div class="modal-field modal-field--full">{{ form.category.errors }}{{ form.category.label_tag }}{{ form.category }}</div>
+        <div class="modal-field modal-field--full">{{ form.new_category.errors }}{{ form.new_category.label_tag }}{{ form.new_category }}</div>
+        <div class="modal-field">{{ form.amount.errors }}{{ form.amount.label_tag }}{{ form.amount }}</div>
+        <div class="modal-field modal-field--check">{{ form.savings.errors }}{{ form.savings }}{{ form.savings.label_tag }}</div>
+        <div class="modal-field modal-field--full">{{ form.notes.errors }}{{ form.notes.label_tag }}{{ form.notes }}</div>
+    </div><input type="hidden" name="next" value="{{ next }}"></div>
+    <div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button class="button-create" type="submit">Save budget item</button></div>
 </form>

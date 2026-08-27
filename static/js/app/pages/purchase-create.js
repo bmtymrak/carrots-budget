@@ -1,68 +1,123 @@
 (function () {
-    function calculateTotal(form, total) {
-        const amounts = form.querySelectorAll("[id$='-amount']")
-        const totalAmount = [...amounts].reduce((previous, current) => {
-            const currentValue = parseFloat(current.value)
-
-            return previous + (Number.isNaN(currentValue) ? 0 : currentValue)
-        }, 0)
-
-        total.textContent = `Total: ${Math.round(totalAmount * 100) / 100}`
-    }
-
     function initializePurchaseForm(form) {
         if (form.dataset.jsInitialized) {
             return
         }
 
-        const purchaseForms = form.querySelectorAll(".purchase-form")
-        const container = form
+        const rowsContainer = form.querySelector("[data-purchase-rows]")
         const addButton = form.querySelector("#add-form")
-        const submitButton = form.querySelector("#submit-button")
         const totalForms = form.querySelector("#id_form-TOTAL_FORMS")
-        const total = form.querySelector("#total")
+        const total = form.querySelector("#total strong")
+        const count = form.querySelector("[data-purchase-count]")
 
-        if (!purchaseForms.length || !addButton || !submitButton || !totalForms || !total) {
+        if (!rowsContainer || !addButton || !totalForms || !total || !count) {
             return
         }
 
         form.dataset.jsInitialized = "true"
-        let formNumber = purchaseForms.length - 1
 
-        addButton.addEventListener("click", (event) => {
-            event.preventDefault()
+        function rows() {
+            return [...rowsContainer.querySelectorAll("[data-purchase-row]")]
+        }
 
-            const newForm = purchaseForms[0].cloneNode(true)
-            const formRegex = /form-\d+-/g
+        function updateSummary() {
+            const activeRows = rows().filter((row) => !row.classList.contains("hidden"))
+            const amount = activeRows.reduce((sum, row) => {
+                const value = Number.parseFloat(row.querySelector('[name$="-amount"]')?.value)
+                return sum + (Number.isNaN(value) ? 0 : value)
+            }, 0)
 
-            newForm.querySelectorAll("[name$='-source'], [name$='-location']").forEach((input) => {
-                const fieldContainer = input.closest("div")
+            count.textContent = `${activeRows.length} purchase${activeRows.length === 1 ? "" : "s"}`
+            total.textContent = `$${amount.toFixed(2)}`
+            total.classList.toggle("value-negative", amount < 0)
+        }
 
-                fieldContainer.replaceChildren()
-                fieldContainer.classList.add("purchase-field-spacer")
-                fieldContainer.setAttribute("aria-hidden", "true")
+        function reindexRows() {
+            rows().forEach((row, index) => {
+                row.querySelectorAll("[name], [id], label[for]").forEach((element) => {
+                    for (const attribute of ["name", "id", "for"]) {
+                        const value = element.getAttribute(attribute)
+                        if (value) {
+                            element.setAttribute(attribute, value.replace(/form-\d+-/g, `form-${index}-`))
+                        }
+                    }
+                })
+                row.querySelector("[data-row-number]").textContent = String(index + 1)
+                row.querySelectorAll("[data-remove-purchase]").forEach((button) => {
+                    button.setAttribute("aria-label", `Remove purchase ${index + 1}`)
+                })
             })
+            totalForms.value = String(rows().length)
+        }
 
-            formNumber += 1
-            newForm.innerHTML = newForm.innerHTML.replace(formRegex, `form-${formNumber}-`)
-            container.insertBefore(newForm, submitButton)
-            totalForms.value = String(formNumber + 1)
+        function addRemoveButton(row, container, desktop) {
+            const button = document.createElement("button")
+            button.type = "button"
+            button.className = `remove-purchase${desktop ? " remove-purchase--desktop" : ""}`
+            button.dataset.removePurchase = ""
+            const image = document.createElement("img")
+            image.src = form.dataset.trashUrl
+            image.alt = ""
+            image.setAttribute("aria-hidden", "true")
+            button.append(image)
+            container.append(button)
+        }
 
-            const newFormAmount = form.querySelector(`#id_form-${formNumber}-amount`)
-            const newFormItem = form.querySelector(`#id_form-${formNumber}-item`)
-
-            if (newFormAmount) {
-                newFormAmount.addEventListener("change", () => calculateTotal(form, total))
+        function makeInherited(wrapper) {
+            const input = wrapper.querySelector("input, select, textarea")
+            if (input) {
+                input.type = "hidden"
+                input.value = ""
             }
+            const note = document.createElement("span")
+            note.className = "purchase-inherited"
+            note.textContent = "Same as item 1"
+            wrapper.append(note)
+        }
 
-            if (newFormItem) {
-                newFormItem.focus()
+        addButton.addEventListener("click", () => {
+            const sourceRow = rows()[0]
+            const newRow = sourceRow.cloneNode(true)
+
+            newRow.classList.remove("hidden")
+            newRow.querySelectorAll("input, select, textarea").forEach((field) => {
+                if (field.matches('[name$="-date"]')) {
+                    return
+                }
+                if (field.type === "checkbox") {
+                    field.checked = false
+                } else {
+                    field.value = ""
+                }
+            })
+            newRow.querySelectorAll(".errorlist").forEach((errors) => errors.remove())
+            newRow.querySelectorAll('[data-receipt-field="source"], [data-receipt-field="location"]').forEach(makeInherited)
+
+            const title = newRow.querySelector(".purchase-entry-title")
+            addRemoveButton(newRow, title, false)
+            addRemoveButton(newRow, newRow, true)
+            rowsContainer.append(newRow)
+            reindexRows()
+            updateSummary()
+            newRow.querySelector('[name$="-item"]')?.focus()
+        })
+
+        rowsContainer.addEventListener("click", (event) => {
+            const removeButton = event.target.closest("[data-remove-purchase]")
+            if (!removeButton) {
+                return
+            }
+            const row = removeButton.closest("[data-purchase-row]")
+            if (row && row !== rows()[0]) {
+                row.remove()
+                reindexRows()
+                updateSummary()
+                addButton.focus()
             }
         })
 
-        form.querySelectorAll("[id$='-amount']").forEach((input) => {
-            input.addEventListener("change", () => calculateTotal(form, total))
-        })
+        rowsContainer.addEventListener("input", updateSummary)
+        updateSummary()
     }
 
     function initialize() {

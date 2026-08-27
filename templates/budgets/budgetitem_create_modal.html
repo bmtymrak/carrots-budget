@@ -1,7 +1,12 @@
-<h2>Add Budget Item</h2>
-<form hx-post='{% url "budgetitem_create_htmx" year=year %}' class="form-grid" method="POST">
+<div class="modal-content-header"><h2>Add budget item</h2></div>
+<form hx-post='{% url "budgetitem_create_htmx" year=year %}' method="POST">
     {% csrf_token %}
-    {{form}}
-    <input type="hidden" name="next" value="{{next}}">
-    <button type="submit">Add Budget Item</button>
+    <div class="modal-content-body"><div class="modal-errors">{{ form.non_field_errors }}</div><div class="modal-form-grid">
+        <div class="modal-field modal-field--full">{{ form.category.errors }}{{ form.category.label_tag }}{{ form.category }}</div>
+        <div class="modal-field modal-field--full">{{ form.new_category.errors }}{{ form.new_category.label_tag }}{{ form.new_category }}{% if form.new_category.help_text %}<p class="field-help">{{ form.new_category.help_text }}</p>{% endif %}</div>
+        <div class="modal-field">{{ form.amount.errors }}{{ form.amount.label_tag }}{{ form.amount }}</div>
+        <div class="modal-field modal-field--check">{{ form.savings.errors }}{{ form.savings }}{{ form.savings.label_tag }}</div>
+        <div class="modal-field modal-field--full">{{ form.notes.errors }}{{ form.notes.label_tag }}{{ form.notes }}</div>
+    </div><input type="hidden" name="next" value="{{ next }}"></div>
+    <div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button class="button-create" type="submit">Add budget item</button></div>
 </form>

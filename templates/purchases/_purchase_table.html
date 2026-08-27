@@ -1,3 +1,4 @@
+{% load value_styles %}
 {% if purchases %}
 <div class="financial-table-scroll" role="region" aria-label="{{ aria_label|default:'Purchase data' }}" tabindex="0">
     <table class="financial-table financial-table--purchase{% if show_category %} financial-table--purchase-categories{% endif %}{% if wide %} financial-table--wide{% endif %}">
@@ -12,14 +13,14 @@
                 <th scope="col">Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody data-collapsible-rows>
             {% for purchase in purchases %}
             {% url "purchase_edit_htmx" pk=purchase.id as purchase_edit_url %}
             {% url "purchase_delete_htmx" pk=purchase.id as purchase_delete_url %}
             <tr>
                 <td>{{ purchase.date }}</td>
                 <td>{{ purchase.item }}</td>
-                <td>${{ purchase.amount|floatformat:"-2" }}</td>
+                <td class="{{ purchase.amount|negative_class }}">${{ purchase.amount|floatformat:"-2" }}</td>
                 <td>{{ purchase.source }}</td>
                 <td>{{ purchase.location }}</td>
                 {% if show_category %}<td>{{ purchase.category }}</td>{% endif %}
@@ -33,6 +34,7 @@
             {% endfor %}
         </tbody>
     </table>
+    <button class="financial-list-toggle" type="button" data-financial-list-toggle aria-expanded="false">Show all {{ purchases|length }} purchases</button>
 </div>
 {% else %}
 <p>{{ empty_message|default:"No purchases found." }}</p>

@@ -13,7 +13,19 @@ a {
 }
 
 body {
+    min-width: 320px;
+    margin: 0;
+    background: var(--color-page);
     color: var(--color-text);
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
 }
 
 .hidden {
@@ -22,18 +34,17 @@ body {
 
 /* Global headings remain here until page-specific typography is introduced. */
 .page-title {
-    margin-top: var(--space-xl);
-    margin-bottom: var(--space-md);
-    margin-left: var(--space-md);
+    margin: 0;
 }
 
 h1 {
-    font-size: 48px;
+    font-size: 28px;
     font-weight: bold;
+    letter-spacing: -0.035em;
 }
 
 h2 {
-    margin: 0 0 var(--space-sm);
-    font-size: 24px;
-    margin-left: var(--space-sm);
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -0.015em;
 }

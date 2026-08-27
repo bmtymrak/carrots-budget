@@ -1,47 +1,34 @@
-{% load static %}
-<h2>Manage Recurring Purchases</h2>
-
-<div class="card-base modal-section-spacing">
-    <h3>Add New Recurring Purchase</h3>
-    <form hx-post='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' hx-target="#modal-content" hx-swap="innerHTML" class="form-grid" method="POST">
-        {% csrf_token %}
-        {{form}}
-        <input type="hidden" name="next" value="{{next}}">
-        <button type="submit">Add Recurring Purchase</button>
-    </form>
-</div>
-
-<div class="card-base">
-    <h3>Existing Recurring Purchases</h3>
+{% load value_styles %}
+<div class="recurring-management">
+<div class="modal-content-header"><h2>Recurring purchases</h2><p>Create and manage purchases you add regularly.</p></div>
+<div class="modal-content-body">
+    <section class="modal-subsection">
+        <h3>Add recurring purchase</h3>
+        <form hx-post='{% url "recurring_purchase_list" %}?next={{ next|urlencode }}' hx-target="#modal-content" hx-swap="innerHTML" method="POST">
+            {% csrf_token %}<div class="modal-errors">{{ form.non_field_errors }}</div>
+            <div class="modal-form-grid recurring-create-grid">
+                <div class="modal-field">{{ form.item.errors }}{{ form.item.label_tag }}{{ form.item }}</div>
+                <div class="modal-field">{{ form.amount.errors }}{{ form.amount.label_tag }}{{ form.amount }}</div>
+                <div class="modal-field">{{ form.category.errors }}{{ form.category.label_tag }}{{ form.category }}</div>
+                <div class="modal-field">{{ form.source.errors }}{{ form.source.label_tag }}{{ form.source }}</div>
+                <div class="modal-field">{{ form.location.errors }}{{ form.location.label_tag }}{{ form.location }}</div>
+                <div class="modal-field modal-field--check">{{ form.is_active.errors }}{{ form.is_active }}{{ form.is_active.label_tag }}</div>
+                <div class="modal-field modal-field--full">{{ form.notes.errors }}{{ form.notes.label_tag }}{{ form.notes }}</div>
+            </div>
+            <input type="hidden" name="next" value="{{ next }}"><button class="button-create recurring-create-submit" type="submit">Add recurring purchase</button>
+        </form>
+    </section>
+    <section class="recurring-saved-section"><h3>Saved recurring purchases</h3>
     {% if recurring_purchases %}
-    <div class="data-grid-scroll data-grid-scroll--recurring" role="region" aria-label="Existing recurring purchase data" tabindex="0">
-    <div class="data-grid data-grid--recurring grid-cell-truncate card-table-header">
-        <div class="card-table-heading">Item</div>
-        <div class="card-table-heading">Amount</div>
-        <div class="card-table-heading">Category</div>
-        <div class="card-table-heading">Source</div>
-        <div class="card-table-heading">Location</div>
-        <div class="card-table-heading">Active</div>
-        <div class="card-table-heading"></div>
-    </div>
-    {% for recurring in recurring_purchases %}
-    <div class="data-grid data-grid--recurring grid-cell-truncate">
-        <div>{{recurring.item}}</div>
-        <div>${{recurring.amount|floatformat:"-2"}}</div>
-        <div>{{recurring.category}}</div>
-        <div>{{recurring.source}}</div>
-        <div>{{recurring.location}}</div>
-        <div>{% if recurring.is_active %}Yes{% else %}No{% endif %}</div>
-        <div class="edit-links-container">
-            {% url "recurring_purchase_edit" pk=recurring.id as recurring_edit_url %}
-            {% url "recurring_purchase_delete" pk=recurring.id as recurring_delete_url %}
-            {% include "_includes/icon_action.html" with action_label="Edit recurring purchase" action_url=recurring_edit_url return_url=next icon_path="images/edit-pencil.svg" only %}
-            {% include "_includes/icon_action.html" with action_label="Delete recurring purchase" action_url=recurring_delete_url return_url=next icon_path="images/trash.svg" only %}
-        </div>
-    </div>
-    {% endfor %}
-    </div>
-    {% else %}
-    <p>No recurring purchases yet. Add one above!</p>
-    {% endif %}
+    <div class="financial-table-scroll" role="region" aria-label="Saved recurring purchases" tabindex="0"><table class="financial-table financial-table--wide">
+        <thead><tr><th>Item</th><th>Amount</th><th>Category</th><th>Source</th><th>Location</th><th>Status</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+        <tbody>{% for recurring in recurring_purchases %}<tr>
+            <td><strong>{{ recurring.item }}</strong></td><td class="{{ recurring.amount|negative_class }}">${{ recurring.amount|floatformat:"-2" }}</td><td>{{ recurring.category }}</td><td>{{ recurring.source }}</td><td>{{ recurring.location }}</td><td>{% if recurring.is_active %}<span class="status-active">Active</span>{% else %}Paused{% endif %}</td>
+            <td class="financial-table-actions"><div class="edit-links-container">{% url "recurring_purchase_edit" pk=recurring.id as recurring_edit_url %}{% url "recurring_purchase_delete" pk=recurring.id as recurring_delete_url %}{% include "_includes/icon_action.html" with action_label="Edit recurring purchase" action_url=recurring_edit_url return_url=next icon_path="images/edit-pencil.svg" only %}{% include "_includes/icon_action.html" with action_label="Delete recurring purchase" action_url=recurring_delete_url return_url=next icon_path="images/trash.svg" only %}</div></td>
+        </tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<p>No recurring purchases yet.</p>{% endif %}
+    </section>
+</div>
+<div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Close</button></div>
 </div>

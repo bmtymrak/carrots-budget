@@ -3,9 +3,11 @@
 .card-base {
     width: 100%;
     max-width: 100%;
-    margin-top: var(--space-xl);
-    padding: var(--space-lg);
-    border-radius: var(--radius-xl);
+    margin-top: 12px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
     background: var(--color-surface);
     box-shadow: var(--shadow-card);
 }
@@ -14,13 +16,19 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .card-header-action {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: var(--space-sm);
+    gap: 8px;
+    margin: 0;
     border-radius: var(--radius-lg);
 }
 
@@ -40,19 +48,20 @@
 }
 
 .card-table-header {
-    padding: var(--space-sm);
-    border-radius: var(--radius-md);
+    padding: 0;
+    border-radius: 0;
     background-color: var(--color-surface-muted);
 }
 
 .card-table-heading {
-    margin: var(--space-sm);
-    font-size: 18px;
-    font-weight: 600;
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 14px;
+    font-weight: 800;
 }
 
 .card-table-subtotal {
-    margin: var(--space-2xs) var(--space-sm);
-    font-size: 16px;
-    font-weight: 600;
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
 }

@@ -1,7 +1,7 @@
-<h2>Edit Recurring Purchase: {{recurring_purchase.item}}</h2>
-<form hx-post='{% url "recurring_purchase_edit" pk=recurring_purchase.id %}' hx-target="#modal-content" hx-swap="innerHTML" class="form-grid" method="POST">
-    {% csrf_token %}
-    {{form}}
-    <input type="hidden" name="next" value="{{next}}">
-    <button type="submit">Save</button>
+<div class="modal-content-header"><h2>Edit recurring purchase</h2><p>{{ recurring_purchase.item }}</p></div>
+<form hx-post='{% url "recurring_purchase_edit" pk=recurring_purchase.id %}' hx-target="#modal-content" hx-swap="innerHTML" method="POST">
+    {% csrf_token %}<div class="modal-content-body"><div class="modal-errors">{{ form.non_field_errors }}</div><div class="modal-form-grid">
+    {% for field in form.visible_fields %}<div class="modal-field{% if field.name == "notes" %} modal-field--full{% elif field.name == "is_active" %} modal-field--check{% endif %}">{{ field.errors }}{% if field.name == "is_active" %}{{ field }}{{ field.label_tag }}{% else %}{{ field.label_tag }}{{ field }}{% endif %}</div>{% endfor %}
+    </div><input type="hidden" name="next" value="{{ next }}"></div>
+    <div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button class="button-create" type="submit">Save recurring purchase</button></div>
 </form>

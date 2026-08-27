@@ -24,6 +24,12 @@ from purchases.models import Purchase, Income
 
 class BudgetService:
     @staticmethod
+    def _usage_percent(activity, budgeted):
+        if budgeted:
+            return round((activity / budgeted) * 100)
+        return 100 if activity else 0
+
+    @staticmethod
     def month_bounds(year: int, month: int):
         month_start = datetime.date(year, month, 1)
         if month == 12:
@@ -127,6 +133,7 @@ class BudgetService:
             item.spent = spent
             item.income = income
             item.diff = diff
+            item.usage_percent = self._usage_percent(spent, item.amount)
             
             budget_items_list.append(item)
 
@@ -152,6 +159,7 @@ class BudgetService:
             item.saved = saved
             item.income = income
             item.diff = diff
+            item.usage_percent = self._usage_percent(saved, item.amount)
             
             savings_items_list.append(item)
 
@@ -297,31 +305,25 @@ class BudgetService:
         
         free_income = budget_items_context['free_income_spending'] + savings_items_context['free_income_savings']
 
-        rollovers = (
+        next_rollovers_by_category = dict(
             Rollover.objects.filter(
                 user=user,
                 yearly_budget__date__gte=year_start,
                 yearly_budget__date__lt=next_year_start,
             )
-            .select_related("category", "yearly_budget")
-            .order_by("category__name")
+            .values_list("category_id", "amount")
         )
-        
-        savings_category_ids = savings_items_context['savings_category_ids']
-        rollovers_spending = []
-        rollovers_savings = []
-        
-        for rollover in rollovers:
-            if rollover.category.id in savings_category_ids:
-                rollovers_savings.append(rollover)
-            else:
-                rollovers_spending.append(rollover)
+        for item in (
+            budget_items_context["budget_items_combined"]
+            + savings_items_context["savings_items_combined"]
+        ):
+            item["rollover_next"] = next_rollovers_by_category.get(
+                item["category"], Decimal("0")
+            )
 
         context = {
             "incomes": incomes,
             "purchases_uncategorized": purchases_uncategorized,
-            "rollovers_spending": rollovers_spending,
-            "rollovers_savings": rollovers_savings,
             
             "total_budgeted": total_budgeted,
             "total_spent_saved": total_spent_saved,
@@ -333,10 +335,31 @@ class BudgetService:
             "total_remaining_ytd": total_remaining_ytd,
             
             "free_income": free_income,
+            "total_usage_ytd": self._usage_percent(
+                total_spent_saved_ytd, total_budgeted_ytd
+            ),
+            "total_usage": self._usage_percent(total_spent_saved, total_budgeted),
+            "spending_usage_ytd": self._usage_percent(
+                budget_items_context["total_spending_spent_ytd"],
+                budget_items_context["total_spending_budgeted_ytd"],
+            ),
+            "spending_usage": self._usage_percent(
+                budget_items_context["total_spending_spent"],
+                budget_items_context["total_spending_budgeted"],
+            ),
+            "savings_usage_ytd": self._usage_percent(
+                savings_items_context["total_saved_ytd"],
+                savings_items_context["total_savings_budgeted_ytd"],
+            ),
+            "savings_usage": self._usage_percent(
+                savings_items_context["total_saved"],
+                savings_items_context["total_savings_budgeted"],
+            ),
             
             "months": [
                 (calendar.month_name[month], month) for month in range(1, 13)
             ],
+            "ytd_month_name": calendar.month_name[ytd_month],
         }
         
         context.update(budget_items_context)
@@ -344,7 +367,6 @@ class BudgetService:
         context.update(income_context)
         
         # Remove internal keys that aren't needed in template
-        context.pop('savings_category_ids', None)
         context.pop('free_income_spending', None)
         context.pop('free_income_savings', None)
 
@@ -439,6 +461,7 @@ class BudgetService:
             })
             
             budget_items_combined.append({
+                "category": budget_item["category"],
                 "category__name": category_name,
                 "amount_total": budget_item["amount_total"],
                 "spent": budget_item["spent"],
@@ -446,6 +469,14 @@ class BudgetService:
                 "amount_total_ytd": ytd_item.get("amount_total_ytd", 0),
                 "diff_ytd": ytd_item.get("diff_ytd", 0),
                 "spent_ytd": ytd_item.get("spent", 0),
+                "rollover_current": budget_item["rollover"],
+                "usage_ytd": self._usage_percent(
+                    ytd_item.get("spent", 0),
+                    ytd_item.get("amount_total_ytd", 0),
+                ),
+                "usage_total": self._usage_percent(
+                    budget_item["spent"], budget_item["amount_total"]
+                ),
             })
 
         return {
@@ -491,11 +522,8 @@ class BudgetService:
         total_savings_remaining_ytd = 0
         total_savings_budgeted_ytd = 0
         
-        savings_category_ids = set()
-
         for item in savings_items:
             category_id = item['category']
-            savings_category_ids.add(category_id)
             
             p_data = purchases_data.get(category_id, {'total': 0, 'total_ytd': 0})
             i_data = incomes_data.get(category_id, {'total': 0, 'total_ytd': 0})
@@ -552,6 +580,7 @@ class BudgetService:
             })
             
             savings_items_combined.append({
+                "category": savings_item["category"],
                 "category__name": category_name,
                 "amount_total": savings_item["amount_total"],
                 "saved": savings_item["saved"],
@@ -559,6 +588,14 @@ class BudgetService:
                 "amount_total_ytd": ytd_item.get("amount_total_ytd", 0),
                 "diff_ytd": ytd_item.get("diff_ytd", 0),
                 "saved_ytd": ytd_item.get("saved", 0),
+                "rollover_current": savings_item["rollover"],
+                "usage_ytd": self._usage_percent(
+                    ytd_item.get("saved", 0),
+                    ytd_item.get("amount_total_ytd", 0),
+                ),
+                "usage_total": self._usage_percent(
+                    savings_item["saved"], savings_item["amount_total"]
+                ),
             })
 
         return {
@@ -570,7 +607,6 @@ class BudgetService:
             "total_savings_budgeted_ytd": total_savings_budgeted_ytd,
             "total_savings_remaining_ytd": total_savings_remaining_ytd,
             "free_income_savings": free_income_savings,
-            "savings_category_ids": savings_category_ids,
         }
 
     def _process_income_totals(self, incomes, ytd_end, total_spent_saved, total_spent_saved_ytd, total_budgeted, total_budgeted_ytd):

@@ -1,5 +1,5 @@
 <section class="expense-source-modal" aria-labelledby="expense-source-modal-title">
-    <div class="expense-source-modal-header">
+    <div class="modal-content-header expense-source-modal-header">
         <div>
             <p class="expense-source-eyebrow">Monthly checklist</p>
             <h2 id="expense-source-modal-title">Manage expense sources</h2>
@@ -7,6 +7,7 @@
         <p class="expense-source-modal-month">{{ monthly_budget.date|date:"F Y" }}</p>
     </div>
 
+    <div class="modal-content-body">
     <p class="expense-source-modal-intro">
         Choose which reusable sources appear in {{ monthly_budget.date|date:"F Y" }}.
         Adding or removing a source affects only this month. Renaming a source
@@ -45,5 +46,6 @@
         {% empty %}
             <p class="expense-source-muted">All reusable sources are included.</p>
         {% endfor %}
+    </div>
     </div>
 </section>
