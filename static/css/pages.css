@@ -242,57 +242,487 @@
 }
 
 /* Monthly expense source checklist. */
+.budget-detail-title {
+    font-size: 32px;
+}
+
 .content--monthly-budget {
-    max-width: 1400px;
+    max-width: var(--content-max-width);
 }
 
 .monthly-budget-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 250px;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-xl);
     align-items: start;
 }
 
 .monthly-budget-main {
+    grid-column: 1;
+    grid-row: 1;
     min-width: 0;
 }
 
 .monthly-budget-companion {
     position: sticky;
     top: var(--space-xl);
-    width: 100%;
+    grid-column: 1;
+    grid-row: 1;
+    width: min(250px, calc((100vw - var(--content-max-width)) / 2 - var(--space-xl)));
     max-width: 250px;
     min-width: 0;
-    justify-self: end;
+    margin-left: calc(100% + var(--space-xl));
+    justify-self: start;
 }
 
-.monthly-budget-companion .expense-source-card-header,
-.monthly-budget-companion .expense-source-progress {
+.page-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    width: 100%;
+}
+
+.heading-navigation {
+    width: min(var(--content-max-width), calc(100% - 30px));
+    margin: 0 auto 12px;
+}
+
+.month-nav-wrapper {
+    margin-top: 10px;
+}
+
+.month-nav-container {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(46px, 1fr));
+    gap: 4px;
+    padding: 5px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+}
+
+.month-nav-card {
+    padding: 6px 3px;
+    border-radius: var(--radius-sm);
+    color: var(--color-muted);
+    font-weight: 800;
+    text-align: center;
+    text-decoration: none;
+}
+
+.month-nav-card.is-current {
+    background: var(--color-brand);
+    color: var(--color-surface);
+}
+
+.metric-strip {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+.metric-strip article {
+    min-width: 0;
+    min-height: 70px;
+    padding: 12px;
+    border-left: 1px solid var(--color-border);
+}
+
+.metric-strip article:first-child {
+    border-left: 0;
+}
+.metric-strip span {
     display: block;
+    color: var(--color-muted);
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.metric-strip strong {
+    display: block;
+    margin-top: 7px;
+    font-size: 17px;
+    font-variant-numeric: tabular-nums;
+}
+.metric-strip article:nth-last-child(-n + 2) strong {
+    color: var(--color-success);
+}
+
+.count-badge {
+    padding: 3px 7px;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+    color: var(--color-success);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.button-secondary,
+.button-quiet {
+    border-color: var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.button-quiet {
+    color: var(--color-success);
+}
+.empty-state {
+    padding: 12px;
+    color: var(--color-muted);
+}
+
+.ytd-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-muted);
+    font-weight: 800;
+}
+
+.ytd-selector select {
+    min-height: 34px;
+    padding: 5px 28px 5px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+}
+
+.ytd-selector-submit {
+    min-height: 34px;
+    padding-block: 5px;
+}
+
+.paired-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.paired-metrics article {
+    min-width: 0;
+    border-top: 1px solid var(--color-border-subtle);
+    border-left: 1px solid var(--color-border-subtle);
+}
+
+.paired-metrics article:nth-child(3n + 1) {
+    border-left: 0;
+}
+.paired-metrics h3 {
+    margin: 0;
+    padding: 7px 10px;
+    background: var(--color-surface-muted);
+    font-size: 14px;
+}
+.paired-metrics article > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.paired-metrics span {
+    min-width: 0;
+    padding: 8px 10px;
+    color: var(--color-muted);
+}
+.paired-metrics span + span {
+    border-left: 1px solid var(--color-border-subtle);
+}
+.paired-metrics strong {
+    display: block;
+    margin-top: 3px;
+    color: var(--color-text);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.yearly-table-scroll {
+    width: 100%;
+    max-width: 100%;
+}
+.yearly-budget-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+.yearly-budget-table > thead > tr > th:first-child {
+    width: 17%;
+}
+.yearly-budget-table > thead > tr > th:nth-child(2),
+.yearly-budget-table > thead > tr > th:nth-child(3) {
+    width: 35%;
+}
+.yearly-budget-table > thead > tr > th:nth-child(4) {
+    width: 5%;
+}
+.yearly-budget-table > thead > tr > th:nth-child(5) {
+    width: 8%;
+}
+.yearly-budget-table th,
+.yearly-budget-table td {
+    padding: 8px 7px;
+    border-bottom: 1px solid var(--color-border-subtle);
+    vertical-align: middle;
+}
+.yearly-budget-table th {
+    text-align: left;
+}
+.yearly-budget-table td {
+    min-width: 0;
+}
+.yearly-budget-table a {
+    color: var(--color-text);
+    font-weight: 800;
+}
+.yearly-group-title {
+    display: block;
+    padding-bottom: 6px;
+    color: var(--color-text);
+    text-align: center;
+}
+.yearly-period-labels,
+.yearly-period-values {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+.yearly-period-labels {
+    color: var(--color-muted);
+    font-weight: 800;
+    text-align: right;
+}
+.yearly-period-values {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+.yearly-period-cell:nth-child(3) {
+    padding-left: 18px;
+}
+.yearly-period-cell .usage-meter {
+    grid-template-columns: minmax(0, 1fr) 30px;
+    margin-top: 6px;
+    margin-left: calc(100% / 6);
+}
+.yearly-group-row th,
+.yearly-total-row {
+    background: color-mix(in srgb, var(--color-budget-accent) 8%, var(--color-surface));
+    font-weight: 800;
+}
+.yearly-subtotal-row {
+    background: transparent;
+}
+.yearly-subtotal-row > * {
+    border-top: 1px solid var(--color-budget-accent);
+}
+.yearly-group-row th {
+    padding: 6px 10px;
+    color: var(--color-brand);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.value-negative {
+    color: var(--color-danger) !important;
+    font-weight: 800;
+}
+.rollover-cell {
+    position: relative;
+    text-align: center;
+}
+.rollover-details summary {
+    display: inline-grid;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+    color: var(--color-success);
+    cursor: pointer;
+    list-style: none;
+    place-items: center;
+}
+.rollover-details summary::-webkit-details-marker {
+    display: none;
+}
+.rollover-popover {
+    position: absolute;
+    z-index: 5;
+    right: 4px;
+    display: grid;
+    gap: 8px;
+    width: 220px;
+    padding: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+    text-align: left;
+}
+.rollover-popover span {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.rollover-dialog {
+    position: fixed;
+    inset: 0;
+    width: min(100% - 30px, 500px);
+    max-height: calc(100vh - 30px);
+    margin: auto;
+    padding: 0;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-modal);
+}
+.rollover-dialog::backdrop {
+    background: var(--color-backdrop);
+}
+.rollover-dialog .modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 15px 17px;
+    border-bottom: 1px solid var(--color-border);
+}
+.rollover-dialog .modal-header p {
+    margin: 4px 0 0;
+    color: var(--color-muted);
+}
+.rollover-dialog .modal-body {
+    display: grid;
+    gap: 13px;
+    padding: 17px;
+}
+.rollover-dialog label {
+    display: grid;
+    gap: 5px;
+    font-weight: 800;
+}
+.rollover-dialog input {
+    min-height: 38px;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+.rollover-readonly {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+.rollover-readonly span {
+    color: var(--color-muted);
+    font-weight: 700;
+}
+.rollover-readonly strong {
+    color: var(--color-text);
+    font-size: var(--font-size-lg);
+}
+.rollover-dialog .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 17px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface-muted);
+}
+.modal-close-inline {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    font-size: 22px;
+}
+.modal-button {
+    min-height: 36px;
+    padding: 7px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.monthly-budget-companion .expense-source-card {
+    margin-top: 0;
+}
+
+.monthly-budget-companion .expense-source-card-header {
+    display: block;
+    min-height: 0;
+    padding: 12px;
+    border-bottom: 0;
 }
 
 .monthly-budget-companion .expense-source-card h2 {
     margin-left: 0;
+    font-size: 17px;
 }
 
 .monthly-budget-companion .expense-source-actions {
     justify-content: stretch;
-    margin-top: var(--space-md);
+    margin-top: 8px;
 }
 
 .monthly-budget-companion .expense-source-actions .button-create {
     width: 100%;
-    min-height: 36px;
+    min-height: 34px;
+    padding: 6px 10px;
+    font-size: 13px;
+}
+
+.monthly-budget-companion .expense-source-progress {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 9px 12px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
 }
 
 .monthly-budget-companion .expense-source-progress progress {
     display: block;
     width: 100%;
-    margin-top: var(--space-sm);
+    margin-top: 0;
+}
+
+.monthly-budget-companion .expense-source-list {
+    gap: 0;
+}
+
+.monthly-budget-companion .expense-source-row {
+    min-height: 50px;
+    padding: 9px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--color-border-subtle);
+    border-radius: 0;
+}
+
+.monthly-budget-companion .expense-source-row:last-child {
+    border-bottom: 0;
 }
 
 .monthly-budget-companion .expense-source-row label {
     display: block;
+    line-height: 1.25;
+}
+
+.monthly-budget-companion .expense-source-note {
+    grid-column: 2;
+}
+
+.monthly-budget-companion .expense-source-note-editor {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.monthly-budget-companion .expense-source-note-save {
+    justify-self: end;
 }
 
 .visually-hidden {
@@ -332,9 +762,28 @@
 }
 
 .expense-source-progress progress {
+    appearance: none;
     width: 100%;
     height: 7px;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--radius-round);
+    background: color-mix(in srgb, var(--color-success) 14%, white);
     accent-color: var(--color-success);
+}
+
+.expense-source-progress progress::-webkit-progress-bar {
+    background: color-mix(in srgb, var(--color-success) 14%, white);
+}
+
+.expense-source-progress progress::-webkit-progress-value {
+    border-radius: var(--radius-round);
+    background: var(--color-success);
+}
+
+.expense-source-progress progress::-moz-progress-bar {
+    border-radius: var(--radius-round);
+    background: var(--color-success);
 }
 
 .expense-source-list {
@@ -579,7 +1028,7 @@
     background: color-mix(in srgb, var(--color-danger) 12%, white);
 }
 
-@media (width <= 75rem) {
+@media (width <= 88rem) {
     .content--monthly-budget {
         max-width: var(--content-max-width);
     }
@@ -588,13 +1037,70 @@
         grid-template-columns: minmax(0, 1fr);
     }
 
+    .monthly-budget-main,
+    .monthly-budget-companion {
+        grid-column: auto;
+        grid-row: auto;
+    }
+
     .monthly-budget-companion {
         position: static;
         width: min(100%, 250px);
+        margin-left: 0;
+        justify-self: end;
     }
 }
 
 @media (width <= 48rem) {
+    .page-heading-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .page-header-action {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        width: 100%;
+    }
+
+    .page-header-action .button-create {
+        min-height: 48px;
+        padding: 7px;
+    }
+
+    .month-nav-wrapper {
+        align-items: stretch;
+        overflow-x: auto;
+    }
+    .month-nav-container {
+        min-width: 620px;
+    }
+    .metric-strip {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .metric-strip article {
+        border-top: 1px solid var(--color-border);
+    }
+    .metric-strip article:nth-child(-n + 2) {
+        border-top: 0;
+    }
+    .metric-strip article:nth-child(odd) {
+        border-left: 0;
+    }
+    .paired-metrics {
+        grid-template-columns: 1fr;
+    }
+    .paired-metrics article {
+        border-left: 0;
+    }
+    .yearly-table-scroll {
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+    }
+    .yearly-budget-table {
+        min-width: 900px;
+    }
+
     .expense-source-card-header,
     .expense-source-progress,
     .expense-source-modal-header {

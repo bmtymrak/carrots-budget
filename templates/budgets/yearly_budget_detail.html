@@ -1,245 +1,97 @@
 {% extends "_layouts/app.html" %}
-{% load static %}
+{% load static value_styles %}
 
 {% block header %}
-    <h1 class="page-title">{{yearly_budget.date.year}}</h1>
+<div class="page-heading-row">
+    <h1 class="page-title budget-detail-title">{{ yearly_budget.date.year }}</h1>
+    <div class="page-header-action" aria-label="Budget quick actions">
+        <button class="button-create" type="button" hx-get='{% url "purchase_create" %}?date={{ yearly_budget.date.year }}-01-01&next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add purchase</button>
+        <button class="button-create button-secondary" type="button" hx-get='{% url "income_create" %}?next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add income</button>
+        <button class="button-create button-secondary" type="button" hx-get='{% url "recurring_purchase_list" %}?next={{ request.path|urlencode }}' hx-target="#modal-content">Manage recurring purchases</button>
+    </div>
+</div>
 {% endblock header %}
 
 {% block heading_nav %}
-    <div class="month-nav-wrapper">
-        <div class="month-nav-container">
-        {% for month in months %}
-            <div class="month-nav-card">
-                <a href='{% url "monthly_detail" month=month.1 year=yearly_budget.date.year %}'>{{month.0}}</a>
-            </div>
-        {% endfor %}
-        </div>
-    </div>
+<div class="heading-navigation">
+    <nav class="month-nav-wrapper" aria-label="Open monthly budget"><div class="month-nav-container">
+    {% for month in months %}
+        <a class="month-nav-card" href='{% url "monthly_detail" month=month.1 year=yearly_budget.date.year %}'>{{ month.0|slice:":3" }}</a>
+    {% endfor %}
+    </div></nav>
+</div>
 {% endblock heading_nav %}
 
 {% block body %}
 <div id="yearly-budget-detail" data-behavior="yearly-budget-detail" data-rollover-url="{% url "rollover_update" %}" data-year="{{ yearly_budget.date.year }}" data-ytd-path="{{ request.path }}" data-ytd-month="{{ ytd_month }}">
-<div class="page-header-action">
-    <button class="button-create" type="button" hx-get='{% url "purchase_create" %}?date={{yearly_budget.date.year}}-01-01&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
-    <button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
-    <button class="button-create" type="button" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
-    <button class="button-create" type="button" hx-get='{% url "recurring_purchase_list" %}?next={{request.path|urlencode}}' hx-target="#modal-content">Manage Recurring Purchases</button>
-</div>
-<p id="rollover-save-error" class="rollover-save-error" role="alert" hidden></p>
-
-<div class="card-base">
-    <h2>Summary</h2>
-    <div class="data-grid-scroll data-grid-scroll--summary" role="region" aria-label="Yearly budget summary data" tabindex="0">
-    <div class="data-grid data-grid--summary card-table-header">
-        <div class="card-table-heading">Budgeted</div>
-        <div class="card-table-heading">Spent</div>
-        <div class="card-table-heading">Saved</div>
-        <div class="card-table-heading">Income</div>
-        <div class="card-table-heading">Budgeted Income</div>
-        <div class="card-table-heading">Category Income</div>
-    </div>
-    <div class="data-grid data-grid--summary">
-        <div>${{total_budgeted|floatformat:"-2"}}</div>
-        <div>${{total_spending_spent|floatformat:"-2"}}</div>
-        <div>${{total_saved|floatformat:"-2"}}</div>
-        <div>${{total_income.amount|floatformat:"-2"}}</div>
-        <div>${{total_income_budgeted.amount|floatformat:"-2"}}</div>
-        <div>${{total_income_category.amount|floatformat:"-2"}}</div>
-    </div>
-    <div class="data-grid data-grid--summary card-table-header">
-        <div class="card-table-heading">Budgeted Income-Budgeted</div>
-        <div class="card-table-heading">Spent + Saved</div>
-        <div class="card-table-heading">Budgeted Income - (Spent + Saved)</div>
-        <div class="card-table-heading"></div>
-        <div class="card-table-heading"></div>
-        <div class="card-table-heading"></div>
-    </div>
-    <div class="data-grid data-grid--summary">
-        <div>${{budgeted_income_diff|floatformat:"-2"}}</div>
-        <div>${{total_spent_saved|floatformat:"-2"}}</div>
-        <div>${{budgeted_income_spent_diff|floatformat:"-2"}}</div>
-        <div></div>
-        <div></div>
-        <div></div>
-    </div>
-    </div>
-    <h3>YTD</h3>
-    <div class="month-select-container">
-        <p>YTD Month Select:</p>
-        <select class="month-select" name="month">
-            <option value="1">January</option>
-            <option value="2">February</option>
-            <option value="3">March</option>
-            <option value="4">April</option>
-            <option value="5">May</option>
-            <option value="6">June</option>
-            <option value="7">July</option>
-            <option value="8">August</option>
-            <option value="9">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
-        </select>
-    </div>
-    <div class="data-grid-scroll data-grid-scroll--summary" role="region" aria-label="Year-to-date budget summary data" tabindex="0">
-    <div class="data-grid data-grid--summary card-table-header">
-        <div class="card-table-heading">Budgeted YTD</div>
-        <div class="card-table-heading">Spent YTD</div>
-        <div class="card-table-heading">Saved YTD</div>
-        <div class="card-table-heading">Income YTD</div>
-        <div class="card-table-heading">Budgeted Income YTD</div>
-        <div class="card-table-heading">Category Income YTD</div>
-    </div>
-    <div class="data-grid data-grid--summary">
-        <div>${{total_budgeted_ytd|floatformat:"-2"}}</div>
-        <div>${{total_spending_spent_ytd|floatformat:"-2"}}</div>
-        <div>${{total_saved_ytd|floatformat:"-2"}}</div>
-        <div>${{total_income_ytd.amount|floatformat:"-2"}}</div>
-        <div>${{total_income_budgeted_ytd.amount|floatformat:"-2"}}</div>
-        <div>${{total_income_category_ytd.amount|floatformat:"-2"}}</div>
-    </div>
-    <div class="data-grid data-grid--summary card-table-header">
-        <div class="card-table-heading">Budgeted Income-Budgeted YTD</div>
-        <div class="card-table-heading">Spent + Saved</div>
-        <div class="card-table-heading">Budgeted Income - (Spent + Saved)</div>
-        <div class="card-table-heading"></div>
-        <div class="card-table-heading"></div>
-        <div class="card-table-heading"></div>
-    </div>
-    <div class="data-grid data-grid--summary">
-        <div>${{budgeted_income_diff_ytd|floatformat:"-2"}}</div>
-        <div>${{total_spent_saved_ytd|floatformat:"-2"}}</div>
-        <div>${{budgeted_income_spent_diff_ytd|floatformat:"-2"}}</div>
-        <div></div>
-        <div></div>
-        <div></div>
-    </div>
-    </div>
-</div>
-
-<div class="card-container-horz">
-    <div class="card-base">
+    <section class="card-base yearly-summary">
         <div class="card-header">
-            <h2>Budget</h2>
-            <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
-            </div>
+            <h2>Budget summary</h2>
+            <form class="ytd-selector" method="get" data-ytd-selector>
+                <label for="ytd-month">YTD through</label>
+                <select id="ytd-month" class="month-select" name="ytd">
+                    {% for month in months %}<option value="{{ month.1 }}"{% if month.1 == ytd_month %} selected{% endif %}>{{ month.0 }}</option>{% endfor %}
+                </select>
+                <button class="button-create button-quiet ytd-selector-submit" type="submit">Apply</button>
+            </form>
         </div>
-        <div class="data-grid-scroll data-grid-scroll--budget-yearly" role="region" aria-label="Yearly budget category data" tabindex="0">
-        <div class="card-main">
-            <div>
-                <div class="data-grid data-grid--budget-yearly card-table-header">
-                    <div class="card-table-heading">Category</div>
-                    <div class="card-table-heading">Budgeted YTD</div>
-                    <div class="card-table-heading">Spent YTD</div>
-                    <div class="card-table-heading">+/- YTD</div>
-                    <div class="card-table-heading">Budgeted</div>
-                    <div class="card-table-heading">Spent</div>
-                    <div class="card-table-heading">+/-</div>
-                    <div></div>
-                </div>
+        <div class="paired-metrics">
+            <article><h3>Budgeted</h3><div><span>Full year<strong class="{{ total_budgeted|negative_class }}">${{ total_budgeted|floatformat:"-2" }}</strong></span><span>YTD<strong class="{{ total_budgeted_ytd|negative_class }}">${{ total_budgeted_ytd|floatformat:"-2" }}</strong></span></div></article>
+            <article><h3>Spent</h3><div><span>Full year<strong class="{{ total_spending_spent|negative_class }}">${{ total_spending_spent|floatformat:"-2" }}</strong></span><span>YTD<strong class="{{ total_spending_spent_ytd|negative_class }}">${{ total_spending_spent_ytd|floatformat:"-2" }}</strong></span></div></article>
+            <article><h3>Saved</h3><div><span>Full year<strong class="{{ total_saved|negative_class }}">${{ total_saved|floatformat:"-2" }}</strong></span><span>YTD<strong class="{{ total_saved_ytd|negative_class }}">${{ total_saved_ytd|floatformat:"-2" }}</strong></span></div></article>
+            <article><h3>Income</h3><div><span>Full year<strong class="{{ total_income.amount|negative_class }}">${{ total_income.amount|floatformat:"-2" }}</strong></span><span>YTD<strong class="{{ total_income_ytd.amount|negative_class }}">${{ total_income_ytd.amount|floatformat:"-2" }}</strong></span></div></article>
+            <article><h3>Budgeted income</h3><div><span>Full year<strong class="{{ total_income_budgeted.amount|negative_class }}">${{ total_income_budgeted.amount|floatformat:"-2" }}</strong></span><span>YTD<strong class="{{ total_income_budgeted_ytd.amount|negative_class }}">${{ total_income_budgeted_ytd.amount|floatformat:"-2" }}</strong></span></div></article>
+            <article><h3>Category income</h3><div><span>Full year<strong class="{{ total_income_category.amount|negative_class }}">${{ total_income_category.amount|floatformat:"-2" }}</strong></span><span>YTD<strong class="{{ total_income_category_ytd.amount|negative_class }}">${{ total_income_category_ytd.amount|floatformat:"-2" }}</strong></span></div></article>
+            <article><h3>Budgeted income − budgeted</h3><div><span>Full year<strong class="{{ budgeted_income_diff|negative_class }}">${{ budgeted_income_diff|floatformat:"-2" }}</strong></span><span>YTD<strong class="{{ budgeted_income_diff_ytd|negative_class }}">${{ budgeted_income_diff_ytd|floatformat:"-2" }}</strong></span></div></article>
+            <article><h3>Spent + saved</h3><div><span>Full year<strong class="{{ total_spent_saved|negative_class }}">${{ total_spent_saved|floatformat:"-2" }}</strong></span><span>YTD<strong class="{{ total_spent_saved_ytd|negative_class }}">${{ total_spent_saved_ytd|floatformat:"-2" }}</strong></span></div></article>
+            <article><h3>Budgeted income − (spent + saved)</h3><div><span>Full year<strong class="{{ budgeted_income_spent_diff|negative_class }}">${{ budgeted_income_spent_diff|floatformat:"-2" }}</strong></span><span>YTD<strong class="{{ budgeted_income_spent_diff_ytd|negative_class }}">${{ budgeted_income_spent_diff_ytd|floatformat:"-2" }}</strong></span></div></article>
+        </div>
+    </section>
 
-                {% for budget_item in budget_items_combined %}
-                    {% include "budgets/_yearly_budget_item_grid_row.html" with category_name=budget_item.category__name amount_ytd=budget_item.amount_total_ytd activity_ytd=budget_item.spent_ytd difference_ytd=budget_item.diff_ytd amount_total=budget_item.amount_total activity_total=budget_item.spent difference_total=budget_item.diff year=yearly_budget.date.year return_url=request.path only %}
+    <p id="rollover-save-error" class="rollover-save-error" role="alert" hidden></p>
+    <section class="card-base">
+        <div class="card-header"><h2>Budget categories</h2><div class="card-header-action"><span class="count-badge">{{ budget_items_combined|length }} spending · {{ savings_items_combined|length }} savings</span><button class="button-create button-quiet" type="button" hx-get='{% url "budgetitem_create_htmx" year=yearly_budget.date.year %}?next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add budget item</button></div></div>
+        <div class="yearly-table-scroll" role="region" aria-label="Yearly budget category data" tabindex="0">
+        <table class="yearly-budget-table">
+            <thead><tr>
+                <th scope="col"><span class="visually-hidden">Category</span></th>
+                <th scope="col"><span class="yearly-group-title">YTD through {{ ytd_month_name }}</span><span class="yearly-period-labels"><span>Budgeted</span><span>Activity</span><span>+/−</span></span></th>
+                <th scope="col"><span class="yearly-group-title">Full year</span><span class="yearly-period-labels"><span>Budgeted</span><span>Activity</span><span>+/−</span></span></th>
+                <th scope="col"><span class="visually-hidden">Rollover</span></th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr></thead>
+            <tbody>
+                <tr class="yearly-group-row"><th colspan="5" scope="rowgroup">Spending categories</th></tr>
+                {% for item in budget_items_combined %}
+                    {% include "budgets/_yearly_budget_item_grid_row.html" with item=item activity_ytd=item.spent_ytd activity_total=item.spent year=yearly_budget.date.year return_url=request.path only %}
                 {% endfor %}
-                <div class="data-grid data-grid--budget-yearly budget-subtotal">
-                    <div class="card-table-subtotal">Spending Total</div>
-                    <div class="card-table-subtotal">${{total_spending_budgeted_ytd|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">${{total_spending_spent_ytd|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">${{total_spending_remaining_ytd|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">${{total_spending_budgeted|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">${{total_spending_spent|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">{{total_spending_remaining|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal"></div>
-                </div>
-            </div>
-            <div>
-                <div class="rollover-col">
-                    <div class="budget-monthly-single-col card-table-header">
-                        <div class="card-table-heading">Rollover</div>
-                    </div>
-                    <div class="rollover-items-grid">
-                        {% for rollover in rollovers_spending %}
-                        <div><input id="rollover-{{ rollover.pk }}" class="rollover-edit" data-category="{{ rollover.category }}" type="number" step="0.01" value="{{ rollover.amount|floatformat:"-2" }}" aria-label="Rollover amount for {{ rollover.category }}" aria-describedby="rollover-save-error"></div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card-main">
-            <div class="grow">
-                <div class="data-grid data-grid--budget-yearly card-table-header">
-                    <div class="card-table-heading">Category</div>
-                    <div class="card-table-heading">Budgeted YTD</div>
-                    <div class="card-table-heading">Saved YTD</div>
-                    <div class="card-table-heading">+/- YTD</div>
-                    <div class="card-table-heading">Budgeted</div>
-                    <div class="card-table-heading">Saved</div>
-                    <div class="card-table-heading">+/-</div>
-                    <div class="card-table-heading"></div>
-                </div>
-                {% for budget_item in savings_items_combined %}
-                    {% include "budgets/_yearly_budget_item_grid_row.html" with category_name=budget_item.category__name amount_ytd=budget_item.amount_total_ytd activity_ytd=budget_item.saved_ytd difference_ytd=budget_item.diff_ytd amount_total=budget_item.amount_total activity_total=budget_item.saved difference_total=budget_item.diff year=yearly_budget.date.year return_url=request.path only %}
+                <tr class="yearly-total-row yearly-subtotal-row"><th scope="row">Spending total</th><td class="yearly-period-cell"><div class="yearly-period-values"><span class="{{ total_spending_budgeted_ytd|negative_class }}">${{ total_spending_budgeted_ytd|floatformat:"-2" }}</span><span class="{{ total_spending_spent_ytd|negative_class }}">${{ total_spending_spent_ytd|floatformat:"-2" }}</span><span class="{{ total_spending_remaining_ytd|negative_class }}">${{ total_spending_remaining_ytd|floatformat:"-2" }}</span></div><div class="usage-meter" style="--usage-percent:{{ spending_usage_ytd }}%"><span class="usage-meter-track"><span class="usage-meter-fill"></span></span><strong>{{ spending_usage_ytd }}%</strong></div></td><td class="yearly-period-cell"><div class="yearly-period-values"><span class="{{ total_spending_budgeted|negative_class }}">${{ total_spending_budgeted|floatformat:"-2" }}</span><span class="{{ total_spending_spent|negative_class }}">${{ total_spending_spent|floatformat:"-2" }}</span><span class="{{ total_spending_remaining|negative_class }}">${{ total_spending_remaining|floatformat:"-2" }}</span></div><div class="usage-meter" style="--usage-percent:{{ spending_usage }}%"><span class="usage-meter-track"><span class="usage-meter-fill"></span></span><strong>{{ spending_usage }}%</strong></div></td><td></td><td></td></tr>
+                <tr class="yearly-group-row"><th colspan="5" scope="rowgroup">Savings categories</th></tr>
+                {% for item in savings_items_combined %}
+                    {% include "budgets/_yearly_budget_item_grid_row.html" with item=item activity_ytd=item.saved_ytd activity_total=item.saved year=yearly_budget.date.year return_url=request.path only %}
                 {% endfor %}
-                <div class="data-grid data-grid--budget-yearly budget-subtotal">
-                    <div class="card-table-subtotal">Savings Total</div>
-                    <div class="card-table-subtotal">${{total_savings_budgeted_ytd|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">${{total_saved_ytd|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">${{total_savings_remaining_ytd|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">${{total_savings_budgeted|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">${{total_saved|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal">${{total_savings_remaining|floatformat:"-2"}}</div>
-                    <div class="card-table-subtotal"></div>
-                </div>
-                <div class="data-grid data-grid--budget-yearly card-table-header budget-totals">
-                    <div class="card-table-heading">Total</div>
-                    <div class="card-table-heading">${{total_budgeted_ytd|floatformat:"-2"}}</div>
-                    <div class="card-table-heading">${{total_spent_saved_ytd|floatformat:"-2"}}</div>
-                    <div class="card-table-heading">${{total_remaining_ytd|floatformat:"-2"}}</div>
-                    <div class="card-table-heading">${{total_budgeted|floatformat:"-2"}}</div>
-                    <div class="card-table-heading">${{total_spent_saved|floatformat:"-2"}}</div>
-                    <div class="card-table-heading">${{total_remaining|floatformat:"-2"}}</div>
-                    <div class="card-table-heading"></div>
-                </div>
+                <tr class="yearly-total-row yearly-subtotal-row"><th scope="row">Savings total</th><td class="yearly-period-cell"><div class="yearly-period-values"><span class="{{ total_savings_budgeted_ytd|negative_class }}">${{ total_savings_budgeted_ytd|floatformat:"-2" }}</span><span class="{{ total_saved_ytd|negative_class }}">${{ total_saved_ytd|floatformat:"-2" }}</span><span class="{{ total_savings_remaining_ytd|negative_class }}">${{ total_savings_remaining_ytd|floatformat:"-2" }}</span></div><div class="usage-meter" style="--usage-percent:{{ savings_usage_ytd }}%"><span class="usage-meter-track"><span class="usage-meter-fill"></span></span><strong>{{ savings_usage_ytd }}%</strong></div></td><td class="yearly-period-cell"><div class="yearly-period-values"><span class="{{ total_savings_budgeted|negative_class }}">${{ total_savings_budgeted|floatformat:"-2" }}</span><span class="{{ total_saved|negative_class }}">${{ total_saved|floatformat:"-2" }}</span><span class="{{ total_savings_remaining|negative_class }}">${{ total_savings_remaining|floatformat:"-2" }}</span></div><div class="usage-meter" style="--usage-percent:{{ savings_usage }}%"><span class="usage-meter-track"><span class="usage-meter-fill"></span></span><strong>{{ savings_usage }}%</strong></div></td><td></td><td></td></tr>
+            </tbody>
+            <tfoot><tr class="yearly-total-row"><th scope="row">Total</th><td class="yearly-period-cell"><div class="yearly-period-values"><span class="{{ total_budgeted_ytd|negative_class }}">${{ total_budgeted_ytd|floatformat:"-2" }}</span><span class="{{ total_spent_saved_ytd|negative_class }}">${{ total_spent_saved_ytd|floatformat:"-2" }}</span><span class="{{ total_remaining_ytd|negative_class }}">${{ total_remaining_ytd|floatformat:"-2" }}</span></div><div class="usage-meter" style="--usage-percent:{{ total_usage_ytd }}%"><span class="usage-meter-track"><span class="usage-meter-fill"></span></span><strong>{{ total_usage_ytd }}%</strong></div></td><td class="yearly-period-cell"><div class="yearly-period-values"><span class="{{ total_budgeted|negative_class }}">${{ total_budgeted|floatformat:"-2" }}</span><span class="{{ total_spent_saved|negative_class }}">${{ total_spent_saved|floatformat:"-2" }}</span><span class="{{ total_remaining|negative_class }}">${{ total_remaining|floatformat:"-2" }}</span></div><div class="usage-meter" style="--usage-percent:{{ total_usage }}%"><span class="usage-meter-track"><span class="usage-meter-fill"></span></span><strong>{{ total_usage }}%</strong></div></td><td></td><td></td></tr></tfoot>
+        </table>
+        </div>
+    </section>
+
+    <section class="card-base"><div class="card-header"><h2>Income</h2><div class="card-header-action"><span class="count-badge">{{ incomes|length }} entries</span><button class="button-create button-quiet" type="button" hx-get='{% url "income_create" %}?next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add income</button></div></div>{% include "purchases/_income_table.html" with incomes=incomes return_url=request.path aria_label="Yearly income data" only %}</section>
+    <section class="card-base"><div class="card-header"><h2>Uncategorized purchases</h2><span class="count-badge">{{ purchases_uncategorized|length }} purchases</span></div>{% include "purchases/_purchase_table.html" with purchases=purchases_uncategorized show_category=True return_url=request.path aria_label="Uncategorized purchase data" empty_message="No uncategorized purchases." only %}</section>
+
+    <dialog class="rollover-dialog" aria-labelledby="rollover-dialog-title">
+        <form data-rollover-form>
+            <div class="modal-header"><div><h2 id="rollover-dialog-title">Edit rollover</h2><p data-rollover-category></p></div><button class="modal-close-inline" type="button" data-rollover-close aria-label="Close rollover dialog">&times;</button></div>
+            <div class="modal-body">
+                <div class="rollover-readonly"><span>Amount carried into {{ yearly_budget.date.year }}</span><strong data-rollover-current></strong></div>
+                <label>Amount rolling into {{ yearly_budget.date.year|add:"1" }}<input data-rollover-next type="number" step="0.01" required></label>
+                <p class="field-error-text" data-rollover-error hidden></p>
             </div>
-            <div>
-                <div class="rollover-col">
-                    <div class="budget-monthly-single-col card-table-header">
-                        <div class="card-table-heading">Rollover</div>
-                    </div>
-                    <div class="rollover-items-grid">
-                        {% for rollover in rollovers_savings %}
-                        <div><input id="rollover-{{ rollover.pk }}" class="rollover-edit" data-category="{{ rollover.category }}" type="number" step="0.01" value="{{ rollover.amount|floatformat:"-2" }}" aria-label="Rollover amount for {{ rollover.category }}" aria-describedby="rollover-save-error"></div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-  
-</div>
-
-<div class="card-base">
-    <div class="card-header">
-        <h2>Income</h2>
-        <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
-        </div>
-    </div>
-
-    {% include "purchases/_income_table.html" with incomes=incomes return_url=request.path aria_label="Yearly income data" only %}
-</div>
-<div class="card-base">
-    <h2>Uncategorized Purchases</h2>
-    {% include "purchases/_purchase_table.html" with purchases=purchases_uncategorized show_category=True return_url=request.path aria_label="Uncategorized purchase data" empty_message="No uncategorized purchases." only %}
-</div>
-
-</div>
-
-
-
+            <div class="modal-footer"><button class="button-secondary modal-button" type="button" data-rollover-close>Cancel</button><button class="button-create" type="submit">Save rollover</button></div>
+        </form>
+    </dialog>
 </div>
 {% endblock body %}
 
-{% block extra_js %}
-<script src='{% static "js/app/pages/yearly-budget-detail.js" %}' defer></script>
-{% endblock extra_js %}
+{% block extra_js %}<script src='{% static "js/app/pages/yearly-budget-detail.js" %}' defer></script>{% endblock extra_js %}

@@ -1,118 +1,42 @@
-<h2>Add Recurring Purchases for {{monthly_budget.date|date:"F Y"}}</h2>
-
-<form hx-post='{% url "recurring_purchase_add_to_month" year=monthly_budget.date.year month=monthly_budget.date.month %}' hx-target="#modal-content" hx-swap="innerHTML" method="POST">
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{{next}}">
-    {{ formset.management_form }}
-
-    {% if formset.forms %}
-    <div class="card-base">
-        {% if has_form_errors %}
-        <p class="alert-danger-box">
-            Please correct the highlighted recurring purchase values and try again.
-        </p>
-        {% endif %}
-        {% if formset.non_form_errors %}
-        <div class="alert-danger-box">
-            {% for error in formset.non_form_errors %}
-            <div>{{ error }}</div>
+{% load value_styles %}
+<div class="modal-content-header"><h2>Add recurring purchases</h2><p>Choose items to add to {{ monthly_budget.date|date:"F Y" }}.</p></div>
+<form data-behavior="recurring-selection" hx-post='{% url "recurring_purchase_add_to_month" year=monthly_budget.date.year month=monthly_budget.date.month %}' hx-target="#modal-content" hx-swap="innerHTML" method="POST">
+    {% csrf_token %}<input type="hidden" name="next" value="{{ next }}">{{ formset.management_form }}
+    <div class="modal-content-body">
+        {% if has_form_errors %}<p class="alert-danger-box">Please correct the highlighted recurring purchase values and try again.</p>{% endif %}
+        <div class="modal-errors">{{ formset.non_form_errors }}</div>
+        {% if formset.forms %}
+            {% if all_already_added %}<p class="alert-success-box">All recurring purchases have already been added for this month.</p>{% else %}
+            <div class="selection-tools"><span>Eligible recurring purchases</span><div><button class="button-create button-quiet" type="button" data-select-all>Select all</button><button class="button-create button-quiet" type="button" data-clear-all>Clear all</button></div></div>
+            {% endif %}
+            <div class="recurring-ledger-head" aria-hidden="true"><span></span><span>Purchase</span><span>Date</span><span>Amount</span><span>Source</span><span>Location</span><span>Category</span><span>Notes</span><span>Status</span></div>
+            <div class="recurring-choice-list">
+            {% for row_form in formset %}
+                <div class="recurring-choice-row{% if row_form.already_added %} is-unavailable{% endif %}" data-recurring-row data-already-added="{{ row_form.already_added|yesno:"true,false" }}">
+                    {{ row_form.recurring_purchase_id }}
+                    <div>{{ row_form.selected }}<span class="visually-hidden">Select {{ row_form.recurring_purchase.item }}</span></div>
+                    <strong>{{ row_form.recurring_purchase.item }}</strong>
+                    <span class="choice-category">{{ row_form.recurring_purchase.category|default:"Uncategorized" }}</span>
+                    <span class="choice-source">{{ row_form.recurring_purchase.source }}</span>
+                    <strong class="choice-amount {{ row_form.amount.value|default:row_form.recurring_purchase.amount|negative_class }}">${{ row_form.amount.value|default:row_form.recurring_purchase.amount|floatformat:"-2" }}</strong>
+                    <div class="recurring-row-editor"><button class="recurring-row-toggle" type="button" aria-expanded="false" aria-controls="recurring-details-{{ forloop.counter0 }}">Adjust details</button><div id="recurring-details-{{ forloop.counter0 }}" class="modal-form-grid">
+                        <div class="modal-field">{{ row_form.date.errors }}{{ row_form.date.label_tag }}{{ row_form.date }}</div>
+                        <div class="modal-field">{{ row_form.amount.errors }}{{ row_form.amount.label_tag }}{{ row_form.amount }}</div>
+                        <div class="modal-field">{{ row_form.source.errors }}{{ row_form.source.label_tag }}{{ row_form.source }}</div>
+                        <div class="modal-field">{{ row_form.location.errors }}{{ row_form.location.label_tag }}{{ row_form.location }}</div>
+                        <div class="modal-field">{{ row_form.category.errors }}{{ row_form.category.label_tag }}{{ row_form.category }}</div>
+                        <div class="modal-field">{{ row_form.notes.errors }}{{ row_form.notes.label_tag }}{{ row_form.notes }}</div>
+                    </div></div>
+                    <span class="choice-status">{% if row_form.already_added %}Added{% else %}Eligible{% endif %}</span>
+                    <div class="recurring-row-errors">{{ row_form.non_field_errors }}</div>
+                </div>
             {% endfor %}
-        </div>
-        {% endif %}
-        {% if all_already_added %}
-        <p class="alert-success-box">
-            All recurring purchases have already been added for this month.
-        </p>
-        {% else %}
-        <p>Select recurring purchases to add for this month. You can edit values before adding.</p>
-        {% endif %}
-        
-        <div class="data-grid-scroll data-grid-scroll--recurring-add" role="region" aria-label="Recurring purchases available to add" tabindex="0">
-        <div class="data-grid data-grid--recurring-add grid-cell-truncate card-table-header">
-            <div class="card-table-heading">Select</div>
-            <div class="card-table-heading">Item</div>
-            <div class="card-table-heading">Date</div>
-            <div class="card-table-heading">Amount</div>
-            <div class="card-table-heading">Source</div>
-            <div class="card-table-heading">Location</div>
-            <div class="card-table-heading">Category</div>
-            <div class="card-table-heading">Notes</div>
-            <div class="card-table-heading">Status</div>
-        </div>
-
-        {% for row_form in formset %}
-        <div class="data-grid data-grid--recurring-add grid-cell-truncate {% if row_form.already_added %}already-added{% endif %}">
-            {{ row_form.recurring_purchase_id }}
-            <div class="recurring-add-cell">
-                {{ row_form.selected }}
-                {% for error in row_form.selected.errors %}
-                <div class="field-error-text">{{ error }}</div>
-                {% endfor %}
             </div>
-            <div class="recurring-add-cell recurring-add-label-cell">{{ row_form.recurring_purchase.item }}</div>
-            <div class="recurring-add-cell">
-                {{ row_form.date }}
-                {% for error in row_form.date.errors %}
-                <div class="field-error-text">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="recurring-add-cell">
-                {{ row_form.amount }}
-                {% for error in row_form.amount.errors %}
-                <div class="field-error-text">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="recurring-add-cell">
-                {{ row_form.source }}
-                {% for error in row_form.source.errors %}
-                <div class="field-error-text">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="recurring-add-cell">
-                {{ row_form.location }}
-                {% for error in row_form.location.errors %}
-                <div class="field-error-text">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="recurring-add-cell">
-                {{ row_form.category }}
-                {% for error in row_form.category.errors %}
-                <div class="field-error-text">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="recurring-add-cell">
-                {{ row_form.notes }}
-                {% for error in row_form.notes.errors %}
-                <div class="field-error-text">{{ error }}</div>
-                {% endfor %}
-            </div>
-            <div class="recurring-add-cell recurring-add-status-cell">
-                {% if row_form.already_added %}
-                <span class="status-added">✓ Added</span>
-                {% else %}
-                <span class="status-pending">Pending</span>
-                {% endif %}
-            </div>
-        </div>
-        {% if row_form.non_field_errors %}
-        <div class="alert-danger-box">
-            {% for error in row_form.non_field_errors %}
-            <div>{{ error }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endfor %}
-        </div>
+        {% else %}<p>No active recurring purchases found. <a href='{% url "recurring_purchase_list" %}?next={{ next|urlencode }}' hx-get='{% url "recurring_purchase_list" %}?next={{ next|urlencode }}' hx-target="#modal-content">Create a recurring purchase first.</a></p>{% endif %}
     </div>
-
-    {% if all_already_added %}
-    <button type="submit" class="button-create modal-submit-spacing" disabled>All Purchases Already Added</button>
-    {% else %}
-    <button type="submit" class="button-create modal-submit-spacing">Add Selected Purchases</button>
-    {% endif %}
-    {% else %}
-    <div class="card-base">
-        <p>No active recurring purchases found. <a href='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' hx-get='{% url "recurring_purchase_list" %}?next={{next|urlencode}}' hx-target="#modal-content">Create some recurring purchases first.</a></p>
+    <div class="modal-content-footer">
+        {% if formset.forms %}<span class="modal-total"><span data-selection-count>0</span> selected · <strong data-selection-total>$0.00</strong></span>{% endif %}
+        <button class="modal-cancel" type="button" data-modal-close>Cancel</button>
+        {% if formset.forms %}<button class="button-create" type="submit" data-selection-submit{% if all_already_added %} disabled{% endif %}>Add purchases</button>{% endif %}
     </div>
-    {% endif %}
 </form>

@@ -1,24 +1,7 @@
-<div>
-    <h2>Confirm Delete</h2>
-    <div class="card-base">
-        <div class="data-grid-scroll data-grid-scroll--recurring-delete" role="region" aria-label="Recurring purchase being deleted" tabindex="0">
-        <div class="data-grid data-grid--recurring-delete grid-cell-truncate card-table-header">
-            <div class="card-table-heading">Item</div>
-            <div class="card-table-heading">Amount</div>
-            <div class="card-table-heading">Category</div>
-            <div class="card-table-heading">Source</div>
-            <div class="card-table-heading">Location</div>
-        </div>
-
-        <div class="data-grid data-grid--recurring-delete grid-cell-truncate">
-            <div>{{recurring_purchase.item}}</div>
-            <div>${{recurring_purchase.amount|floatformat:"-2"}}</div>
-            <div>{{recurring_purchase.category}}</div>
-            <div>{{recurring_purchase.source}}</div>
-            <div>{{recurring_purchase.location}}</div>
-        </div>
-        </div>
-    </div>
-
-    <button type="button" hx-delete='{% url "recurring_purchase_delete" pk=recurring_purchase.id %}?next={{next|urlencode}}' class="button-delete button-delete-standalone">Delete</button>
+{% load value_styles %}
+<div class="modal-content-header"><h2>Delete recurring purchase?</h2></div>
+<div class="modal-content-body">
+    <dl class="delete-summary"><div><dt>Item</dt><dd>{{ recurring_purchase.item }}</dd></div><div><dt>Amount</dt><dd class="{{ recurring_purchase.amount|negative_class }}">${{ recurring_purchase.amount|floatformat:"-2" }}</dd></div><div><dt>Category</dt><dd>{{ recurring_purchase.category }}</dd></div><div><dt>Source</dt><dd>{{ recurring_purchase.source }}</dd></div><div><dt>Location</dt><dd>{{ recurring_purchase.location }}</dd></div></dl>
+    <div class="danger-callout"><strong>This cannot be undone.</strong><p>The recurring purchase will be permanently removed.</p></div>
 </div>
+<div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button type="button" hx-delete='{% url "recurring_purchase_delete" pk=recurring_purchase.id %}?next={{ next|urlencode }}' class="button-delete">Delete recurring purchase</button></div>

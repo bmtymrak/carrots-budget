@@ -88,18 +88,15 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         kwargs = super().get_context_data(**kwargs)
 
-        if datetime.datetime.now().year > self.object.date.year:
-            ytd_month = 12
-        else:
-            current_month = datetime.datetime.now().month
-            try:
-                ytd_month = int(self.request.GET.get("ytd", current_month))
-            except (TypeError, ValueError):
-                ytd_month = current_month
+        now = datetime.datetime.now()
+        default_ytd_month = 12 if self.object.date.year < now.year else now.month
+        try:
+            ytd_month = int(self.request.GET.get("ytd", default_ytd_month))
+        except (TypeError, ValueError):
+            ytd_month = default_ytd_month
 
-            if not 1 <= ytd_month <= 12:
-                ytd_month = current_month
-
+        if not 1 <= ytd_month <= 12:
+            ytd_month = default_ytd_month
 
         service = BudgetService()
         budget_context = service.get_yearly_budget_context(

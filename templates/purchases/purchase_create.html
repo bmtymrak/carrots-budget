@@ -1,30 +1,43 @@
 {% load static %}
-
-<h2>Add a Purchase</h2>
-<form id="purchase-form-container" data-behavior="purchase-create" hx-post='{% url "purchase_create" %}' method="POST">
+<div class="modal-content-header"><h2>Add a purchase</h2><p>Purchases submitted together share one receipt.</p></div>
+<form class="purchase-create-form" data-behavior="purchase-create" data-trash-url="{% static 'images/trash.svg' %}" hx-post='{% url "purchase_create" %}' method="POST">
     {% csrf_token %}
-    {{purchase_formset.management_form}}
-    {% for form in purchase_formset %}
-    <div class="purchase-form">
-        {% for hidden in form.hidden_fields %}
-        {{hidden}}
+    {{ purchase_formset.management_form }}
+    <div class="modal-content-body">
+        <div class="modal-errors">{{ purchase_formset.non_form_errors }}</div>
+        <div class="purchase-ledger-head" aria-hidden="true"><span>Date</span><span>Purchase</span><span>Amount</span><span>Source</span><span>Location</span><span>Category</span><span>Subcategory</span><span>Savings</span><span>Notes</span><span></span></div>
+        <div data-purchase-rows>
+        {% for form in purchase_formset %}
+            <div class="purchase-entry{% if not forloop.first and not form.has_changed %} hidden{% endif %}" data-purchase-row>
+                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                <div class="purchase-entry-title"><strong>Purchase <span data-row-number>{{ forloop.counter }}</span></strong>{% if not forloop.first %}<button class="remove-purchase" type="button" data-remove-purchase aria-label="Remove purchase {{ forloop.counter }}"><img src="{% static "images/trash.svg" %}" alt="" aria-hidden="true"></button>{% endif %}</div>
+                <div class="purchase-entry-fields">
+                    <div class="modal-field">{{ form.date.errors }}{{ form.date.label_tag }}{{ form.date }}</div>
+                    <div class="modal-field">{{ form.item.errors }}{{ form.item.label_tag }}{{ form.item }}</div>
+                    <div class="modal-field">{{ form.amount.errors }}{{ form.amount.label_tag }}{{ form.amount }}</div>
+                    {% if forloop.first %}
+                    <div class="modal-field" data-receipt-field="source">{{ form.source.errors }}{{ form.source.label_tag }}{{ form.source }}</div>
+                    <div class="modal-field" data-receipt-field="location">{{ form.location.errors }}{{ form.location.label_tag }}{{ form.location }}</div>
+                    {% else %}
+                    <div class="modal-field" data-receipt-field="source">{{ form.source.as_hidden }}<span class="purchase-inherited">Same as item 1</span></div>
+                    <div class="modal-field" data-receipt-field="location">{{ form.location.as_hidden }}<span class="purchase-inherited">Same as item 1</span></div>
+                    {% endif %}
+                    <div class="modal-field">{{ form.category.errors }}{{ form.category.label_tag }}{{ form.category }}</div>
+                    <div class="modal-field">{{ form.subcategory.errors }}{{ form.subcategory.label_tag }}{{ form.subcategory }}</div>
+                    <div class="modal-field modal-field--check">{{ form.savings.errors }}{{ form.savings }}{{ form.savings.label_tag }}</div>
+                    <div class="modal-field">{{ form.notes.errors }}{{ form.notes.label_tag }}{{ form.notes }}</div>
+                </div>
+                {% if not forloop.first %}<button class="remove-purchase remove-purchase--desktop" type="button" data-remove-purchase aria-label="Remove purchase {{ forloop.counter }}"><img src="{% static "images/trash.svg" %}" alt="" aria-hidden="true"></button>{% endif %}
+            </div>
         {% endfor %}
-        {% for field in form.visible_fields %}
-        {% if forloop.parentloop.first or field.name != "source" and field.name != "location" %}
-        <div>
-        {{field.errors}}
-        {{field.label_tag}}
-        {{field}}
         </div>
-        {% else %}
-        <div class="purchase-field-spacer" aria-hidden="true"></div>
-        {% endif %}
-        {% endfor %}
+        <input type="hidden" name="next" value="{{ next }}">
     </div>
-    {% endfor %}
-    <input type="hidden" name="next" value="{{next}}">
-    <button id="submit-button" type="submit">Add</button>
-    <button id="add-form" type="button">Add Item</button>
-    <p id="total">Total: </p>
+    <div class="modal-content-footer">
+        <button id="add-form" class="modal-cancel" type="button">+ Add another item</button>
+        <span id="total" class="modal-total"><span data-purchase-count>1 purchase</span> · Total <strong>$0.00</strong></span>
+        <button class="modal-cancel" type="button" data-modal-close>Cancel</button>
+        <button id="submit-button" class="button-create" type="submit">Add purchase</button>
+    </div>
 </form>
 <script src="{% static 'js/app/pages/purchase-create.js' %}"></script>

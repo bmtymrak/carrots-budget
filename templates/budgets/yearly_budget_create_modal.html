@@ -1,7 +1,8 @@
-<h2>Create Budget</h2>
-<form hx-post='{% url "yearly_create"%}' class="form-grid" method="POST">
+<div class="modal-content-header"><h2>Create budget</h2><p>Start a budget for another year.</p></div>
+<form hx-post='{% url "yearly_create" %}' method="POST">
     {% csrf_token %}
-    {{form}}
-    <input type="hidden" name="next" value="{{next}}">
-    <button type="submit">Create Budget</button>
+    <div class="modal-content-body"><div class="modal-errors">{{ form.non_field_errors }}</div><div class="modal-form-grid">
+        <div class="modal-field modal-field--full">{{ form.year.errors }}{{ form.year.label_tag }}{{ form.year }}</div>
+    </div><input type="hidden" name="next" value="{{ next }}"></div>
+    <div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button class="button-create" type="submit">Create budget</button></div>
 </form>

@@ -48,7 +48,9 @@ class PurchaseViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["next"], reverse("purchase_list"))
-        self.assertContains(response, "<h2>Add a Purchase</h2>", html=True)
+        self.assertContains(response, "<h2>Add a purchase</h2>", html=True)
+        self.assertContains(response, "data-purchase-row>", count=1)
+        self.assertContains(response, "data-purchase-count")
 
     def test_purchase_create_rejects_external_next_url(self):
         response = self.client.get(
@@ -965,6 +967,51 @@ class RecurringPurchaseViewTests(TestCase):
         purchase = Purchase.objects.get(user=self.user, item='Spotify')
         self.assertEqual(purchase.amount, Decimal('14.99'))
 
+    def test_recurring_purchase_add_uses_all_edited_details(self):
+        """Editable row details are retained when creating the monthly purchase."""
+        YearlyBudget.objects.create(
+            user=self.user,
+            date=datetime.date(2024, 1, 1),
+        )
+        recurring = RecurringPurchaseFactory(
+            user=self.user,
+            category=self.category,
+            item="Internet",
+            amount=Decimal("75.00"),
+            source="Original source",
+            location="Original location",
+            notes="Original notes",
+        )
+
+        response = self.client.post(
+            reverse("recurring_purchase_add_to_month", kwargs={"year": 2024, "month": 1}),
+            self._build_add_to_month_post_data(
+                [
+                    {
+                        "recurring": recurring,
+                        "date": "2024-01-22",
+                        "amount": "82.50",
+                        "source": "Edited source",
+                        "location": "Edited location",
+                        "category": str(self.category.id),
+                        "notes": "Edited notes",
+                    }
+                ]
+            ),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        purchase = Purchase.objects.get(user=self.user, recurring_purchase=recurring)
+        self.assertEqual(purchase.date, datetime.date(2024, 1, 22))
+        self.assertEqual(purchase.amount, Decimal("82.50"))
+        self.assertEqual(purchase.source, "Edited source")
+        self.assertEqual(purchase.location, "Edited location")
+        self.assertEqual(purchase.category, self.category)
+        self.assertEqual(purchase.notes, "Edited notes")
+        self.assertEqual(purchase.receipt.date, datetime.date(2024, 1, 22))
+        self.assertEqual(purchase.receipt.source, "Edited source")
+        self.assertEqual(purchase.receipt.location, "Edited location")
+
     def test_recurring_purchase_add_allows_blank_amount(self):
         """Test that selected recurring purchases can be created without an amount."""
         YearlyBudget.objects.create(
@@ -1236,7 +1283,7 @@ class RecurringPurchaseViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            '<h2>Add Recurring Purchases for February 2028</h2>',
+            '<h2>Add recurring purchases</h2>',
             html=False,
             count=1,
         )

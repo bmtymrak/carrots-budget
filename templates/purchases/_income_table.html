@@ -1,3 +1,4 @@
+{% load value_styles %}
 {% if incomes %}
 <div class="financial-table-scroll" role="region" aria-label="{{ aria_label|default:'Income data' }}" tabindex="0">
     <table class="financial-table financial-table--income">
@@ -11,12 +12,12 @@
                 <th scope="col">Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody data-collapsible-rows>
             {% for income in incomes %}
             {% url "income_edit_htmx" pk=income.id as income_edit_url %}
             {% url "income_delete_htmx" pk=income.id as income_delete_url %}
             <tr>
-                <td>${{ income.amount|floatformat:"-2" }}</td>
+                <td class="{{ income.amount|negative_class }}">${{ income.amount|floatformat:"-2" }}</td>
                 <td>{{ income.source }}</td>
                 <td>{{ income.category }}</td>
                 <td>{{ income.date }}</td>
@@ -31,6 +32,7 @@
             {% endfor %}
         </tbody>
     </table>
+    <button class="financial-list-toggle" type="button" data-financial-list-toggle aria-expanded="false">Show all {{ incomes|length }} income entries</button>
 </div>
 {% else %}
 <p>{{ empty_message|default:"No income recorded." }}</p>

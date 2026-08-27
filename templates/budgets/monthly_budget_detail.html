@@ -1,142 +1,92 @@
 {% extends "_layouts/app.html" %}
+{% load value_styles %}
 
 {% block content_class %}content--monthly-budget{% endblock content_class %}
 
 {% block header %}
-    <h1 class="page-title">{{monthly_budget.date|date:"F Y"}}</h1>
+<div class="page-heading-row">
+    <h1 class="page-title budget-detail-title">{{ monthly_budget.date|date:"F Y" }}</h1>
+    <div class="page-header-action" aria-label="Budget quick actions">
+        <button class="button-create" type="button" hx-get='{% url "purchase_create" %}?date={{ monthly_budget.date|date:"Y-m-d" }}&next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add purchase</button>
+        <button class="button-create button-secondary" type="button" hx-get='{% url "income_create" %}?next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add income</button>
+        <button class="button-create button-secondary" type="button" hx-get='{% url "recurring_purchase_add_to_month" year=monthly_budget.date.year month=monthly_budget.date.month %}?next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add recurring purchases</button>
+    </div>
+</div>
 {% endblock header %}
 
-
-        
 {% block heading_nav %}
-    <a class="return-link" href='{% url "yearly_detail" year=monthly_budget.date.year%}'>&larr; {{monthly_budget.date|date:"Y"}} Overview</a>
-    <div class="month-nav-wrapper">
+<div class="heading-navigation">
+    <a class="return-link" href='{% url "yearly_detail" year=monthly_budget.date.year %}'>&larr; {{ monthly_budget.date|date:"Y" }} yearly overview</a>
+    <nav class="month-nav-wrapper" aria-label="Choose month">
         <div class="month-nav-container">
         {% for month in months %}
-            <div class="month-nav-card">
-                <a href='{% url "monthly_detail" month=month.1 year=monthly_budget.date.year %}'>{{month.0}}</a>
-            </div>
+            <a class="month-nav-card{% if month.1 == monthly_budget.date.month %} is-current{% endif %}" {% if month.1 == monthly_budget.date.month %}aria-current="page"{% endif %} href='{% url "monthly_detail" month=month.1 year=monthly_budget.date.year %}'>{{ month.0|slice:":3" }}</a>
         {% endfor %}
         </div>
-    </div>
+    </nav>
+</div>
 {% endblock heading_nav %}
 
-    
 {% block body %}
 <div class="monthly-budget-layout">
 <div class="monthly-budget-main">
-    <div class="page-header-action">
-        <button class="button-create" type="button" hx-get='{% url "purchase_create" %}?date={{monthly_budget.date|date:"Y-m-d"}}&next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Purchase</button>
-        <button class="button-create" type="button" hx-get='{% url "recurring_purchase_add_to_month" year=monthly_budget.date.year month=monthly_budget.date.month %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Recurring Purchases</button>
-        <button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
-        <button class="button-create" type="button" hx-get='{% url "budgetitem_create_htmx" year=monthly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
-    </div>
-<div class="card-base">
-    <h2>Summary</h2>
-    <div class="data-grid-scroll data-grid-scroll--summary" role="region" aria-label="Monthly budget summary data" tabindex="0">
-    <div class="data-grid data-grid--summary card-table-header">
-        <div class="card-table-heading">Budgeted</div>
-        <div class="card-table-heading">Spent</div>
-        <div class="card-table-heading">Saved</div>
-        <div class="card-table-heading">Income</div>
-        <div class="card-table-heading">Remaining</div>
-        <div class="card-table-heading">Free</div>
-    </div>
-    <div class="data-grid data-grid--summary">
-        <div>${{total_budgeted}}</div>
-        <div>${{total_spent|floatformat:"-2"}}</div>
-        <div>${{total_saved.amount|floatformat:"-2"}}</div>
-        <div>${{total_income.amount|floatformat:"-2"}}</div>
-        <div>${{total_remaining|floatformat:"-2"}}</div>
-        <div>${{free_income|floatformat:"-2"}}</div>
-    </div>
-    </div>
-</div>
+    <section class="metric-strip" aria-label="Complete monthly summary">
+        <article><span>Budgeted</span><strong class="{{ total_budgeted|negative_class }}">${{ total_budgeted|floatformat:"-2" }}</strong></article>
+        <article><span>Spent</span><strong class="{{ total_spent|negative_class }}">${{ total_spent|floatformat:"-2" }}</strong></article>
+        <article><span>Saved</span><strong class="{{ total_saved.amount|negative_class }}">${{ total_saved.amount|floatformat:"-2" }}</strong></article>
+        <article><span>Income</span><strong class="{{ total_income.amount|negative_class }}">${{ total_income.amount|floatformat:"-2" }}</strong></article>
+        <article><span>Remaining</span><strong class="{{ total_remaining|negative_class }}">${{ total_remaining|floatformat:"-2" }}</strong></article>
+        <article><span>Free</span><strong class="{{ free_income|negative_class }}">${{ free_income|floatformat:"-2" }}</strong></article>
+    </section>
 
-<div class="card-container-horz">
-    <div class="card-base">
+    <section class="card-base">
         <div class="card-header">
-            <h2>Budget</h2>
-            <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "budgetitem_create_htmx" year=monthly_budget.date.year %}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Budget Item</button>
+            <h2>Budget categories</h2>
+            <div class="card-header-action">
+                <span class="count-badge">{{ budget_items|length }} spending · {{ savings_items|length }} savings</span>
+                <button class="button-create button-quiet" type="button" hx-get='{% url "budgetitem_create_htmx" year=monthly_budget.date.year %}?next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add budget item</button>
             </div>
         </div>
-
         <div class="data-grid-scroll data-grid-scroll--budget-monthly" role="region" aria-label="Monthly budget category data" tabindex="0">
-        <div class="data-grid data-grid--budget-monthly card-table-header">
-            <div class="card-table-heading">Category</div>
-            <div class="card-table-heading">Budgeted</div>
-            <div class="card-table-heading">Spent</div>
-            <div class="card-table-heading">Remaining</div>
-            <div></div>
-        </div>
-
-        {% for budget_item in budget_items %}
-            {% include "budgets/_monthly_budget_item_grid_row.html" with budget_item=budget_item activity_amount=budget_item.spent year=monthly_budget.date.year month=monthly_budget.date.month return_url=request.path only %}
-        {% endfor %}
-    {% if uncategorized_purchases.amount %}
-        <div class="data-grid data-grid--budget-monthly">
-            <div>Uncategorized</div>
-            <div>${{uncategorized_purchases.budgeted|floatformat:"-2"}}</div>
-            <div>${{uncategorized_purchases.amount|floatformat:"-2"}}</div>
-            <div>${{uncategorized_purchases.remaining|floatformat:"-2"}}</div>
-            <div></div>
-        </div>
-    {% endif %}
-
-        <div class="data-grid data-grid--budget-monthly budget-subtotal">
-            <div class="card-table-subtotal">Spending Totals</div>
-            <div class="card-table-subtotal">${{total_spending_budgeted.amount|floatformat:"-2"}}</div>
-            <div class="card-table-subtotal">${{total_spending_spent.amount|floatformat:"-2"}}</div>
-            <div class="card-table-subtotal">${{total_spending_remaining.amount|floatformat:"-2"}}</div>
-            <div class="card-table-subtotal"></div>
-        </div>
-        <div class="data-grid data-grid--budget-monthly card-table-header">
-            <div class="card-table-heading">Category</div>
-            <div class="card-table-heading">Budgeted</div>
-            <div class="card-table-heading">Saved</div>
-            <div class="card-table-heading">Remaining</div>
-            <div></div>
-        </div>
-    {% for budget_item in savings_items %}
-        {% include "budgets/_monthly_budget_item_grid_row.html" with budget_item=budget_item activity_amount=budget_item.saved year=monthly_budget.date.year month=monthly_budget.date.month return_url=request.path only %}
-    {% endfor %}
-
-    <div class="data-grid data-grid--budget-monthly budget-subtotal">
-        <div class="card-table-subtotal">Savings Totals</div>
-        <div class="card-table-subtotal">${{total_savings_budgeted.amount|floatformat:"-2"}}</div>
-        <div class="card-table-subtotal">${{total_saved.amount|floatformat:"-2"}}</div>
-        <div class="card-table-subtotal">${{total_savings_remaining.amount|floatformat:"-2"}}</div>
-        <div></div>
-    </div>
-    <div class="data-grid data-grid--budget-monthly card-table-header budget-totals">
-        <div class="card-table-heading">Totals</div>
-        <div class="card-table-heading">${{total_budgeted|floatformat:"-2"}}</div>
-        <div class="card-table-heading">${{total_spent_saved|floatformat:"-2"}}</div>
-        <div class="card-table-heading">${{total_remaining|floatformat:"-2"}}</div>
-        <div class="card-table-heading"></div>
-    </div>
-        </div>
-    </div>
-
-    <div class="card-base">
-        <div class="card-header">
-            <h2>Income</h2>
-            <div class="card-header-action"><button class="button-create" type="button" hx-get='{% url "income_create"%}?next={{request.path|urlencode}}' hx-target="#modal-content"> + Add Income</button>
+            <div class="data-grid data-grid--budget-monthly card-table-header">
+                <div class="card-table-heading"><span class="visually-hidden">Category</span></div><div class="card-table-heading">Budgeted</div><div class="card-table-heading">Spent / saved</div><div class="card-table-heading">Remaining</div><div class="card-table-heading">Usage</div><div class="visually-hidden">Actions</div>
+            </div>
+            <div class="budget-group-row">Spending categories</div>
+            {% for budget_item in budget_items %}
+                {% include "budgets/_monthly_budget_item_grid_row.html" with budget_item=budget_item activity_amount=budget_item.spent year=monthly_budget.date.year month=monthly_budget.date.month return_url=request.path only %}
+            {% empty %}<p class="empty-state">No spending categories.</p>{% endfor %}
+            {% if uncategorized_purchases.amount %}
+            <div class="data-grid data-grid--budget-monthly">
+                <div><strong>Uncategorized</strong></div><div>$0.00</div><div class="{{ uncategorized_purchases.amount|negative_class }}">${{ uncategorized_purchases.amount|floatformat:"-2" }}</div><div class="{{ uncategorized_purchases.remaining|negative_class }}">${{ uncategorized_purchases.remaining|floatformat:"-2" }}</div><div><div class="usage-meter usage-meter--over" style="--usage-percent:100%"><span class="usage-meter-track" aria-hidden="true"><span class="usage-meter-fill"></span></span><span class="usage-meter-value">100%</span></div></div><div></div>
+            </div>
+            {% endif %}
+            <div class="data-grid data-grid--budget-monthly budget-subtotal">
+                <div class="card-table-subtotal">Spending total</div><div class="card-table-subtotal {{ total_spending_budgeted.amount|negative_class }}">${{ total_spending_budgeted.amount|floatformat:"-2" }}</div><div class="card-table-subtotal {{ total_spending_spent.amount|negative_class }}">${{ total_spending_spent.amount|floatformat:"-2" }}</div><div class="card-table-subtotal {{ total_spending_remaining.amount|negative_class }}">${{ total_spending_remaining.amount|floatformat:"-2" }}</div><div></div><div></div>
+            </div>
+            <div class="budget-group-row">Savings categories</div>
+            {% for budget_item in savings_items %}
+                {% include "budgets/_monthly_budget_item_grid_row.html" with budget_item=budget_item activity_amount=budget_item.saved year=monthly_budget.date.year month=monthly_budget.date.month return_url=request.path only %}
+            {% empty %}<p class="empty-state">No savings categories.</p>{% endfor %}
+            <div class="data-grid data-grid--budget-monthly budget-subtotal">
+                <div class="card-table-subtotal">Savings total</div><div class="card-table-subtotal {{ total_savings_budgeted.amount|negative_class }}">${{ total_savings_budgeted.amount|floatformat:"-2" }}</div><div class="card-table-subtotal {{ total_saved.amount|negative_class }}">${{ total_saved.amount|floatformat:"-2" }}</div><div class="card-table-subtotal {{ total_savings_remaining.amount|negative_class }}">${{ total_savings_remaining.amount|floatformat:"-2" }}</div><div></div><div></div>
+            </div>
+            <div class="data-grid data-grid--budget-monthly budget-totals">
+                <div class="card-table-heading">Total</div><div class="card-table-heading {{ total_budgeted|negative_class }}">${{ total_budgeted|floatformat:"-2" }}</div><div class="card-table-heading {{ total_spent_saved|negative_class }}">${{ total_spent_saved|floatformat:"-2" }}</div><div class="card-table-heading {{ total_remaining|negative_class }}">${{ total_remaining|floatformat:"-2" }}</div><div></div><div></div>
             </div>
         </div>
+    </section>
 
+    <section class="card-base">
+        <div class="card-header"><h2>Income</h2><div class="card-header-action"><span class="count-badge">{{ incomes|length }} entries</span><button class="button-create button-quiet" type="button" hx-get='{% url "income_create" %}?next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add income</button></div></div>
         {% include "purchases/_income_table.html" with incomes=incomes return_url=request.path aria_label="Monthly income data" only %}
-    </div>
+    </section>
+
+    <section class="card-base">
+        <div class="card-header"><h2>Purchases</h2><div class="card-header-action"><span class="count-badge">{{ purchases|length }} purchases</span><button class="button-create button-quiet" type="button" hx-get='{% url "purchase_create" %}?date={{ monthly_budget.date|date:"Y-m-d" }}&next={{ request.path|urlencode }}' hx-target="#modal-content">+ Add purchase</button></div></div>
+        {% include "purchases/_purchase_table.html" with purchases=purchases show_category=True return_url=request.path aria_label="Monthly purchase data" only %}
+    </section>
 </div>
 
-<div class="card-base">
-    <h2>Purchases</h2>
-    {% include "purchases/_purchase_table.html" with purchases=purchases show_category=True return_url=request.path aria_label="Monthly purchase data" only %}
-</div>
-</div>
-
-<aside class="monthly-budget-companion" aria-label="Expense review companion">
-    {% include "budgets/_expense_source_checklist.html" %}
-</aside>
+<aside class="monthly-budget-companion" aria-label="Expense review companion">{% include "budgets/_expense_source_checklist.html" %}</aside>
 </div>
 {% endblock body %}

@@ -1,26 +1,7 @@
-<div>
-    <h2>Confirm Delete</h2>
-    <div class="card-base">
-        <div class="data-grid-scroll data-grid-scroll--purchase" role="region" aria-label="Income being deleted" tabindex="0">
-        <div class="data-grid data-grid--purchase card-table-header">
-            <div class="card-table-heading">Date</div>
-            <div class="card-table-heading">Source</div>
-            <div class="card-table-heading">Amount</div>
-            <div class="card-table-heading">Category</div>
-            <div class="card-table-heading">Notes</div>
-            <div class="card-table-heading"></div>
-        </div>
-
-        <div class="data-grid data-grid--purchase">
-            <div>{{income.date}}</div>
-            <div>{{income.source}}</div>
-            <div>${{income.amount}}</div>
-            <div>{{income.category}}</div>
-            <div>{{income.notes}}</div>
-            <div></div>
-        </div>
-        </div>
-    </div>
-
-    <button type="button" hx-delete='{% url "income_delete_htmx" pk=income.id %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
+{% load value_styles %}
+<div class="modal-content-header"><h2>Delete income?</h2></div>
+<div class="modal-content-body">
+    <dl class="delete-summary"><div><dt>Date</dt><dd>{{ income.date|date:"M j, Y" }}</dd></div><div><dt>Source</dt><dd>{{ income.source|default:"—" }}</dd></div><div><dt>Amount</dt><dd class="{{ income.amount|negative_class }}">${{ income.amount|floatformat:"-2" }}</dd></div><div><dt>Payer</dt><dd>{{ income.payer|default:"—" }}</dd></div><div><dt>Category</dt><dd>{{ income.category|default:"Uncategorized" }}</dd></div><div><dt>Notes</dt><dd>{{ income.notes|default:"—" }}</dd></div></dl>
+    <div class="danger-callout"><strong>This cannot be undone.</strong><p>The income entry will be permanently removed.</p></div>
 </div>
+<div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button type="button" hx-delete='{% url "income_delete_htmx" pk=income.id %}?next={{ next|urlencode }}' class="button-delete">Delete income</button></div>

@@ -1,25 +1,21 @@
-
-
-<h2>{{category}}</h2>
-<form hx-post='{% url "budgetitem_bulk_edit_htmx" year=year category=category %}' class="budgetitem-bulk-form" method="POST">
+<div class="modal-content-header"><h2>Edit annual budget item</h2><p>{{ category }} · {{ year }}</p></div>
+<form hx-post='{% url "budgetitem_bulk_edit_htmx" year=year category=category %}' method="POST">
     {% csrf_token %}
-    {{formset.management_form}}
-    <div class="budgetitem-bulk-grid">
+    <div class="modal-content-body">
+    <div class="modal-errors">{{ formset.non_form_errors }}</div>
+    {{ formset.management_form }}
+    <div class="budgetitem-bulk-grid" role="group" aria-label="Monthly budget amounts">
         {% for form in formset %}
             {% for hidden in form.hidden_fields %}
-            {{hidden}}
+            {{ hidden }}
             {% endfor %}
             {% for field in form.visible_fields %}
-            <div>
-            {{field.errors}}
-            {{form.instance.monthly_budget.date | date:"F"}}
-            </div>
-            <div>
-            {{field}}
-            </div>
+            <div class="budgetitem-bulk-month">{{ form.instance.monthly_budget.date|date:"F" }}</div>
+            <div class="modal-field">{{ field.errors }}<span class="visually-hidden">{{ field.label_tag }}</span>{{ field }}</div>
             {% endfor %}
         {% endfor %}
     </div>
-    <input type="hidden" name="next" value="{{next}}">
-    <button type="submit">Save</button>
+    <input type="hidden" name="next" value="{{ next }}">
+    </div>
+    <div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button class="button-create" type="submit">Save annual budget</button></div>
 </form>

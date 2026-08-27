@@ -1,11 +1,18 @@
+{% load value_styles %}
 {% url "budget_item_detail" year=year month=month category=budget_item.category.name as detail_url %}
 {% url "budgetitem_edit_htmx" year=year month=month category=budget_item.category.name as edit_url %}
 {% url "budget_item_delete" year=year month=month category=budget_item.category.name as delete_url %}
 <div class="data-grid data-grid--budget-monthly">
-    <div><a data-tooltip="{{ budget_item.category }}" href="{{ detail_url }}">{{ budget_item.category }}</a></div>
-    <div>${{ budget_item.amount|floatformat:"-2" }}</div>
-    <div>${{ activity_amount|floatformat:"-2" }}</div>
-    <div>${{ budget_item.diff|floatformat:"-2" }}</div>
+    <div><a href="{{ detail_url }}"><strong>{{ budget_item.category }}</strong></a></div>
+    <div class="{{ budget_item.amount|negative_class }}">${{ budget_item.amount|floatformat:"-2" }}</div>
+    <div class="{{ activity_amount|negative_class }}">${{ activity_amount|floatformat:"-2" }}</div>
+    <div class="{{ budget_item.diff|negative_class }}">${{ budget_item.diff|floatformat:"-2" }}</div>
+    <div>
+        <div class="usage-meter {% if budget_item.usage_percent > 100 %}usage-meter--over{% elif budget_item.usage_percent >= 90 %}usage-meter--warning{% endif %}" style="--usage-percent: {{ budget_item.usage_percent }}%" aria-label="{{ budget_item.usage_percent }}% used">
+            <span class="usage-meter-track" aria-hidden="true"><span class="usage-meter-fill"></span></span>
+            <span class="usage-meter-value">{{ budget_item.usage_percent }}%</span>
+        </div>
+    </div>
     <div>
         <div class="edit-links-container">
             {% include "_includes/icon_action.html" with action_label="Edit budget item" action_url=edit_url return_url=return_url icon_path="images/edit-pencil.svg" only %}

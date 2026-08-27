@@ -1,6 +1,13 @@
-<h2>Edit Income</h2>
-<form hx-post='{% url "income_edit_htmx" pk=income.id %}' class="form-grid" method="POST">
-    {{form}}
-    <input type="hidden" name="next" value="{{next}}">
-    <button type="submit">Save</button>
+<div class="modal-content-header"><h2>Edit income</h2><p>Update this income entry.</p></div>
+<form hx-post='{% url "income_edit_htmx" pk=income.id %}' method="POST">
+    {% csrf_token %}
+    <div class="modal-content-body"><div class="modal-errors">{{ form.non_field_errors }}</div><div class="modal-form-grid">
+        <div class="modal-field">{{ form.date.errors }}{{ form.date.label_tag }}{{ form.date }}</div>
+        <div class="modal-field">{{ form.amount.errors }}{{ form.amount.label_tag }}{{ form.amount }}</div>
+        <div class="modal-field">{{ form.source.errors }}{{ form.source.label_tag }}{{ form.source }}</div>
+        <div class="modal-field">{{ form.payer.errors }}{{ form.payer.label_tag }}{{ form.payer }}</div>
+        <div class="modal-field modal-field--full">{{ form.category.errors }}{{ form.category.label_tag }}{{ form.category }}</div>
+        <div class="modal-field modal-field--full">{{ form.notes.errors }}{{ form.notes.label_tag }}{{ form.notes }}</div>
+    </div><input type="hidden" name="next" value="{{ next }}"></div>
+    <div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button class="button-create" type="submit">Save income</button></div>
 </form>

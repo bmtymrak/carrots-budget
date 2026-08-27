@@ -1,16 +1,29 @@
-{% url "yearly_budget_item_detail" year=year category=category_name as detail_url %}
-{% url "budgetitem_bulk_edit_htmx" category=category_name year=year as edit_url %}
-{% url "budget_item_delete_htmx" category=category_name year=year as delete_url %}
-<div class="data-grid data-grid--budget-yearly">
-    <div><a href="{{ detail_url }}">{{ category_name }}</a></div>
-    <div>${{ amount_ytd|floatformat:"-2" }}</div>
-    <div>${{ activity_ytd|floatformat:"-2" }}</div>
-    <div>${{ difference_ytd|floatformat:"-2" }}</div>
-    <div>${{ amount_total|floatformat:"-2" }}</div>
-    <div>${{ activity_total|floatformat:"-2" }}</div>
-    <div>${{ difference_total|floatformat:"-2" }}</div>
-    <div>
+{% load value_styles %}
+{% url "yearly_budget_item_detail" year=year category=item.category__name as detail_url %}
+{% url "budgetitem_bulk_edit_htmx" category=item.category__name year=year as edit_url %}
+{% url "budget_item_delete_htmx" category=item.category__name year=year as delete_url %}
+<tr>
+    <th scope="row"><a href="{{ detail_url }}">{{ item.category__name }}</a></th>
+    <td class="yearly-period-cell">
+        <div class="yearly-period-values"><span class="{{ item.amount_total_ytd|negative_class }}">${{ item.amount_total_ytd|floatformat:"-2" }}</span><span class="{{ activity_ytd|negative_class }}">${{ activity_ytd|floatformat:"-2" }}</span><span class="{{ item.diff_ytd|negative_class }}">${{ item.diff_ytd|floatformat:"-2" }}</span></div>
+        <div class="usage-meter {% if item.usage_ytd > 100 %}usage-meter--over{% elif item.usage_ytd >= 90 %}usage-meter--warning{% endif %}" style="--usage-percent:{{ item.usage_ytd }}%" aria-label="YTD usage {{ item.usage_ytd }}%"><span class="usage-meter-track" aria-hidden="true"><span class="usage-meter-fill"></span></span><strong class="usage-meter-value">{{ item.usage_ytd }}%</strong></div>
+    </td>
+    <td class="yearly-period-cell">
+        <div class="yearly-period-values"><span class="{{ item.amount_total|negative_class }}">${{ item.amount_total|floatformat:"-2" }}</span><span class="{{ activity_total|negative_class }}">${{ activity_total|floatformat:"-2" }}</span><span class="{{ item.diff|negative_class }}">${{ item.diff|floatformat:"-2" }}</span></div>
+        <div class="usage-meter {% if item.usage_total > 100 %}usage-meter--over{% elif item.usage_total >= 90 %}usage-meter--warning{% endif %}" style="--usage-percent:{{ item.usage_total }}%" aria-label="Full-year usage {{ item.usage_total }}%"><span class="usage-meter-track" aria-hidden="true"><span class="usage-meter-fill"></span></span><strong class="usage-meter-value">{{ item.usage_total }}%</strong></div>
+    </td>
+    <td class="rollover-cell">
+        <details class="rollover-details">
+            <summary aria-label="Rollover details for {{ item.category__name }}">↻</summary>
+            <div class="rollover-popover">
+                <span>Carried into {{ year }} <strong class="{{ item.rollover_current|negative_class }}">${{ item.rollover_current|floatformat:"-2" }}</strong></span>
+                <span>Rolling into next year <strong class="{{ item.rollover_next|negative_class }}">${{ item.rollover_next|floatformat:"-2" }}</strong></span>
+                <button class="button-create button-quiet" type="button" data-rollover-edit data-category="{{ item.category__name }}" data-current="{{ item.rollover_current }}" data-next="{{ item.rollover_next }}">Edit rollover</button>
+            </div>
+        </details>
+    </td>
+    <td class="financial-table-actions"><div class="edit-links-container">
         {% include "_includes/icon_action.html" with action_label="Edit budget item" action_url=edit_url return_url=return_url icon_path="images/edit-pencil.svg" only %}
         {% include "_includes/icon_action.html" with action_label="Delete budget item" action_url=delete_url return_url=return_url icon_path="images/trash.svg" only %}
-    </div>
-</div>
+    </div></td>
+</tr>

@@ -82,7 +82,7 @@ class TestYearlyBudgetCreateView(TestCase):
         response = self.client.get(reverse("yearly_create"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "<h2>Create Budget</h2>", html=True)
+        self.assertContains(response, "<h2>Create budget</h2>", html=True)
 
     def test_correct_budgets_created(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
@@ -610,6 +610,9 @@ class YearlyBudgetViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'budgets/yearly_budget_detail.html')
         self.assertContains(response, category.name)
+        self.assertContains(response, '<h1 class="page-title budget-detail-title">')
+        self.assertContains(response, '<th scope="col"><span class="visually-hidden">Category</span></th>', html=True)
+        self.assertContains(response, 'class="yearly-total-row yearly-subtotal-row"', count=2)
         self.assertEqual(response.context["ytd_month"], datetime.datetime.now().month)
         self.assertContains(
             response,
@@ -625,6 +628,56 @@ class YearlyBudgetViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["ytd_month"], 6)
         self.assertContains(response, 'data-ytd-month="6"')
+        self.assertContains(response, 'name="ytd"')
+        self.assertContains(response, '<option value="6" selected>June</option>', html=True)
+        self.assertContains(response, "YTD through June")
+
+    def test_yearly_budget_detail_exposes_both_rollover_directions(self):
+        category = CategoryFactory(user=self.user)
+        monthly_budget = MonthlyBudgetFactory(
+            user=self.user,
+            yearly_budget=self.yearly_budget,
+            date=datetime.date(self.year, 1, 1),
+        )
+        BudgetItemFactory(
+            user=self.user,
+            category=category,
+            yearly_budget=self.yearly_budget,
+            monthly_budget=monthly_budget,
+        )
+        previous_budget = YearlyBudgetFactory(
+            user=self.user,
+            date=datetime.date(self.year - 1, 1, 1),
+        )
+        RolloverFactory(
+            user=self.user,
+            category=category,
+            yearly_budget=previous_budget,
+            amount=Decimal("125.00"),
+        )
+        RolloverFactory(
+            user=self.user,
+            category=category,
+            yearly_budget=self.yearly_budget,
+            amount=Decimal("75.00"),
+        )
+
+        response = self.client.get(
+            reverse("yearly_detail", kwargs={"year": self.year})
+        )
+
+        item = response.context["budget_items_combined"][0]
+        self.assertEqual(item["rollover_current"], Decimal("125.00"))
+        self.assertEqual(item["rollover_next"], Decimal("75.00"))
+        self.assertContains(response, 'data-current="125.00"')
+        self.assertContains(response, 'data-next="75.00"')
+        self.assertContains(response, '<strong data-rollover-current></strong>', html=True)
+        self.assertNotContains(response, '<input data-rollover-current')
+        self.assertContains(
+            response,
+            '<input data-rollover-next type="number" step="0.01" required>',
+            html=True,
+        )
 
     def test_yearly_budget_detail_ignores_invalid_ytd_month(self):
         response = self.client.get(
@@ -649,6 +702,24 @@ class YearlyBudgetViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["ytd_month"], 12)
         self.assertContains(response, 'data-ytd-month="12"')
+
+    def test_past_year_budget_detail_uses_requested_ytd_month(self):
+        past_year = self.year - 1
+        YearlyBudgetFactory(
+            user=self.user,
+            date=datetime.date(past_year, 1, 1),
+        )
+
+        response = self.client.get(
+            reverse('yearly_detail', kwargs={'year': past_year}),
+            {'ytd': '6'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["ytd_month"], 6)
+        self.assertContains(response, 'data-ytd-month="6"')
+        self.assertContains(response, '<option value="6" selected>June</option>', html=True)
+        self.assertContains(response, "YTD through June")
 
     def test_yearly_budget_create_view(self):
         next_year = self.year + 1
@@ -704,6 +775,8 @@ class MonthlyBudgetViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'budgets/monthly_budget_detail.html')
         self.assertContains(response, category.name)
+        self.assertContains(response, '<h1 class="page-title budget-detail-title">')
+        self.assertContains(response, '<div class="card-table-heading"><span class="visually-hidden">Category</span></div>', html=True)
 
     def test_monthly_budget_detail_with_purchases(self):
         category = CategoryFactory(user=self.user)
@@ -730,6 +803,35 @@ class MonthlyBudgetViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '$100')
         self.assertContains(response, '$500')
+
+    def test_monthly_budget_renders_income_before_complete_purchase_list(self):
+        category = CategoryFactory(user=self.user)
+        income = IncomeFactory(
+            user=self.user,
+            category=category,
+            date=datetime.date(self.year, self.month, 2),
+            source="Visible income source",
+        )
+        purchases = [
+            PurchaseFactory(
+                user=self.user,
+                category=category,
+                date=datetime.date(self.year, self.month, day),
+                item=f"Visible purchase {day}",
+            )
+            for day in range(1, 6)
+        ]
+
+        response = self.client.get(
+            reverse("monthly_detail", kwargs={"year": self.year, "month": self.month})
+        )
+        content = response.content.decode()
+
+        self.assertLess(content.index("<h2>Income</h2>"), content.index("<h2>Purchases</h2>"))
+        self.assertContains(response, income.source)
+        for purchase in purchases:
+            self.assertContains(response, purchase.item)
+        self.assertContains(response, "data-financial-list-toggle")
 
 
 class BudgetItemViewTests(TestCase):
@@ -857,6 +959,22 @@ class RolloverViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.rollover.refresh_from_db()
         self.assertEqual(self.rollover.amount, Decimal('600.00'))
+
+    def test_rollover_update_view_allows_negative_amount(self):
+        response = self.client.post(
+            reverse("rollover_update"),
+            content_type="application/json",
+            data={
+                "amount": "-125.50",
+                "category": self.category.name,
+                "year": self.year,
+            },
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.rollover.refresh_from_db()
+        self.assertEqual(self.rollover.amount, Decimal("-125.50"))
 
 
 @override_settings(STORAGES=TEST_STORAGES)

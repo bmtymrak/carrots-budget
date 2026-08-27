@@ -1,8 +1,5 @@
-<div>
-    <h2>Confirm Delete</h2>
-    <div class="card-base">
-        <h3>{{category}}    
-    </div>
-    </div>
-    <button type="button" hx-delete='{% url "budget_item_delete_htmx" year=year category=category %}?next={{next}}' class="button-delete button-delete-standalone">Delete</button>
+<div class="modal-content-header"><h2>Delete budget item?</h2><p>{{ category }} · {{ year }}</p></div>
+<div class="modal-content-body">
+    <div class="danger-callout"><strong>This cannot be undone.</strong><p>This removes the budget item from every month in {{ year }}. Existing purchases are not deleted.</p></div>
 </div>
+<div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button type="button" hx-delete='{% url "budget_item_delete_htmx" year=year category=category %}?next={{ next|urlencode }}' class="button-delete">Delete budget item</button></div>

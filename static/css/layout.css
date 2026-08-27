@@ -2,14 +2,46 @@
 
 .main-container {
     display: flex;
+    flex-direction: column;
     flex-wrap: wrap;
     min-height: 100vh;
 }
 
-.app-sidebar {
-    flex: 0 0 175px;
-    background-color: var(--color-brand);
-    padding: var(--space-lg) var(--space-xl) 0;
+.app-topbar {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    border-bottom: 1px solid var(--color-brand-strong);
+    background: var(--color-brand);
+    color: var(--color-surface);
+}
+
+.app-topbar-inner {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    width: min(var(--content-max-width), calc(100% - 30px));
+    min-height: 60px;
+    margin: auto;
+}
+
+.app-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-surface);
+    font-size: 18px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.app-brand img {
+    display: block;
+}
+
+.app-navigation {
+    display: flex;
+    flex: 1;
 }
 
 .app-main {
@@ -25,17 +57,28 @@
 }
 
 .nav-list {
+    display: flex;
+    flex: 1;
+    align-items: stretch;
+    gap: var(--space-xs);
+    margin: 0;
     list-style-type: none;
     padding-left: 0;
 }
 
 .nav-list>li {
-    padding: var(--space-sm) var(--space-sm) var(--space-sm) 0;
+    display: flex;
+    align-items: center;
+    padding: 0;
 }
 
 .nav-list>li>a {
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 10px;
     text-decoration: none;
-    color: white;
+    color: #d4e8dc;
     font-weight: bold;
     border-radius: var(--radius-xs);
 }
@@ -46,14 +89,18 @@
 }
 
 .nav-list-action {
-    margin-top: 12px;
+    margin: 0;
+}
+
+.nav-list > li:last-child {
+    margin-left: auto;
 }
 
 .sidebar-action {
     width: fit-content;
     padding: var(--space-sm) var(--space-md);
     border: 2px solid var(--color-surface);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background-color: var(--color-surface);
     color: var(--color-success);
     cursor: pointer;
@@ -70,19 +117,6 @@
     outline-color: white;
     outline-offset: var(--focus-offset-roomy);
 }
-
-.logo-sidebar-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-}
-
-.logo-sidebar-text {
-    color: var(--color-surface);
-    font-size: 24px;
-    font-weight: 800;
-}
-
 
 .month-nav-wrapper {
     display: flex;
@@ -105,14 +139,14 @@
     flex-direction: column;
     margin: auto;
     align-items: center;
-    padding-left: var(--space-md);
+    padding: 0 15px 70px;
 
 }
 
 .content {
     max-width: var(--content-max-width);
     width: 100%;
-    padding: 0 var(--space-md);
+    padding: 0;
 }
 
 @media (width <= 48rem) {
@@ -140,16 +174,18 @@
     display: flex;
     justify-content: center;
     width: 100%;
-    margin-bottom: var(--space-md);
+    align-items: center;
+    width: min(var(--content-max-width), calc(100% - 30px));
+    margin: 26px auto 12px;
 
 }
 
 .page-header-action {
     display: flex;
     align-items: center;
-    justify-content: space-around;
-    margin-top: var(--space-xl);
-    margin-bottom: var(--space-sm);
+    justify-content: flex-end;
+    gap: 8px;
+    margin: 0 0 12px;
     border-radius: var(--radius-lg);
 }
 
@@ -158,8 +194,7 @@
 }
 
 .return-link {
-    margin-left: var(--space-md);
-    color: var(--color-text);
+    color: var(--color-success);
     font-weight: 700;
     text-decoration: none;
 }
@@ -184,13 +219,9 @@
         max-width: 100%;
     }
 
-    .app-sidebar {
-        flex-basis: auto;
-        padding: var(--space-md) var(--space-xl);
-    }
-
-    .logo-sidebar-container {
-        justify-content: space-between;
+    .app-topbar-inner {
+        width: min(100% - 22px, var(--content-max-width));
+        min-height: 54px;
     }
 
     .menu-toggle {
@@ -203,19 +234,25 @@
     }
 
     #primary-nav {
+        position: absolute;
+        top: 100%;
+        right: 11px;
+        left: 11px;
         display: none;
-        margin-top: var(--space-md);
+        margin: 0;
         padding: var(--space-md);
-        border-radius: var(--radius-lg);
+        border: 1px solid var(--color-brand-strong);
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
         background-color: var(--color-brand);
+        box-shadow: var(--shadow-card);
     }
 
     #primary-nav.nav-open {
-        display: block;
+        display: grid;
     }
 
     .nav-list > li {
-        padding: var(--space-md) 0;
+        padding: 0;
     }
 
     .nav-list > li > a {
@@ -226,5 +263,14 @@
 
     .nav-list > li > a:hover {
         background-color: rgb(255 255 255 / 10%);
+    }
+
+    .nav-list > li:last-child {
+        margin-left: 0;
+    }
+
+    .sidebar-action {
+        width: 100%;
+        min-height: 42px;
     }
 }

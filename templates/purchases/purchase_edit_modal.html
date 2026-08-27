@@ -1,54 +1,44 @@
-{% load static %}
-
-<h2>{% if receipt %}Edit Receipt{% else %}Edit Purchase{% endif %}</h2>
-
+{% load static value_styles %}
 {% if receipt %}
+<div class="modal-content-header"><h2>Edit receipt</h2><p>{{ receipt.location|default:receipt.source }} · {{ receipt.date|date:"F j, Y" }}</p></div>
 <form data-behavior="receipt-edit" hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="receipt-edit-form" method="POST">
     {% csrf_token %}
-    {{receipt_form.non_field_errors}}
-    <fieldset class="receipt-details">
-        <legend>Receipt details</legend>
-        {% for field in receipt_form.visible_fields %}
-        <div>
-            {{field.errors}}
-            {{field.label_tag}}
-            {{field}}
+    <div class="modal-content-body">
+        <div class="modal-errors">{{ receipt_form.non_field_errors }}{{ purchase_formset.non_form_errors }}</div>
+        <div class="receipt-meta" aria-label="Details shared by every purchase on this receipt">
+            <div class="modal-field">{{ receipt_form.date.errors }}<label for="{{ receipt_form.date.id_for_label }}">Receipt date</label>{{ receipt_form.date }}</div>
+            <div class="modal-field">{{ receipt_form.source.errors }}{{ receipt_form.source.label_tag }}{{ receipt_form.source }}</div>
+            <div class="modal-field">{{ receipt_form.location.errors }}{{ receipt_form.location.label_tag }}{{ receipt_form.location }}</div>
         </div>
-        {% endfor %}
-    </fieldset>
-
-    {{purchase_formset.management_form}}
-    {{purchase_formset.non_form_errors}}
-    <section class="receipt-items" aria-labelledby="receipt-items-heading">
-        <h3 id="receipt-items-heading">Purchases on this receipt</h3>
+        {{ purchase_formset.management_form }}
+        <div class="receipt-section-heading"><h3>Purchases on this receipt</h3><span class="count-badge">{{ purchase_formset|length }} purchases</span></div>
+        <div class="receipt-items-header" aria-hidden="true"><span>Purchase</span><span>Amount</span><span>Category</span><span>Subcategory</span><span>Savings</span><span>Notes</span></div>
+        <div class="receipt-items">
         {% for purchase_form in purchase_formset %}
-        <fieldset class="receipt-purchase-editor">
-            <legend>Purchase {{forloop.counter}}</legend>
-            {% for hidden in purchase_form.hidden_fields %}{{hidden}}{% endfor %}
-            {% for field in purchase_form.visible_fields %}
-            <div>
-                {{field.errors}}
-                {{field.label_tag}}
-                {{field}}
-            </div>
-            {% endfor %}
-        </fieldset>
+            <fieldset class="receipt-purchase-editor">
+                <legend>Purchase {{ forloop.counter }}</legend>
+                {% for hidden in purchase_form.hidden_fields %}{{ hidden }}{% endfor %}
+                <div class="modal-field">{{ purchase_form.item.errors }}{{ purchase_form.item.label_tag }}{{ purchase_form.item }}</div>
+                <div class="modal-field">{{ purchase_form.amount.errors }}{{ purchase_form.amount.label_tag }}{{ purchase_form.amount }}</div>
+                <div class="modal-field">{{ purchase_form.category.errors }}{{ purchase_form.category.label_tag }}{{ purchase_form.category }}</div>
+                <div class="modal-field">{{ purchase_form.subcategory.errors }}{{ purchase_form.subcategory.label_tag }}{{ purchase_form.subcategory }}</div>
+                <div class="modal-field modal-field--check">{{ purchase_form.savings.errors }}{{ purchase_form.savings }}{{ purchase_form.savings.label_tag }}</div>
+                <div class="modal-field">{{ purchase_form.notes.errors }}{{ purchase_form.notes.label_tag }}{{ purchase_form.notes }}</div>
+            </fieldset>
         {% endfor %}
-    </section>
-
-    <p id="receipt-total" class="receipt-total">
-        Total: $<span>{{receipt_total|floatformat:2}}</span>
-    </p>
-
-    <input type="hidden" name="next" value="{{next}}">
-    <button type="submit">Save receipt</button>
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+    </div>
+    <div class="modal-content-footer"><span id="receipt-total" class="modal-total">Receipt total <strong>$<span class="{{ receipt_total|negative_class }}">{{ receipt_total|floatformat:2 }}</span></strong></span><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button class="button-create" type="submit">Save receipt</button></div>
 </form>
 <script src="{% static 'js/app/pages/receipt-edit.js' %}"></script>
 {% else %}
-<form hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' class="form-grid" method="POST">
+<div class="modal-content-header"><h2>Edit purchase</h2></div>
+<form hx-post='{% url "purchase_edit_htmx" pk=purchase.id %}' method="POST">
     {% csrf_token %}
-    {{form}}
-    <input type="hidden" name="next" value="{{next}}">
-    <button type="submit">Save</button>
+    <div class="modal-content-body"><div class="modal-form-grid">
+    {% for field in form.visible_fields %}<div class="modal-field{% if field.name == "notes" %} modal-field--full{% elif field.name == "savings" %} modal-field--check{% endif %}">{{ field.errors }}{% if field.name == "savings" %}{{ field }}{{ field.label_tag }}{% else %}{{ field.label_tag }}{{ field }}{% endif %}</div>{% endfor %}
+    </div><input type="hidden" name="next" value="{{ next }}"></div>
+    <div class="modal-content-footer"><button class="modal-cancel" type="button" data-modal-close>Cancel</button><button class="button-create" type="submit">Save purchase</button></div>
 </form>
 {% endif %}

@@ -80,6 +80,9 @@ TEMPLATES = [
         "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
+            "libraries": {
+                "value_styles": "budgets.templatetags.value_styles",
+            },
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
@@ -167,6 +170,9 @@ STORAGES = {
 
 # For django-debug-toolbar
 INTERNAL_IPS = ["127.0.0.1"]
+DEBUG_TOOLBAR_CONFIG = {
+    "RENDER_PANELS": False,
+}
 
 AUTH_USER_MODEL = "accounts.CustomUser"
 
