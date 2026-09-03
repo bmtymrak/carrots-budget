@@ -1,19 +1,13 @@
-from django.shortcuts import render, redirect
-from django.views.generic import TemplateView
+from allauth.account.views import LoginView
+from django.shortcuts import redirect
 
 
-class HomePageView(TemplateView):
+class HomePageView(LoginView):
+    """Present the landing page without bypassing allauth's login safeguards."""
+
     template_name = "home.html"
 
     def dispatch(self, request, *args, **kwargs):
-        if request.method.lower() in self.http_method_names:
-            handler = getattr(
-                self, request.method.lower(), self.http_method_not_allowed
-            )
-        else:
-            handler = self.http_method_not_allowed
-
-        if self.request.user.is_authenticated:
+        if request.user.is_authenticated:
             return redirect("yearly_list")
-        else:
-            return handler(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)

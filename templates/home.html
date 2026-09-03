@@ -1,21 +1,3 @@
-{% extends "_layouts/public.html" %}
-{% load static %}
+{% extends "account/login.html" %}
 
-{% block body %}
-<div class="content-container flex">
-    <div class="content">
-        <div class="home-container">
-            <div class="home-header-container">
-                <div class="home-header-info">
-                    <h1>Carrots Budgeting</h1>
-                    <div class="home-link-container">
-                        <a class="home-link" href="{% url 'account_login' %}">Login</a>
-                        <a class="home-link" href="{% url 'account_signup' %}">Sign Up</a>
-                    </div>
-                </div>
-                <img src='{% static "images/carrots_logo.svg" %}' alt="Carrots Budget logo" height="200">
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock body %}
+{% block title %}Carrots Budgeting · Your whole budget, without the noise{% endblock title %}
