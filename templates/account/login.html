@@ -1,23 +1,17 @@
 {% extends "_layouts/public.html" %}
-{% load i18n %}
+{% load i18n static %}
 
-{% block title %}{% trans "Log In" %} · {{ block.super }}{% endblock title %}
+{% block title %}{% trans "Sign In" %} · {{ block.super }}{% endblock title %}
+
+{% block extra_head %}
+<meta name="description" content="See your whole budget with Carrots. Plan your year, track your purchases, and sign in to keep your money in view.">
+<link rel="stylesheet" href="{% static 'css/landing.css' %}">
+{% endblock extra_head %}
 
 {% block body %}
-<div class="auth-page">
-    <section class="card-base auth-card" aria-labelledby="login-title">
-        <h1 class="auth-title" id="login-title">{% trans "Log In" %}</h1>
-        <form class="login form-grid auth-form" method="post" action="{% url 'account_login' %}">
-            {% csrf_token %}
-            {{ form.as_p }}
-            {% if redirect_field_value %}
-            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
-            {% endif %}
-            <div class="auth-actions">
-                <a class="auth-secondary-action" href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
-                <button class="auth-primary-action" type="submit">{% trans "Sign In" %}</button>
-            </div>
-        </form>
-    </section>
-</div>
+{% include "_includes/landing_login.html" %}
 {% endblock body %}
+
+{% block extra_js %}
+<script src="{% static 'js/app/pages/landing.js' %}" defer></script>
+{% endblock extra_js %}

@@ -1,0 +1,81 @@
+{% load i18n static %}
+
+<div class="landing-page">
+    <div class="landing-shell">
+        <header class="landing-header">
+            <a class="landing-brand" href="{% url 'home' %}" aria-label="Carrots home">
+                <img src="{% static 'images/carrots_logo.svg' %}" alt="" width="27" height="56">
+                <span>Carrots</span>
+            </a>
+        </header>
+
+        <div class="landing-grid">
+            <section class="landing-intro" aria-labelledby="landing-title">
+                <h1 id="landing-title"><span>Know</span> where your year is going.</h1>
+                <p>Your whole budget, without the noise.</p>
+            </section>
+
+            <section class="landing-login" aria-labelledby="login-title">
+                <h2 id="login-title">{% trans "Sign in to your budget" %}</h2>
+
+                {% if messages %}
+                <div class="landing-messages" role="status">
+                    {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+                </div>
+                {% endif %}
+
+                <form class="landing-form" method="post" action="{% url 'account_login' %}">
+                    {% csrf_token %}
+                    {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                    {% if redirect_field_value %}
+                    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+                    {% endif %}
+
+                    {% if form.non_field_errors %}
+                    <div class="landing-form-errors" role="alert">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="landing-field">
+                        <label for="{{ form.login.id_for_label }}">{{ form.login.label }}</label>
+                        <div class="landing-input-wrap">
+                            <svg class="landing-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/></svg>
+                            {{ form.login }}
+                        </div>
+                        {{ form.login.errors }}
+                        {% if form.login.help_text %}<p class="landing-help" id="{{ form.login.auto_id }}_helptext">{{ form.login.help_text }}</p>{% endif %}
+                    </div>
+
+                    <div class="landing-field">
+                        <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                        <div class="landing-input-wrap landing-password-wrap">
+                            <svg class="landing-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="10" width="16" height="12" rx="2"/><path d="M7 10V6a5 5 0 0 1 10 0v4"/></svg>
+                            {{ form.password }}
+                            <button class="landing-password-toggle" type="button" aria-label="{% trans 'Show password' %}" aria-controls="{{ form.password.id_for_label }}" aria-pressed="false" data-behavior="password-toggle" data-show-label="{% trans 'Show password' %}" data-hide-label="{% trans 'Hide password' %}" hidden>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="landing-eye-slash" d="m3 3 18 18"/></svg>
+                            </button>
+                        </div>
+                        {{ form.password.errors }}
+                    </div>
+
+                    <div class="landing-login-options">
+                        {% if form.remember %}
+                        <label class="landing-remember" for="{{ form.remember.id_for_label }}">{{ form.remember }} <span>{% trans "Remember me" %}</span></label>
+                        {% endif %}
+                        <a class="landing-recovery" id="{{ form.password.auto_id }}_helptext" href="{% url 'account_reset_password' %}">{% trans "Forgot password?" %}</a>
+                    </div>
+                    {% if form.remember.errors %}{{ form.remember.errors }}{% endif %}
+
+                    <button class="landing-submit" type="submit">{% trans "Sign in" %}</button>
+                </form>
+
+                {% if signup_url %}
+                <p class="landing-signup">{% trans "New to Carrots?" %} <a href="{{ signup_url }}">{% trans "Create an account" %}</a></p>
+                {% endif %}
+            </section>
+
+            <figure class="landing-preview">
+                <img src="{% static 'images/landing/monthly-budget-preview.webp' %}" alt="Carrots monthly budget showing budgeted spending, purchases, savings, income, and remaining amounts across budget categories. Example figures." width="1100" height="704" fetchpriority="high">
+            </figure>
+        </div>
+    </div>
+</div>
