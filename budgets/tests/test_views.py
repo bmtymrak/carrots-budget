@@ -1,7 +1,7 @@
 import datetime
 from urllib.parse import quote
 
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
@@ -26,12 +26,6 @@ from purchases.tests.factories import CategoryFactory, PurchaseFactory, IncomeFa
 
 
 User = get_user_model()
-
-
-TEST_STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-}
 
 
 class TestYearlyBudgetDetailView(TestCase):
@@ -204,7 +198,6 @@ class TestYearlyBudgetListView(TestCase):
         self.assertFalse(yearly_budget_user2 in response.context["yearly_budgets"])
 
 
-@override_settings(STORAGES=TEST_STORAGES)
 class TestMonthlyBudgetDetailView(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -977,7 +970,6 @@ class RolloverViewTests(TestCase):
         self.assertEqual(self.rollover.amount, Decimal("-125.50"))
 
 
-@override_settings(STORAGES=TEST_STORAGES)
 class ExpenseSourceViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

@@ -2,7 +2,7 @@ import datetime
 import unittest
 from urllib.parse import quote
 
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
@@ -19,18 +19,6 @@ from .factories import (
 
 User = get_user_model()
 
-TEST_STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    # Avoid manifest-based static file lookups when rendering templates in tests.
-    "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-    },
-}
-
-
-@override_settings(STORAGES=TEST_STORAGES)
 class PurchaseViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -335,7 +323,6 @@ class PurchaseViewTests(TestCase):
         )
 
 
-@override_settings(STORAGES=TEST_STORAGES)
 class PurchaseListViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -622,7 +609,6 @@ class PurchaseListViewTests(TestCase):
             html=False,
         )
 
-@override_settings(STORAGES=TEST_STORAGES)
 class IncomeViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -679,7 +665,6 @@ class IncomeViewTests(TestCase):
 
 
 
-@override_settings(STORAGES=TEST_STORAGES)
 class CategoryViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -708,7 +693,6 @@ class CategoryViewTests(TestCase):
         )
 
 
-@override_settings(STORAGES=TEST_STORAGES)
 class RecurringPurchaseViewTests(TestCase):
     def setUp(self):
         self.client = Client()

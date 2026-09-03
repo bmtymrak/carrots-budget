@@ -43,7 +43,7 @@ class PurchaseFactory(DjangoModelFactory):
     source = factory.Faker('company')
     location = factory.Faker('city')
     category = factory.SubFactory(CategoryFactory)
-    subcategory = factory.SubFactory(SubcategoryFactory)
+    subcategory = None
     notes = factory.Faker('text', max_nb_chars=200)
     savings = False
 
