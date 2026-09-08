@@ -64,20 +64,20 @@ uv run manage.py migrate
 
 Run all tests:
 ```bash
-uv run manage.py test
+uv run manage.py test --settings=project.test_settings --noinput --timing
 ```
 
 Run tests for a specific app:
 ```bash
-uv run manage.py test budgets
-uv run manage.py test purchases
-uv run manage.py test accounts
+uv run manage.py test budgets --settings=project.test_settings
+uv run manage.py test purchases --settings=project.test_settings
+uv run manage.py test accounts --settings=project.test_settings
 ```
 
 Run a specific test class or method:
 ```bash
-uv run manage.py test budgets.tests.test_models.TestYearlyBudget
-uv run manage.py test budgets.tests.test_models.TestYearlyBudget.test_monthly_budgets_created
+uv run manage.py test budgets.tests.test_models.TestYearlyBudget --settings=project.test_settings
+uv run manage.py test budgets.tests.test_models.TestYearlyBudget.test_monthly_budgets_created --settings=project.test_settings
 ```
 
 ### Testing Conventions

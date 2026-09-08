@@ -29,7 +29,23 @@ class BudgetItemFormTest(TestCase):
 
     def test_only_current_user_categories_show_in_form(self):
         form = BudgetItemForm(user=self.user1)
-        self.assertEqual(form.fields["category"].queryset.count(), 1)
+        self.assertEqual(
+            list(form.fields["category"].queryset),
+            [self.testuser1_category],
+        )
+
+        foreign_category_form = BudgetItemForm(
+            data={
+                "category": self.testuser2_category.pk,
+                "amount": "10.00",
+                "savings": False,
+                "notes": "",
+            },
+            user=self.user1,
+        )
+
+        self.assertFalse(foreign_category_form.is_valid())
+        self.assertIn("category", foreign_category_form.errors)
 
     def test_correct_fields_in_form(self):
         form = BudgetItemForm(user=self.user1)
@@ -41,9 +57,7 @@ class BudgetItemFormTest(TestCase):
             "notes",
         ]
 
-        self.assertTrue(
-            all([field in expected_fields for field in list(form.fields.keys())])
-        )
+        self.assertEqual(list(form.fields.keys()), expected_fields)
 
 
 class YearlyBudgetFormTest(TestCase):

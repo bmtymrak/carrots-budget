@@ -293,6 +293,8 @@ class TestMonthlyBudgetDetailView(TestCase):
 
 
 class TestBudgetItemDetailView(TestCase):
+    budget_date = datetime.date(2026, 1, 1)
+
     @classmethod
     def setUpTestData(cls):
         cls.user1 = User.objects.create_user(
@@ -303,23 +305,23 @@ class TestBudgetItemDetailView(TestCase):
         )
 
         cls.yearly_budget_user1 = YearlyBudget.objects.create(
-            user=cls.user1, date=datetime.date.today()
+            user=cls.user1, date=cls.budget_date
         )
 
         cls.yearly_budget_user2 = YearlyBudget.objects.create(
-            user=cls.user2, date=datetime.datetime.now()
+            user=cls.user2, date=cls.budget_date
         )
 
-        cls.monthly_budget_user1 = MonthlyBudget.objects.create(
+        cls.monthly_budget_user1 = MonthlyBudget.objects.get(
             user=cls.user1,
             yearly_budget=cls.yearly_budget_user1,
-            date=datetime.datetime.now().date(),
+            date=cls.budget_date,
         )
 
-        cls.monthly_budget_user2 = MonthlyBudget.objects.create(
+        cls.monthly_budget_user2 = MonthlyBudget.objects.get(
             user=cls.user2,
             yearly_budget=cls.yearly_budget_user2,
-            date=datetime.datetime.now().date(),
+            date=cls.budget_date,
         )
 
         cls.category_user1 = Category.objects.create(
@@ -350,31 +352,31 @@ class TestBudgetItemDetailView(TestCase):
 
         Purchase.objects.create(
             user=cls.user1,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 1",
             category=cls.category_user1,
         )
         Purchase.objects.create(
             user=cls.user1,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 2",
             category=cls.category_user1,
         )
         Purchase.objects.create(
             user=cls.user1,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 3",
             category=cls.category_user1,
         )
         Purchase.objects.create(
             user=cls.user2,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 1",
             category=cls.category_user2,
         )
         Purchase.objects.create(
             user=cls.user2,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 2",
             category=cls.category_user2,
         )
@@ -383,8 +385,8 @@ class TestBudgetItemDetailView(TestCase):
         url = reverse(
                 "budget_item_detail",
                 args=[
-                    datetime.datetime.now().year,
-                    datetime.datetime.now().month,
+                    self.budget_date.year,
+                    self.budget_date.month,
                     self.category_user1.name,
                 ],
             )
@@ -400,8 +402,8 @@ class TestBudgetItemDetailView(TestCase):
             reverse(
                 "budget_item_detail",
                 args=[
-                    datetime.datetime.now().year,
-                    datetime.datetime.now().month,
+                    self.budget_date.year,
+                    self.budget_date.month,
                     self.category_user1.name,
                 ],
             )
@@ -417,8 +419,8 @@ class TestBudgetItemDetailView(TestCase):
             reverse(
                 "budget_item_detail",
                 args=[
-                    datetime.datetime.now().year,
-                    datetime.datetime.now().month,
+                    self.budget_date.year,
+                    self.budget_date.month,
                     self.category_user1.name,
                 ],
             )
@@ -429,8 +431,8 @@ class TestBudgetItemDetailView(TestCase):
             BudgetItem.objects.get(
                 user=self.user1,
                 category=self.category_user1,
-                yearly_budget__date__year=datetime.datetime.now().year,
-                monthly_budget__date__month=datetime.datetime.now().month,
+                yearly_budget__date__year=self.budget_date.year,
+                monthly_budget__date__month=self.budget_date.month,
             ),
         )
 

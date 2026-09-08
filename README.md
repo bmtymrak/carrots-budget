@@ -16,3 +16,17 @@ Designed to replace a spreadsheet-based budgeting system, Carrots Budgeting stre
 - Django/Python backend
 - Frontend with Django templates using HTMX and vanilla Javascript for interactivity
 - Authentication using django-allauth
+
+## Testing
+
+Run the full test suite with the dedicated test settings:
+
+```bash
+uv run manage.py test --settings=project.test_settings --noinput --timing
+```
+
+Run selected test modules with the same settings:
+
+```bash
+uv run manage.py test budgets.tests.test_services purchases.tests.test_services --settings=project.test_settings --noinput --timing
+```

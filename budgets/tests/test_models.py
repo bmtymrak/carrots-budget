@@ -39,6 +39,8 @@ class TestYearlyBudget(TestCase):
 
 
 class TestMonthlyBudget(TestCase):
+    budget_date = datetime.date(2026, 1, 1)
+
     @classmethod
     def setUpTestData(cls):
         cls.user1 = User.objects.create_user(
@@ -46,20 +48,19 @@ class TestMonthlyBudget(TestCase):
         )
 
         cls.yearly_budget = YearlyBudget.objects.create(
-            user=cls.user1, date=datetime.date.today()
+            user=cls.user1, date=cls.budget_date
+        )
+        cls.monthly_budget = MonthlyBudget.objects.get(
+            user=cls.user1,
+            yearly_budget=cls.yearly_budget,
+            date=cls.budget_date,
         )
 
     def test_unique_constraint(self):
-        MonthlyBudget.objects.create(
-            user=self.user1,
-            date=datetime.date.today(),
-            yearly_budget=self.yearly_budget,
-        )
-
         with self.assertRaises(IntegrityError):
             MonthlyBudget.objects.create(
                 user=self.user1,
-                date=datetime.date.today(),
+                date=self.monthly_budget.date,
                 yearly_budget=self.yearly_budget,
             )
 

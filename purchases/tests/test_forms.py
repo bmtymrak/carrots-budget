@@ -34,7 +34,25 @@ class IncomeFormTest(TestCase):
 
     def test_only_current_user_categories_show_in_form(self):
         form = IncomeForm(user=self.user1)
-        self.assertTrue(len(form.fields["category"].queryset) == 1)
+        self.assertEqual(
+            list(form.fields["category"].queryset),
+            [self.testuser1_category],
+        )
+
+        foreign_category_form = IncomeForm(
+            data={
+                "date": "2026-01-01",
+                "amount": "10.00",
+                "source": "Source",
+                "payer": "Payer",
+                "category": self.testuser2_category.pk,
+                "notes": "",
+            },
+            user=self.user1,
+        )
+
+        self.assertFalse(foreign_category_form.is_valid())
+        self.assertIn("category", foreign_category_form.errors)
 
 
 class TestPurchaseForm(TestCase):
