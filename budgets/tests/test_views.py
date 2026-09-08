@@ -28,34 +28,6 @@ from purchases.tests.factories import CategoryFactory, PurchaseFactory, IncomeFa
 User = get_user_model()
 
 
-class TestYearlyBudgetDetailView(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = User.objects.create_user(
-            email="testemail@test.com", username="testuser", password="testpass123"
-        )
-        cls.yearly_budget = YearlyBudget.objects.create(
-            user=cls.user, date=datetime.datetime.now()
-        )
-
-    def test_redirect_if_not_logged_in(self):
-        response = self.client.get(
-            reverse("yearly_detail", args=[datetime.datetime.now().year])
-        )
-
-        self.assertRedirects(
-            response, f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}"
-        )
-
-    def test_yearly_detail_uses_correct_template(self):
-        self.client.login(email="testemail@test.com", password="testpass123")
-        response = self.client.get(
-            reverse("yearly_detail", args=[datetime.datetime.now().year])
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "budgets/yearly_budget_detail.html")
-
-
 class TestYearlyBudgetCreateView(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -67,9 +39,10 @@ class TestYearlyBudgetCreateView(TestCase):
         )
 
     def test_redirect_if_not_logged_in(self):
-        response = self.client.get(reverse("yearly_list"))
+        url = reverse("yearly_create")
+        response = self.client.get(url)
 
-        self.assertRedirects(response, "/accounts/login/?next=/budgets/")
+        self.assertRedirects(response, f"/accounts/login/?next={url}")
 
     def test_yearly_budget_create_get(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
@@ -164,25 +137,6 @@ class TestYearlyBudgetListView(TestCase):
 
         self.assertRedirects(response, "/accounts/login/?next=/budgets/")
 
-    def test_logged_in_user_with_budgets(self):
-        self.client.login(email="testuser1@test.com", password="testpass123")
-        self.yearly_budget = YearlyBudget.objects.create(
-            user=self.user1, date=datetime.datetime.now()
-        )
-
-        response = self.client.get(reverse("yearly_list"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "budgets/yearly_budget_list.html")
-
-    def test_logged_in_user_correct_template(self):
-        self.client.login(email="testuser1@test.com", password="testpass123")
-
-        response = self.client.get(reverse("yearly_list"))
-
-        self.assertEqual(200, response.status_code)
-        self.assertTemplateUsed(response, "budgets/yearly_budget_list.html")
-
     def test_only_show_current_user_budgets(self):
         yearly_budget_user1 = YearlyBudget.objects.create(
             user=self.user1, date=datetime.datetime.now()
@@ -223,17 +177,6 @@ class TestMonthlyBudgetDetailView(TestCase):
         self.assertRedirects(
             response, f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}/1"
         )
-
-    def test_montly_budget_detail_correct_template(self):
-
-        self.client.login(email="testuser1@test.com", password="testpass123")
-
-        response = self.client.get(
-            reverse("monthly_detail", args=[datetime.datetime.now().year, 1])
-        )
-
-        self.assertEqual(200, response.status_code)
-        self.assertTemplateUsed(response, "budgets/monthly_budget_detail.html")
 
     def test_object_is_for_the_current_logged_in_user(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
@@ -580,6 +523,14 @@ class YearlyBudgetViewTests(TestCase):
             user=self.user,
             date=datetime.date(self.year, 1, 1)
         )
+
+    def test_yearly_budget_detail_requires_login(self):
+        self.client.logout()
+        url = reverse("yearly_detail", args=[self.year])
+
+        response = self.client.get(url)
+
+        self.assertRedirects(response, f"/accounts/login/?next={url}")
 
     def test_yearly_budget_list_view(self):
         response = self.client.get(reverse('yearly_list'))

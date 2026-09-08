@@ -31,7 +31,9 @@ class MonthlyBudgetFactory(DjangoModelFactory):
     date = factory.LazyFunction(datetime.date.today)
     expected_income = fuzzy.FuzzyDecimal(3000, 10000, precision=2)
     user = factory.SubFactory(UserFactory)
-    yearly_budget = factory.SubFactory(YearlyBudgetFactory)
+    yearly_budget = factory.SubFactory(
+        YearlyBudgetFactory, user=factory.SelfAttribute("..user")
+    )
 
 class BudgetItemFactory(DjangoModelFactory):
     class Meta:
@@ -39,9 +41,13 @@ class BudgetItemFactory(DjangoModelFactory):
         django_get_or_create = ('monthly_budget', 'category', 'user')
 
     user = factory.SubFactory(UserFactory)
-    category = factory.SubFactory(CategoryFactory)
+    category = factory.SubFactory(
+        CategoryFactory, user=factory.SelfAttribute("..user")
+    )
     amount = fuzzy.FuzzyDecimal(0, 1000, precision=2)
-    monthly_budget = factory.SubFactory(MonthlyBudgetFactory)
+    monthly_budget = factory.SubFactory(
+        MonthlyBudgetFactory, user=factory.SelfAttribute("..user")
+    )
     yearly_budget = factory.SelfAttribute('monthly_budget.yearly_budget')
     notes = factory.Faker('text', max_nb_chars=200)
     savings = False
@@ -52,8 +58,12 @@ class RolloverFactory(DjangoModelFactory):
         django_get_or_create = ('yearly_budget', 'category', 'user')
 
     user = factory.SubFactory(UserFactory)
-    yearly_budget = factory.SubFactory(YearlyBudgetFactory)
-    category = factory.SubFactory(CategoryFactory)
+    yearly_budget = factory.SubFactory(
+        YearlyBudgetFactory, user=factory.SelfAttribute("..user")
+    )
+    category = factory.SubFactory(
+        CategoryFactory, user=factory.SelfAttribute("..user")
+    )
     amount = fuzzy.FuzzyDecimal(0, 1000, precision=2)
 
 

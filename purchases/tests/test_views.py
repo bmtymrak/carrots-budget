@@ -1,5 +1,4 @@
 import datetime
-import unittest
 from urllib.parse import quote
 
 from django.test import TestCase, Client
@@ -292,36 +291,6 @@ class PurchaseViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Receipt.objects.filter(pk=receipt.pk).exists())
-
-    @unittest.skip("Feature 'new_category' is not implemented in Purchase backend")
-    def test_purchase_create_with_new_category(self):
-        response = self.client.post(
-            reverse('purchase_create'),
-            {
-                'form-TOTAL_FORMS': '1',
-                'form-INITIAL_FORMS': '0',
-                'form-MIN_NUM_FORMS': '0',
-                'form-MAX_NUM_FORMS': '1000',
-                'form-0-item': 'Test Purchase',
-                'form-0-date': datetime.date.today(),
-                'form-0-amount': '100.00',
-                'form-0-source': 'Test Store',
-                'form-0-location': 'Test Location',
-                'form-0-new_category': 'New Test Category',
-                'form-0-notes': 'Test notes',
-                'form-0-savings': False,
-                'next': '/'
-            }
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            Purchase.objects.filter(
-                user=self.user,
-                item='Test Purchase',
-                category__name='New Test Category'
-            ).exists()
-        )
-
 
 class PurchaseListViewTests(TestCase):
     def setUp(self):
@@ -640,31 +609,6 @@ class IncomeViewTests(TestCase):
             ).exists()
         )
 
-    @unittest.skip("Feature 'new_category' is not implemented in Income backend")
-    def test_income_create_with_new_category(self):
-        response = self.client.post(
-            reverse('income_create'),
-            {
-                'amount': '5000.00',
-                'date': datetime.date.today(),
-                'source': 'Test Employer',
-                'payer': 'Test Payer',
-                'new_category': 'New Income Category',
-                'notes': 'Test income'
-            }
-        )
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(
-            Income.objects.filter(
-                user=self.user,
-                amount=Decimal('5000.00'),
-                category__name='New Income Category'
-            ).exists()
-        )
-
-
-
-
 class CategoryViewTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -917,39 +861,6 @@ class RecurringPurchaseViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(recurring.id, response.context['already_added'])
-
-    def test_recurring_purchase_add_with_modified_amount(self):
-        """Test that modified amounts are used when creating purchases."""
-        yearly_budget = YearlyBudget.objects.create(
-            user=self.user,
-            date=datetime.date(2024, 1, 1)
-        )
-        recurring = RecurringPurchaseFactory(
-            user=self.user,
-            category=self.category,
-            item='Spotify',
-            amount=Decimal('9.99')
-        )
-        
-        response = self.client.post(
-            reverse('recurring_purchase_add_to_month', kwargs={'year': 2024, 'month': 1}),
-            self._build_add_to_month_post_data(
-                [
-                    {
-                        'recurring': recurring,
-                        'amount': '14.99',
-                        'source': recurring.source,
-                        'location': recurring.location,
-                        'category': str(self.category.id),
-                        'notes': recurring.notes,
-                    }
-                ]
-            )
-        )
-        self.assertEqual(response.status_code, 200)
-        
-        purchase = Purchase.objects.get(user=self.user, item='Spotify')
-        self.assertEqual(purchase.amount, Decimal('14.99'))
 
     def test_recurring_purchase_add_uses_all_edited_details(self):
         """Editable row details are retained when creating the monthly purchase."""

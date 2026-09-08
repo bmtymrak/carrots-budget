@@ -30,3 +30,10 @@ Run selected test modules with the same settings:
 ```bash
 uv run manage.py test budgets.tests.test_services purchases.tests.test_services --settings=project.test_settings --noinput --timing
 ```
+
+The small browser interaction suite uses Playwright with an installed Chrome browser:
+
+```bash
+npm ci
+npm run test:browser
+```

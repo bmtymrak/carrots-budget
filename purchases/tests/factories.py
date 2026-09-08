@@ -42,7 +42,9 @@ class PurchaseFactory(DjangoModelFactory):
     amount = fuzzy.FuzzyDecimal(0, 1000, precision=2)
     source = factory.Faker('company')
     location = factory.Faker('city')
-    category = factory.SubFactory(CategoryFactory)
+    category = factory.SubFactory(
+        CategoryFactory, user=factory.SelfAttribute("..user")
+    )
     subcategory = None
     notes = factory.Faker('text', max_nb_chars=200)
     savings = False
@@ -56,7 +58,9 @@ class IncomeFactory(DjangoModelFactory):
     date = factory.LazyFunction(datetime.date.today)
     source = factory.Faker('company')
     payer = factory.Faker('company')
-    category = factory.SubFactory(CategoryFactory)
+    category = factory.SubFactory(
+        CategoryFactory, user=factory.SelfAttribute("..user")
+    )
     notes = factory.Faker('text', max_nb_chars=200)
 
 
@@ -67,7 +71,9 @@ class RecurringPurchaseFactory(DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     item = factory.Sequence(lambda n: f'Recurring Purchase {n}')
     amount = fuzzy.FuzzyDecimal(10, 500, precision=2)
-    category = factory.SubFactory(CategoryFactory)
+    category = factory.SubFactory(
+        CategoryFactory, user=factory.SelfAttribute("..user")
+    )
     source = factory.Faker('company')
     location = factory.Faker('city')
     notes = factory.Faker('text', max_nb_chars=200)
