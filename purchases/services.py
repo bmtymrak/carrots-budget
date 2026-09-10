@@ -86,7 +86,7 @@ def save_receipt_with_purchases(receipt, purchases):
             ).values_list("pk", flat=True)
         )
         submitted_ids = {purchase.pk for purchase in purchases}
-        if submitted_ids != expected_ids:
+        if submitted_ids != expected_ids or len(submitted_ids) != len(purchases):
             raise ValidationError(
                 "All purchases on this receipt must be submitted together."
             )

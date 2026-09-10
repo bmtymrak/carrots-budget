@@ -2,6 +2,7 @@ import datetime
 import json
 import calendar
 import time
+from decimal import Decimal, InvalidOperation
 from urllib.parse import urlsplit
 
 from django.db.models.fields import DecimalField, BooleanField
@@ -77,7 +78,8 @@ class YearlyBudgetDetailView(LoginRequiredMixin, DetailView):
 
     def get_object(self):
         year_start, next_year_start = BudgetService.year_bounds(self.kwargs["year"])
-        obj = self.model.objects.get(
+        obj = get_object_or_404(
+            self.model,
             user=self.request.user,
             date__gte=year_start,
             date__lt=next_year_start,
@@ -224,7 +226,8 @@ class BudgetItemDetailView(LoginRequiredMixin, DetailView):
     template_name = "budgets/budgetitem_detail.html"
 
     def get_object(self):
-        obj = BudgetItem.objects.get(
+        obj = get_object_or_404(
+            BudgetItem,
             user=self.request.user,
             monthly_budget__date__year=self.kwargs["year"],
             monthly_budget__date__month=self.kwargs["month"],
@@ -257,7 +260,8 @@ class BudgetItemDeleteView(LoginRequiredMixin, DeleteView):
     template_name = "budgets/budgetitem_delete.html"
 
     def get_object(self):
-        obj = self.model.objects.get(
+        obj = get_object_or_404(
+            self.model,
             user=self.request.user,
             monthly_budget__date__year=self.kwargs["year"],
             monthly_budget__date__month=self.kwargs["month"],
@@ -291,11 +295,7 @@ class BudgetItemDeleteView(LoginRequiredMixin, DeleteView):
             return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        if self.request.POST.get("next"):
-            return self.request.POST.get("next")
-
-        else:
-            return reverse_lazy("yearly_list")
+        return _safe_next_url(self.request, reverse("yearly_list"))
 
 
 
@@ -334,21 +334,46 @@ class YearlyBudgetItemDetailView(LoginRequiredMixin, TemplateView):
 
 
 @login_required
+@require_POST
 def rollover_update_view(request):
-    if request.headers.get("x-requested-with") == "XMLHttpRequest":
-        data = json.load(request)
-        amount = data["amount"]
+    if request.headers.get("x-requested-with") != "XMLHttpRequest":
+        return HttpResponseBadRequest("Expected an XMLHttpRequest")
+
+    try:
+        data = json.loads(request.body)
+        amount = Decimal(str(data["amount"]))
         category = data["category"]
-        year = data["year"]
+        year = int(data["year"])
+    except (
+        json.JSONDecodeError,
+        KeyError,
+        TypeError,
+        ValueError,
+        InvalidOperation,
+        UnicodeDecodeError,
+    ):
+        return HttpResponseBadRequest("Invalid rollover data")
 
-        obj = Rollover.objects.filter(
-            user=request.user, category__name=category, yearly_budget__date__year=year
-        ).get()
+    if (
+        not amount.is_finite()
+        or amount.as_tuple().exponent < -2
+        or amount.copy_abs() >= Decimal("10000000000")
+        or not isinstance(category, str)
+        or not category
+        or not 1 <= year <= 9999
+    ):
+        return HttpResponseBadRequest("Invalid rollover data")
 
-        obj.amount = amount
-        obj.save()
+    obj = get_object_or_404(
+        Rollover,
+        user=request.user,
+        category__name=category,
+        yearly_budget__date__year=year,
+    )
+    obj.amount = amount
+    obj.save(update_fields=["amount"])
 
-        return JsonResponse({"amount": amount})
+    return JsonResponse({"amount": str(amount)})
 
 
 @login_required
@@ -375,8 +400,8 @@ def budget_create(request):
 
 @login_required
 def budgetitem_edit(request, year, month, category):
-
-    budget_item = BudgetItem.objects.get(
+    budget_item = get_object_or_404(
+        BudgetItem,
         user=request.user,
         yearly_budget__date__year=year,
         monthly_budget__date__month=month,
@@ -385,52 +410,49 @@ def budgetitem_edit(request, year, month, category):
 
     form = BudgetItemForm(instance=budget_item, user=request.user)
 
+    next_url = _expense_source_next_url(request, year, month)
+
     if request.method == "POST":
-        next = request.POST.get("next")
         form = BudgetItemForm(
             instance=budget_item, data=request.POST, user=request.user
         )
         if form.is_valid():
             form.save()
-            return HttpResponseClientRedirect(next)
-
-    if request.method == "GET":
-        next = request.GET["next"]
+            return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
         "budgets/budgetitem_edit_modal.html",
-        {"form": form, "budget_item": budget_item, "next": next},
+        {"form": form, "budget_item": budget_item, "next": next_url},
     )
 
 
 @login_required
 def budgetitem_bulk_edit(request, year, category):
-
+    yearly_budget = get_object_or_404(
+        YearlyBudget, user=request.user, date__year=year
+    )
     budget_items = BudgetItem.objects.filter(
         user=request.user,
-        yearly_budget=YearlyBudget.objects.get(user=request.user, date__year=year),
+        yearly_budget=yearly_budget,
         category__name=category,
     )
     formset = BudgetItemFormset(queryset=budget_items)
+    next_url = _safe_next_url(request, reverse("yearly_detail", args=[year]))
 
     if request.method == "POST":
-        next = request.POST.get("next")
         formset = BudgetItemFormset(data=request.POST, queryset=budget_items)
 
         if formset.is_valid():
             instances = formset.save(commit=False)
             for instance in instances:
                 instance.save()
-            return HttpResponseClientRedirect(next)
-
-    if request.method == "GET":
-        next = request.GET["next"]
+            return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
         "budgets/budgetitem_bulk_edit_modal.html",
-        {"formset": formset, "year": year, "category": category, "next": next},
+        {"formset": formset, "year": year, "category": category, "next": next_url},
     )
 
 
@@ -443,7 +465,7 @@ def budgetitem_delete(request, year, category):
         category__name=category,
     )
 
-    next = request.GET["next"]
+    next_url = _safe_next_url(request, reverse("yearly_detail", args=[year]))
 
     if request.method == "DELETE":
         budget_items.delete()
@@ -452,7 +474,7 @@ def budgetitem_delete(request, year, category):
             category__name=category,
             yearly_budget__date__year=year,
         ).delete()
-        return HttpResponseClientRedirect(next)
+        return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
@@ -461,19 +483,18 @@ def budgetitem_delete(request, year, category):
             "budget_items": budget_items,
             "year": year,
             "category": category,
-            "next": next,
+            "next": next_url,
         },
     )
 
 
 @login_required
 def budget_item_create(request, year):
-
+    next_url = _safe_next_url(request, reverse("yearly_detail", args=[year]))
     if request.method == "POST":
 
         form = BudgetItemForm(data=request.POST, user=request.user)
         form.instance.user = request.user
-        next = request.POST.get("next")
 
         if form.is_valid():
 
@@ -486,16 +507,15 @@ def budget_item_create(request, year):
 
             BudgetItem.create_items_and_rollovers(request.user, year, form)
 
-            return HttpResponseClientRedirect(next)
+            return HttpResponseClientRedirect(next_url)
 
     if request.method == "GET":
-        next = request.GET["next"]
         form = BudgetItemForm(user=request.user)
 
     return render(
         request,
         "budgets/budgetitem_create_modal.html",
-        {"form": form, "next": next, "year": year},
+        {"form": form, "next": next_url, "year": year},
     )
 
 
@@ -512,8 +532,7 @@ def _get_user_monthly_budget(request, year, month):
     )
 
 
-def _expense_source_next_url(request, year, month):
-    default_url = reverse("monthly_detail", kwargs={"year": year, "month": month})
+def _safe_next_url(request, default_url):
     requested_url = request.POST.get("next") or request.GET.get("next")
     if requested_url and url_has_allowed_host_and_scheme(
         requested_url,
@@ -522,6 +541,11 @@ def _expense_source_next_url(request, year, month):
     ) and urlsplit(requested_url).path == default_url:
         return requested_url
     return default_url
+
+
+def _expense_source_next_url(request, year, month):
+    default_url = reverse("monthly_detail", kwargs={"year": year, "month": month})
+    return _safe_next_url(request, default_url)
 
 
 def _expense_source_redirect(request, next_url):

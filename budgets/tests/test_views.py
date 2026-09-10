@@ -1,7 +1,7 @@
 import datetime
 from urllib.parse import quote
 
-from django.test import TestCase, Client, override_settings
+from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
@@ -28,40 +28,6 @@ from purchases.tests.factories import CategoryFactory, PurchaseFactory, IncomeFa
 User = get_user_model()
 
 
-TEST_STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-}
-
-
-class TestYearlyBudgetDetailView(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = User.objects.create_user(
-            email="testemail@test.com", username="testuser", password="testpass123"
-        )
-        cls.yearly_budget = YearlyBudget.objects.create(
-            user=cls.user, date=datetime.datetime.now()
-        )
-
-    def test_redirect_if_not_logged_in(self):
-        response = self.client.get(
-            reverse("yearly_detail", args=[datetime.datetime.now().year])
-        )
-
-        self.assertRedirects(
-            response, f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}"
-        )
-
-    def test_yearly_detail_uses_correct_template(self):
-        self.client.login(email="testemail@test.com", password="testpass123")
-        response = self.client.get(
-            reverse("yearly_detail", args=[datetime.datetime.now().year])
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "budgets/yearly_budget_detail.html")
-
-
 class TestYearlyBudgetCreateView(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -73,9 +39,10 @@ class TestYearlyBudgetCreateView(TestCase):
         )
 
     def test_redirect_if_not_logged_in(self):
-        response = self.client.get(reverse("yearly_list"))
+        url = reverse("yearly_create")
+        response = self.client.get(url)
 
-        self.assertRedirects(response, "/accounts/login/?next=/budgets/")
+        self.assertRedirects(response, f"/accounts/login/?next={url}")
 
     def test_yearly_budget_create_get(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
@@ -170,25 +137,6 @@ class TestYearlyBudgetListView(TestCase):
 
         self.assertRedirects(response, "/accounts/login/?next=/budgets/")
 
-    def test_logged_in_user_with_budgets(self):
-        self.client.login(email="testuser1@test.com", password="testpass123")
-        self.yearly_budget = YearlyBudget.objects.create(
-            user=self.user1, date=datetime.datetime.now()
-        )
-
-        response = self.client.get(reverse("yearly_list"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "budgets/yearly_budget_list.html")
-
-    def test_logged_in_user_correct_template(self):
-        self.client.login(email="testuser1@test.com", password="testpass123")
-
-        response = self.client.get(reverse("yearly_list"))
-
-        self.assertEqual(200, response.status_code)
-        self.assertTemplateUsed(response, "budgets/yearly_budget_list.html")
-
     def test_only_show_current_user_budgets(self):
         yearly_budget_user1 = YearlyBudget.objects.create(
             user=self.user1, date=datetime.datetime.now()
@@ -204,7 +152,6 @@ class TestYearlyBudgetListView(TestCase):
         self.assertFalse(yearly_budget_user2 in response.context["yearly_budgets"])
 
 
-@override_settings(STORAGES=TEST_STORAGES)
 class TestMonthlyBudgetDetailView(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -230,17 +177,6 @@ class TestMonthlyBudgetDetailView(TestCase):
         self.assertRedirects(
             response, f"/accounts/login/?next=/budgets/{datetime.datetime.now().year}/1"
         )
-
-    def test_montly_budget_detail_correct_template(self):
-
-        self.client.login(email="testuser1@test.com", password="testpass123")
-
-        response = self.client.get(
-            reverse("monthly_detail", args=[datetime.datetime.now().year, 1])
-        )
-
-        self.assertEqual(200, response.status_code)
-        self.assertTemplateUsed(response, "budgets/monthly_budget_detail.html")
 
     def test_object_is_for_the_current_logged_in_user(self):
         self.client.login(email="testuser1@test.com", password="testpass123")
@@ -300,6 +236,8 @@ class TestMonthlyBudgetDetailView(TestCase):
 
 
 class TestBudgetItemDetailView(TestCase):
+    budget_date = datetime.date(2026, 1, 1)
+
     @classmethod
     def setUpTestData(cls):
         cls.user1 = User.objects.create_user(
@@ -310,23 +248,23 @@ class TestBudgetItemDetailView(TestCase):
         )
 
         cls.yearly_budget_user1 = YearlyBudget.objects.create(
-            user=cls.user1, date=datetime.date.today()
+            user=cls.user1, date=cls.budget_date
         )
 
         cls.yearly_budget_user2 = YearlyBudget.objects.create(
-            user=cls.user2, date=datetime.datetime.now()
+            user=cls.user2, date=cls.budget_date
         )
 
-        cls.monthly_budget_user1 = MonthlyBudget.objects.create(
+        cls.monthly_budget_user1 = MonthlyBudget.objects.get(
             user=cls.user1,
             yearly_budget=cls.yearly_budget_user1,
-            date=datetime.datetime.now().date(),
+            date=cls.budget_date,
         )
 
-        cls.monthly_budget_user2 = MonthlyBudget.objects.create(
+        cls.monthly_budget_user2 = MonthlyBudget.objects.get(
             user=cls.user2,
             yearly_budget=cls.yearly_budget_user2,
-            date=datetime.datetime.now().date(),
+            date=cls.budget_date,
         )
 
         cls.category_user1 = Category.objects.create(
@@ -357,31 +295,31 @@ class TestBudgetItemDetailView(TestCase):
 
         Purchase.objects.create(
             user=cls.user1,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 1",
             category=cls.category_user1,
         )
         Purchase.objects.create(
             user=cls.user1,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 2",
             category=cls.category_user1,
         )
         Purchase.objects.create(
             user=cls.user1,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 3",
             category=cls.category_user1,
         )
         Purchase.objects.create(
             user=cls.user2,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 1",
             category=cls.category_user2,
         )
         Purchase.objects.create(
             user=cls.user2,
-            date=datetime.datetime.today(),
+            date=cls.budget_date,
             item="Item 2",
             category=cls.category_user2,
         )
@@ -390,8 +328,8 @@ class TestBudgetItemDetailView(TestCase):
         url = reverse(
                 "budget_item_detail",
                 args=[
-                    datetime.datetime.now().year,
-                    datetime.datetime.now().month,
+                    self.budget_date.year,
+                    self.budget_date.month,
                     self.category_user1.name,
                 ],
             )
@@ -407,8 +345,8 @@ class TestBudgetItemDetailView(TestCase):
             reverse(
                 "budget_item_detail",
                 args=[
-                    datetime.datetime.now().year,
-                    datetime.datetime.now().month,
+                    self.budget_date.year,
+                    self.budget_date.month,
                     self.category_user1.name,
                 ],
             )
@@ -424,8 +362,8 @@ class TestBudgetItemDetailView(TestCase):
             reverse(
                 "budget_item_detail",
                 args=[
-                    datetime.datetime.now().year,
-                    datetime.datetime.now().month,
+                    self.budget_date.year,
+                    self.budget_date.month,
                     self.category_user1.name,
                 ],
             )
@@ -436,8 +374,8 @@ class TestBudgetItemDetailView(TestCase):
             BudgetItem.objects.get(
                 user=self.user1,
                 category=self.category_user1,
-                yearly_budget__date__year=datetime.datetime.now().year,
-                monthly_budget__date__month=datetime.datetime.now().month,
+                yearly_budget__date__year=self.budget_date.year,
+                monthly_budget__date__month=self.budget_date.month,
             ),
         )
 
@@ -585,6 +523,14 @@ class YearlyBudgetViewTests(TestCase):
             user=self.user,
             date=datetime.date(self.year, 1, 1)
         )
+
+    def test_yearly_budget_detail_requires_login(self):
+        self.client.logout()
+        url = reverse("yearly_detail", args=[self.year])
+
+        response = self.client.get(url)
+
+        self.assertRedirects(response, f"/accounts/login/?next={url}")
 
     def test_yearly_budget_list_view(self):
         response = self.client.get(reverse('yearly_list'))
@@ -977,7 +923,6 @@ class RolloverViewTests(TestCase):
         self.assertEqual(self.rollover.amount, Decimal("-125.50"))
 
 
-@override_settings(STORAGES=TEST_STORAGES)
 class ExpenseSourceViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(

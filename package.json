@@ -1,0 +1,13 @@
+{
+  "name": "carrots-budget",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser tests for Carrots Budgeting",
+  "scripts": {
+    "test": "npm run test:browser",
+    "test:browser": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

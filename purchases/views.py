@@ -38,6 +38,21 @@ class AddUserMixin:
         return super().form_valid(form)
 
 
+def _safe_next_url(request, default_url):
+    submitted_url = (
+        request.POST.get("next")
+        if request.method == "POST"
+        else request.GET.get("next")
+    )
+    if submitted_url and url_has_allowed_host_and_scheme(
+        submitted_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return submitted_url
+    return default_url
+
+
 class PurchaseListView(LoginRequiredMixin, ListView):
     model = Purchase
     context_object_name = "purchases"
@@ -158,53 +173,39 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 
 @login_required
 def purchase_delete_htmx(request, pk):
-
-    purchase = Purchase.objects.get(user=request.user, pk=pk)
-
-    next = request.GET["next"]
+    purchase = get_object_or_404(Purchase, user=request.user, pk=pk)
+    next_url = _safe_next_url(request, reverse("purchase_list"))
 
     if request.method == "DELETE":
         purchase.delete()
-        return HttpResponseClientRedirect(next)
+        return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
         "purchases/purchase_delete_modal.html",
-        {"purchase": purchase, "next": next},
+        {"purchase": purchase, "next": next_url},
     )
 
 
 @login_required
 def income_delete_htmx(request, pk):
-
-    income = Income.objects.get(user=request.user, pk=pk)
-
-    next = request.GET["next"]
+    income = get_object_or_404(Income, user=request.user, pk=pk)
+    next_url = _safe_next_url(request, reverse("yearly_list"))
 
     if request.method == "DELETE":
         income.delete()
-        return HttpResponseClientRedirect(next)
+        return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
         "purchases/income_delete_modal.html",
-        {"income": income, "next": next},
+        {"income": income, "next": next_url},
     )
 
 
 @login_required
 def purchase_create(request):
-    submitted_next = (
-        request.POST.get("next") if request.method == "POST" else request.GET.get("next")
-    )
-    if submitted_next and url_has_allowed_host_and_scheme(
-        submitted_next,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
-        next_url = submitted_next
-    else:
-        next_url = reverse("purchase_list")
+    next_url = _safe_next_url(request, reverse("purchase_list"))
 
     if request.method == "POST":
         formset_data = request.POST.copy()  # Makes Querydict mutable
@@ -286,8 +287,9 @@ def purchase_edit(request, pk):
     else:
         form = PurchaseForm(instance=purchase, user=request.user)
 
+    next_url = _safe_next_url(request, reverse("purchase_list"))
+
     if request.method == "POST":
-        next = request.POST.get("next")
         if receipt:
             receipt_form = ReceiptForm(request.POST, instance=receipt)
             purchase_formset = ReceiptPurchaseFormSet(
@@ -301,15 +303,12 @@ def purchase_edit(request, pk):
                     receipt_form.save(commit=False),
                     [form.instance for form in purchase_formset.forms],
                 )
-                return HttpResponseClientRedirect(next)
+                return HttpResponseClientRedirect(next_url)
         else:
             form = PurchaseForm(instance=purchase, data=request.POST, user=request.user)
             if form.is_valid():
                 save_purchase_with_receipt(form.save(commit=False))
-                return HttpResponseClientRedirect(next)
-
-    if request.method == "GET":
-        next = request.GET["next"]
+                return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
@@ -322,55 +321,48 @@ def purchase_edit(request, pk):
             "receipt_purchases": receipt_purchases,
             "receipt_total": receipt_total,
             "purchase_formset": purchase_formset,
-            "next": next,
+            "next": next_url,
         },
     )
 
 
 @login_required
 def income_edit(request, pk):
-    income = Income.objects.get(user=request.user, pk=pk)
+    income = get_object_or_404(Income, user=request.user, pk=pk)
+    next_url = _safe_next_url(request, reverse("yearly_list"))
 
     form = IncomeForm(instance=income, user=request.user)
 
     if request.method == "POST":
-        next = request.POST.get("next")
         form = IncomeForm(instance=income, data=request.POST, user=request.user)
         if form.is_valid():
             form.save()
-            return HttpResponseClientRedirect(next)
-
-    if request.method == "GET":
-        next = request.GET["next"]
+            return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
         "purchases/income_edit_modal.html",
-        {"form": form, "income": income, "next": next},
+        {"form": form, "income": income, "next": next_url},
     )
 
 
 @login_required
 def income_create(request):
-
+    next_url = _safe_next_url(request, reverse("yearly_list"))
     form = IncomeForm(user=request.user)
 
     if request.method == "POST":
-        next = request.POST.get("next")
         form = IncomeForm(data=request.POST, user=request.user)
         form.instance.user = request.user
 
         if form.is_valid():
             form.save()
-            return HttpResponseClientRedirect(next)
-
-    if request.method == "GET":
-        next = request.GET["next"]
+            return HttpResponseClientRedirect(next_url)
 
     return render(
         request,
         "purchases/income_create_modal.html",
-        {"form": form, "next": next},
+        {"form": form, "next": next_url},
     )
 
 
@@ -381,7 +373,7 @@ def recurring_purchase_list(request):
         user=request.user
     ).select_related("category")
     form = RecurringPurchaseForm(user=request.user)
-    next_url = request.GET.get("next", reverse("yearly_list"))
+    next_url = _safe_next_url(request, reverse("yearly_list"))
 
     if request.method == "POST":
         form = RecurringPurchaseForm(data=request.POST, user=request.user)
@@ -410,10 +402,9 @@ def recurring_purchase_edit(request, pk):
     """Edit a recurring purchase."""
     recurring_purchase = get_object_or_404(RecurringPurchase, user=request.user, pk=pk)
     form = RecurringPurchaseForm(instance=recurring_purchase, user=request.user)
-    next_url = request.GET.get("next", reverse("yearly_list"))
+    next_url = _safe_next_url(request, reverse("yearly_list"))
 
     if request.method == "POST":
-        next_url = request.POST.get("next", next_url)
         form = RecurringPurchaseForm(
             instance=recurring_purchase, data=request.POST, user=request.user
         )
@@ -432,7 +423,7 @@ def recurring_purchase_edit(request, pk):
 def recurring_purchase_delete(request, pk):
     """Delete a recurring purchase."""
     recurring_purchase = get_object_or_404(RecurringPurchase, user=request.user, pk=pk)
-    next_url = request.GET.get("next", reverse("yearly_list"))
+    next_url = _safe_next_url(request, reverse("yearly_list"))
 
     if request.method == "DELETE":
         recurring_purchase.delete()
@@ -452,8 +443,8 @@ def recurring_purchase_add_to_month(request, year, month):
     recurring_purchases = list(RecurringPurchase.objects.filter(
         user=request.user, is_active=True
     ).select_related("category"))
-    next_url = request.GET.get(
-        "next", reverse("monthly_detail", kwargs={"year": year, "month": month})
+    next_url = _safe_next_url(
+        request, reverse("monthly_detail", kwargs={"year": year, "month": month})
     )
     
     # Check which recurring purchases have already been added this month
@@ -491,7 +482,6 @@ def recurring_purchase_add_to_month(request, year, month):
     }
 
     if request.method == "POST":
-        next_url = request.POST.get("next", next_url)
         formset = RecurringPurchaseAddToMonthFormSet(
             data=request.POST,
             **formset_kwargs,
