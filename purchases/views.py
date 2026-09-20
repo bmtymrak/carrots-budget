@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from django.utils.http import url_has_allowed_host_and_scheme
+from project.http import safe_next_url
 from django.views.generic import (
     ListView,
     CreateView,
@@ -36,21 +36,6 @@ class AddUserMixin:
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
-
-
-def _safe_next_url(request, default_url):
-    submitted_url = (
-        request.POST.get("next")
-        if request.method == "POST"
-        else request.GET.get("next")
-    )
-    if submitted_url and url_has_allowed_host_and_scheme(
-        submitted_url,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
-        return submitted_url
-    return default_url
 
 
 class PurchaseListView(LoginRequiredMixin, ListView):
@@ -174,7 +159,7 @@ class CategoryCreateView(LoginRequiredMixin, AddUserMixin, CreateView):
 @login_required
 def purchase_delete_htmx(request, pk):
     purchase = get_object_or_404(Purchase, user=request.user, pk=pk)
-    next_url = _safe_next_url(request, reverse("purchase_list"))
+    next_url = safe_next_url(request, fallback=reverse("purchase_list"))
 
     if request.method == "DELETE":
         purchase.delete()
@@ -190,7 +175,7 @@ def purchase_delete_htmx(request, pk):
 @login_required
 def income_delete_htmx(request, pk):
     income = get_object_or_404(Income, user=request.user, pk=pk)
-    next_url = _safe_next_url(request, reverse("yearly_list"))
+    next_url = safe_next_url(request, fallback=reverse("yearly_list"))
 
     if request.method == "DELETE":
         income.delete()
@@ -205,7 +190,7 @@ def income_delete_htmx(request, pk):
 
 @login_required
 def purchase_create(request):
-    next_url = _safe_next_url(request, reverse("purchase_list"))
+    next_url = safe_next_url(request, fallback=reverse("purchase_list"))
 
     if request.method == "POST":
         formset_data = request.POST.copy()  # Makes Querydict mutable
@@ -287,7 +272,7 @@ def purchase_edit(request, pk):
     else:
         form = PurchaseForm(instance=purchase, user=request.user)
 
-    next_url = _safe_next_url(request, reverse("purchase_list"))
+    next_url = safe_next_url(request, fallback=reverse("purchase_list"))
 
     if request.method == "POST":
         if receipt:
@@ -329,7 +314,7 @@ def purchase_edit(request, pk):
 @login_required
 def income_edit(request, pk):
     income = get_object_or_404(Income, user=request.user, pk=pk)
-    next_url = _safe_next_url(request, reverse("yearly_list"))
+    next_url = safe_next_url(request, fallback=reverse("yearly_list"))
 
     form = IncomeForm(instance=income, user=request.user)
 
@@ -348,7 +333,7 @@ def income_edit(request, pk):
 
 @login_required
 def income_create(request):
-    next_url = _safe_next_url(request, reverse("yearly_list"))
+    next_url = safe_next_url(request, fallback=reverse("yearly_list"))
     form = IncomeForm(user=request.user)
 
     if request.method == "POST":
@@ -373,7 +358,7 @@ def recurring_purchase_list(request):
         user=request.user
     ).select_related("category")
     form = RecurringPurchaseForm(user=request.user)
-    next_url = _safe_next_url(request, reverse("yearly_list"))
+    next_url = safe_next_url(request, fallback=reverse("yearly_list"))
 
     if request.method == "POST":
         form = RecurringPurchaseForm(data=request.POST, user=request.user)
@@ -402,7 +387,7 @@ def recurring_purchase_edit(request, pk):
     """Edit a recurring purchase."""
     recurring_purchase = get_object_or_404(RecurringPurchase, user=request.user, pk=pk)
     form = RecurringPurchaseForm(instance=recurring_purchase, user=request.user)
-    next_url = _safe_next_url(request, reverse("yearly_list"))
+    next_url = safe_next_url(request, fallback=reverse("yearly_list"))
 
     if request.method == "POST":
         form = RecurringPurchaseForm(
@@ -423,7 +408,7 @@ def recurring_purchase_edit(request, pk):
 def recurring_purchase_delete(request, pk):
     """Delete a recurring purchase."""
     recurring_purchase = get_object_or_404(RecurringPurchase, user=request.user, pk=pk)
-    next_url = _safe_next_url(request, reverse("yearly_list"))
+    next_url = safe_next_url(request, fallback=reverse("yearly_list"))
 
     if request.method == "DELETE":
         recurring_purchase.delete()
@@ -443,8 +428,8 @@ def recurring_purchase_add_to_month(request, year, month):
     recurring_purchases = list(RecurringPurchase.objects.filter(
         user=request.user, is_active=True
     ).select_related("category"))
-    next_url = _safe_next_url(
-        request, reverse("monthly_detail", kwargs={"year": year, "month": month})
+    next_url = safe_next_url(
+        request, fallback=reverse("monthly_detail", kwargs={"year": year, "month": month})
     )
     
     # Check which recurring purchases have already been added this month

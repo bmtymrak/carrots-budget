@@ -78,7 +78,6 @@
                     headers: {
                         Accept: "application/json",
                         "Content-Type": "application/json",
-                        "X-Requested-With": "XMLHttpRequest",
                         "X-CSRFToken": window.CarrotsBudget.getCsrfToken(),
                     },
                     body: JSON.stringify({
@@ -88,14 +87,24 @@
                     }),
                 })
 
-                if (!response.ok) {
+                const data = await response.json()
+                if (response.status === 400 && data && typeof data.errors === "object" && data.errors !== null) {
+                    const messages = Object.values(data.errors).flat().filter((message) => typeof message === "string")
+                    if (messages.length) {
+                        errorMessage.textContent = messages.join(" ")
+                        errorMessage.hidden = false
+                        return
+                    }
+                }
+                if (!response.ok || response.redirected || !data ||
+                    typeof data.amount !== "string" || !/^-?\d{1,10}\.\d{2}$/.test(data.amount)) {
                     throw new Error("Rollover update failed")
                 }
 
-                activeTrigger.dataset.next = nextInput.value
+                activeTrigger.dataset.next = data.amount
                 const nextValue = activeTrigger.closest(".rollover-popover").querySelectorAll("strong")[1]
                 if (nextValue) {
-                    nextValue.textContent = `$${Number(nextInput.value).toFixed(2)}`
+                    nextValue.textContent = `$${data.amount}`
                 }
                 dialog.close()
                 activeTrigger.focus()
