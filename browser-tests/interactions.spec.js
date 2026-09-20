@@ -97,16 +97,17 @@ test("recurring purchase selection updates count, total, and submit state", asyn
 
 
 test("rollover editor saves inline and reports a failed retry", async ({page}) => {
-    let failRequest = false
+    let mockResponse = {status: 200, contentType: "application/json", body: JSON.stringify({amount: "-32.25"})}
     let submittedBody
     let submittedHeaders
     await page.route("http://carrots.test/rollover", async (route) => {
         submittedBody = route.request().postDataJSON()
         submittedHeaders = route.request().headers()
-        await route.fulfill({
-            status: failRequest ? 500 : 200,
-            body: "{}",
-        })
+        if (mockResponse === "network") {
+            await route.abort()
+        } else {
+            await route.fulfill(mockResponse)
+        }
     })
     await page.route("http://carrots.test/", (route) => route.fulfill({
         contentType: "text/html",
@@ -140,16 +141,37 @@ test("rollover editor saves inline and reports a failed retry", async ({page}) =
     await page.locator("[data-rollover-next]").fill("35.50")
     await page.getByRole("button", {name: "Save"}).click()
     await expect(page.locator(".rollover-dialog")).not.toHaveAttribute("open", "")
-    await expect(page.locator(".rollover-popover strong").nth(1)).toHaveText("$35.50")
+    await expect(page.locator(".rollover-popover strong").nth(1)).toHaveText("$-32.25")
     expect(submittedBody).toEqual({amount: "35.50", category: "Food", year: "2024"})
     expect(submittedHeaders["x-csrftoken"]).toBe("token")
-    expect(submittedHeaders["x-requested-with"]).toBe("XMLHttpRequest")
+    await expect(page.locator("[data-rollover-edit]")).toHaveAttribute("data-next", "-32.25")
 
-    failRequest = true
     await page.locator(".rollover-details summary").click()
     await page.getByRole("button", {name: "Edit"}).click()
+    await expect(page.locator("[data-rollover-next]")).toHaveValue("-32.25")
     await page.locator("[data-rollover-next]").fill("40")
-    await page.getByRole("button", {name: "Save"}).click()
-    await expect(page.locator("[data-rollover-error]")).toBeVisible()
-    await expect(page.locator("[data-rollover-error]")).toContainText("Could not save")
+    const fieldError = '<img src=x onerror="alert(1)"> Enter a valid amount.'
+    const failures = [
+        [{status: 400, contentType: "application/json", body: JSON.stringify({errors: {amount: [fieldError]}})}, fieldError],
+        [{status: 200, contentType: "application/json", body: "{}"}, "Could not save"],
+        [{status: 200, contentType: "application/json", body: JSON.stringify({amount: 40})}, "Could not save"],
+        [{status: 200, contentType: "application/json", body: JSON.stringify({amount: "NaN"})}, "Could not save"],
+        [{status: 200, contentType: "application/json", body: "{"}, "Could not save"],
+        [{status: 200, contentType: "text/html", body: "<html>Log in</html>"}, "Could not save"],
+        [{status: 404, contentType: "text/html", body: "Not found"}, "Could not save"],
+        [{status: 403, contentType: "text/html", body: "Forbidden"}, "Could not save"],
+        ["network", "Could not save"],
+    ]
+    for (const [response, error] of failures) {
+        mockResponse = response
+        await page.getByRole("button", {name: "Save"}).click()
+        await expect(page.locator("[data-rollover-error]")).toBeVisible()
+        await expect(page.locator("[data-rollover-error]")).toContainText(error)
+        await expect(page.locator("[data-rollover-error] img")).toHaveCount(0)
+        await expect(page.locator(".rollover-dialog")).toHaveAttribute("open", "")
+        await expect(page.locator("[data-rollover-next]")).toHaveValue("40")
+        await expect(page.locator("[data-rollover-edit]")).toHaveAttribute("data-next", "-32.25")
+        await expect(page.locator(".rollover-popover strong").nth(1)).toHaveText("$-32.25")
+        await expect(page.getByRole("button", {name: "Save"})).toBeEnabled()
+    }
 })

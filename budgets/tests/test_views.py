@@ -22,7 +22,7 @@ from .factories import (
     BudgetItemFactory,
     RolloverFactory,
 )
-from purchases.tests.factories import CategoryFactory, PurchaseFactory, IncomeFactory
+from purchases.tests.factories import CategoryFactory, PurchaseFactory, IncomeFactory, UserFactory
 
 
 User = get_user_model()
@@ -1592,3 +1592,80 @@ class ExpenseSourceViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["HX-Redirect"], self.monthly_url())
+
+
+class BudgetCategoryPersistenceTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = UserFactory()
+        cls.year = YearlyBudgetFactory(user=cls.user, date=datetime.date(2025, 1, 1))
+        cls.category = CategoryFactory(user=cls.user)
+        cls.foreign_category = CategoryFactory()
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def counts(self):
+        from purchases.models import Category
+        return (Category.objects.count(), BudgetItem.objects.count(), Rollover.objects.count())
+
+    def test_invalid_create_has_no_writes(self):
+        from unittest.mock import patch
+        initial = self.counts()
+        for category, name in [('', ''), ('', '  '), ('', 'x' * 251),
+                               (self.category.pk, 'New'), (self.foreign_category.pk, ''),
+                               (self.foreign_category.pk, 'New')]:
+            with self.subTest(category=category, name=name), patch.object(BudgetItem, 'create_items_and_rollovers') as replicate:
+                response = self.client.post(reverse('budgetitem_create_htmx', args=[2025]),
+                                            {'category': category, 'new_category': name, 'amount': '10'})
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.context['form'].errors)
+                self.assertNotIn('HX-Redirect', response)
+                replicate.assert_not_called()
+                self.assertEqual(self.counts(), initial)
+
+    def test_valid_create_replicates_each_category_choice(self):
+        from purchases.models import Category
+        for data in [{'category': self.category.pk}, {'new_category': ' New category '}]:
+            with self.subTest(data=data):
+                response = self.client.post(reverse('budgetitem_create_htmx', args=[2025]), {**data, 'amount': '12.50'})
+                self.assertEqual(response['HX-Redirect'], reverse('yearly_detail', args=[2025]))
+                category = self.category if 'category' in data else Category.objects.get(user=self.user, name='New category')
+                self.assertEqual(BudgetItem.objects.filter(user=self.user, category=category, yearly_budget=self.year).count(), 12)
+                self.assertEqual(Rollover.objects.filter(user=self.user, category=category, yearly_budget=self.year).count(), 1)
+
+    def test_edit_rejects_unsupported_input_and_preserves_row(self):
+        item = BudgetItemFactory(user=self.user, category=self.category, yearly_budget=self.year,
+                                 monthly_budget=self.year.monthly_budgets.get(date__month=1), amount='20')
+        initial = self.counts()
+        url = reverse('budgetitem_edit_htmx', args=[2025, 1, self.category.name])
+        self.assertNotContains(self.client.get(url), 'name="new_category"')
+        for data in [{'category': ''}, {'new_category': 'New'}, {'new_category': '  '},
+                     {'new_category': 'x' * 251}, {'category': self.category.pk, 'new_category': 'New'},
+                     {'category': self.foreign_category.pk}]:
+            with self.subTest(data=data):
+                response = self.client.post(url, {**data, 'amount': '99', 'notes': 'changed'})
+                self.assertTrue(response.context['form'].errors)
+                item.refresh_from_db()
+                self.assertEqual(item.amount, Decimal('20'))
+                self.assertEqual(item.category, self.category)
+                self.assertNotEqual(item.notes, 'changed')
+                self.assertEqual(self.counts(), initial)
+        replacement = CategoryFactory(user=self.user)
+        response = self.client.post(url, {'category': replacement.pk, 'amount': '30'})
+        self.assertEqual(response['HX-Redirect'], reverse('monthly_detail', args=[2025, 1]))
+        item.refresh_from_db()
+        self.assertEqual(item.category, replacement)
+        self.assertEqual(item.amount, Decimal('30'))
+
+    def test_duplicate_allocation_still_requires_phase_one_handling(self):
+        from django.db import IntegrityError, transaction
+        data = {'category': self.category.pk, 'amount': '10'}
+        url = reverse('budgetitem_create_htmx', args=[2025])
+        self.client.post(url, data)
+        initial = self.counts()
+        # Characterize the existing database rejection; graceful handling and
+        # atomic replication are intentionally deferred to Phase 1.
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            self.client.post(url, data)
+        self.assertEqual(self.counts(), initial)

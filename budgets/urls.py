@@ -1,7 +1,6 @@
 from django.urls import path
 
 from .views import (
-    MonthlyBudgetCreateView,
     MonthlyBudgetDetailView,
     BudgetItemDetailView,
     YearlyBudgetListView,
@@ -19,7 +18,6 @@ from .views import (
 )
 
 urlpatterns = [
-    path("monthly-create", MonthlyBudgetCreateView.as_view(), name="monthly_create"),
     path(
         "<int:year>/<int:month>",
         MonthlyBudgetDetailView.as_view(),

@@ -4,7 +4,6 @@
     {% csrf_token %}
     <div class="modal-content-body"><div class="modal-errors">{{ form.non_field_errors }}</div><div class="modal-form-grid">
         <div class="modal-field modal-field--full">{{ form.category.errors }}{{ form.category.label_tag }}{{ form.category }}</div>
-        <div class="modal-field modal-field--full">{{ form.new_category.errors }}{{ form.new_category.label_tag }}{{ form.new_category }}</div>
         <div class="modal-field">{{ form.amount.errors }}{{ form.amount.label_tag }}{{ form.amount }}</div>
         <div class="modal-field modal-field--check">{{ form.savings.errors }}{{ form.savings }}{{ form.savings.label_tag }}</div>
         <div class="modal-field modal-field--full">{{ form.notes.errors }}{{ form.notes.label_tag }}{{ form.notes }}</div>

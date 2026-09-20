@@ -165,3 +165,49 @@ class ExpenseSourceFormTest(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("already have an expense source", str(form.errors))
+
+
+class BudgetCategoryChoiceTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username="category-owner", email="category-owner@example.com")
+        other_user = User.objects.create_user(username="category-other", email="category-other@example.com")
+        cls.category = Category.objects.create(user=cls.user, name="Food")
+        cls.foreign_category = Category.objects.create(user=other_user, name="Food")
+
+    def test_create_requires_exactly_one_category(self):
+        cases = [
+            (self.category.pk, "", True), ("", " New name ", True),
+            ("", "", False), ("", "   ", False), ("", "x" * 251, False),
+            (self.category.pk, "New name", False),
+            (self.foreign_category.pk, "", False),
+            (self.foreign_category.pk, "New name", False),
+        ]
+        for category, name, valid in cases:
+            with self.subTest(category=category, name=name):
+                form = BudgetItemForm(
+                    user=self.user,
+                    data={"category": category, "new_category": name, "amount": "10"},
+                )
+                self.assertEqual(form.is_valid(), valid, form.errors)
+                if valid and name:
+                    self.assertEqual(form.cleaned_data["new_category"], "New name")
+
+    def test_edit_only_accepts_existing_category(self):
+        from budgets.forms import BudgetItemEditForm
+
+        self.assertNotIn("new_category", BudgetItemEditForm(user=self.user).fields)
+        cases = [
+            (self.category.pk, None, True), ("", None, False),
+            ("", "New name", False), ("", "   ", False), ("", "x" * 251, False),
+            (self.category.pk, "New name", False),
+            (self.category.pk, "   ", False), (self.category.pk, "", False),
+            (self.foreign_category.pk, None, False),
+        ]
+        for category, name, valid in cases:
+            with self.subTest(category=category, name=name):
+                data = {"category": category, "amount": "10"}
+                if name is not None:
+                    data["new_category"] = name
+                form = BudgetItemEditForm(user=self.user, data=data)
+                self.assertEqual(form.is_valid(), valid, form.errors)
